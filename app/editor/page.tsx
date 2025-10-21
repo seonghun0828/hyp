@@ -245,6 +245,14 @@ export default function EditorPage() {
             ) {
               return true;
             }
+            // 편집 버튼 제외
+            if (
+              element.classList.contains('bg-blue-500') ||
+              element.classList.contains('bg-blue-600') ||
+              (element.tagName === 'BUTTON' && element.textContent === '✏️')
+            ) {
+              return true;
+            }
           }
           return false;
         },
