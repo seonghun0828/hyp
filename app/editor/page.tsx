@@ -452,6 +452,24 @@ export default function EditorPage() {
                           padding: '4px 8px',
                           borderRadius: '4px',
                         }}
+                        onDoubleClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // 더블클릭으로 텍스트 수정 모드 진입
+                          const newText = prompt(
+                            '텍스트를 수정하세요:',
+                            element.text
+                          );
+                          if (newText !== null && newText.trim() !== '') {
+                            setTextElements((prev) =>
+                              prev.map((el) =>
+                                el.id === element.id
+                                  ? { ...el, text: newText.trim() }
+                                  : el
+                              )
+                            );
+                          }
+                        }}
                         onMouseDown={(e) => {
                           e.preventDefault();
                           setSelectedElement(element.id);
@@ -520,13 +538,37 @@ export default function EditorPage() {
                         }}
                       >
                         {element.text}
+                        {/* 수정 버튼 */}
+                        <button
+                          className="absolute -top-2 -right-4 w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newText = prompt(
+                              '텍스트를 수정하세요:',
+                              element.text
+                            );
+                            if (newText !== null && newText.trim() !== '') {
+                              setTextElements((prev) =>
+                                prev.map((el) =>
+                                  el.id === element.id
+                                    ? { ...el, text: newText.trim() }
+                                    : el
+                                )
+                              );
+                            }
+                          }}
+                          title="텍스트 수정"
+                        >
+                          ✏️
+                        </button>
                         {/* 삭제 버튼 */}
                         <button
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
+                          className="absolute -top-2 -right-10 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteTextElement(element.id);
                           }}
+                          title="텍스트 삭제"
                         >
                           ×
                         </button>
