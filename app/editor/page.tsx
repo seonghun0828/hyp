@@ -23,6 +23,7 @@ interface TextElement {
   fontSize: number;
   color: string;
   fontFamily: string;
+  backgroundColor: 'transparent' | 'black' | 'white';
   isSelected: boolean;
 }
 
@@ -171,6 +172,7 @@ export default function EditorPage() {
         fontSize: 12,
         fontFamily: 'Arial',
         color: '#000000',
+        backgroundColor: 'white',
         isSelected: true,
       };
 
@@ -442,6 +444,72 @@ export default function EditorPage() {
                         className="w-full h-10 rounded border"
                       />
                     </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        배경색
+                      </label>
+                      <button
+                        className={`px-4 py-2 rounded text-sm transition-colors ${(() => {
+                          const current = textElements.find(
+                            (el) => el.id === selectedElement
+                          );
+                          if (!current)
+                            return 'bg-blue-500 text-white hover:bg-blue-600';
+
+                          if (current.backgroundColor === 'white') {
+                            return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
+                          } else if (current.backgroundColor === 'black') {
+                            return 'bg-black text-white hover:bg-gray-800';
+                          } else {
+                            return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
+                          }
+                        })()}`}
+                        onClick={() => {
+                          const current = textElements.find(
+                            (el) => el.id === selectedElement
+                          );
+                          if (!current) return;
+
+                          // 순환 로직: 하얀색 → 검정색 → 없음 → 하얀색
+                          let nextBackgroundColor:
+                            | 'transparent'
+                            | 'black'
+                            | 'white';
+
+                          if (current.backgroundColor === 'white') {
+                            // 하얀색 → 검정색
+                            nextBackgroundColor = 'black';
+                          } else if (current.backgroundColor === 'black') {
+                            // 검정색 → 없음
+                            nextBackgroundColor = 'transparent';
+                          } else {
+                            // 없음 → 하얀색
+                            nextBackgroundColor = 'white';
+                          }
+
+                          updateElementStyle(selectedElement, {
+                            backgroundColor: nextBackgroundColor,
+                            // 텍스트 색상은 변경하지 않음
+                          });
+                        }}
+                      >
+                        {(() => {
+                          const current = textElements.find(
+                            (el) => el.id === selectedElement
+                          );
+                          if (!current) return '글자';
+
+                          if (current.backgroundColor === 'white') {
+                            return '하얀색';
+                          } else if (current.backgroundColor === 'black') {
+                            return '검정색';
+                          } else {
+                            return '없음';
+                          }
+                        })()}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -482,7 +550,12 @@ export default function EditorPage() {
                           fontSize: `${element.fontSize}px`,
                           fontFamily: element.fontFamily,
                           color: element.color,
-                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                          backgroundColor:
+                            element.backgroundColor === 'transparent'
+                              ? 'transparent'
+                              : element.backgroundColor === 'black'
+                              ? 'rgba(0, 0, 0, 0.8)'
+                              : 'rgba(255, 255, 255, 0.8)',
                           padding: '4px 8px',
                           borderRadius: '4px',
                           whiteSpace: 'pre', // 줄바꿈 표시
@@ -648,7 +721,17 @@ export default function EditorPage() {
                   color:
                     textElements.find((el) => el.id === editingTextId)?.color ||
                     '#000000',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: (() => {
+                    const element = textElements.find(
+                      (el) => el.id === editingTextId
+                    );
+                    if (!element) return 'rgba(255, 255, 255, 0.8)';
+                    return element.backgroundColor === 'transparent'
+                      ? 'transparent'
+                      : element.backgroundColor === 'black'
+                      ? 'rgba(0, 0, 0, 0.8)'
+                      : 'rgba(255, 255, 255, 0.8)';
+                  })(),
                   whiteSpace: 'pre',
                 }}
                 placeholder="텍스트를 입력하세요... (Ctrl+Enter로 저장, Esc로 취소)"
