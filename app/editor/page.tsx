@@ -48,6 +48,10 @@ export default function EditorPage() {
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
 
+  // 텍스트 편집 모달 상태
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>('');
+
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
     if (!isHydrated) return;
@@ -104,7 +108,7 @@ export default function EditorPage() {
           text,
           x: 50,
           y: 100 + index * 60,
-          fontSize: 24,
+          fontSize: 12,
           color: '#000000',
           fontFamily: 'Arial',
           isSelected: index === 0,
@@ -126,6 +130,28 @@ export default function EditorPage() {
 
   // HTML/CSS 방식으로 변경 - 중복 제거
 
+  // 텍스트 편집 모달 함수들
+  const openTextEditor = (elementId: string, currentText: string) => {
+    setEditingTextId(elementId);
+    setEditingText(currentText);
+  };
+
+  const closeTextEditor = () => {
+    setEditingTextId(null);
+    setEditingText('');
+  };
+
+  const saveTextEdit = () => {
+    if (editingTextId && editingText.trim() !== '') {
+      setTextElements((prev) =>
+        prev.map((el) =>
+          el.id === editingTextId ? { ...el, text: editingText.trim() } : el
+        )
+      );
+    }
+    closeTextEditor();
+  };
+
   const handleTextOptionChange = (index: number) => {
     setSelectedTextIndexLocal(index);
     setSelectedTextIndex(index);
@@ -142,7 +168,7 @@ export default function EditorPage() {
         text: textOptions?.[index] || '샘플 텍스트',
         x: 50 + index * 200, // 옵션별로 다른 위치
         y: 100 + index * 100,
-        fontSize: 24,
+        fontSize: 12,
         fontFamily: 'Arial',
         color: '#000000',
         isSelected: true,
@@ -316,11 +342,11 @@ export default function EditorPage() {
                       </label>
                       <input
                         type="range"
-                        min="12"
+                        min="6"
                         max="48"
                         value={
                           textElements.find((el) => el.id === selectedElement)
-                            ?.fontSize || 24
+                            ?.fontSize || 12
                         }
                         onChange={(e) =>
                           updateElementStyle(selectedElement, {
@@ -451,24 +477,14 @@ export default function EditorPage() {
                           backgroundColor: 'rgba(255, 255, 255, 0.8)',
                           padding: '4px 8px',
                           borderRadius: '4px',
+                          whiteSpace: 'pre', // 줄바꿈 표시
+                          display: 'inline-block', // 인라인 블록으로 설정
                         }}
                         onDoubleClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          // 더블클릭으로 텍스트 수정 모드 진입
-                          const newText = prompt(
-                            '텍스트를 수정하세요:',
-                            element.text
-                          );
-                          if (newText !== null && newText.trim() !== '') {
-                            setTextElements((prev) =>
-                              prev.map((el) =>
-                                el.id === element.id
-                                  ? { ...el, text: newText.trim() }
-                                  : el
-                              )
-                            );
-                          }
+                          // 더블클릭으로 커스텀 텍스트 편집 모달 열기
+                          openTextEditor(element.id, element.text);
                         }}
                         onMouseDown={(e) => {
                           e.preventDefault();
@@ -543,19 +559,8 @@ export default function EditorPage() {
                           className="absolute -top-2 -right-4 w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const newText = prompt(
-                              '텍스트를 수정하세요:',
-                              element.text
-                            );
-                            if (newText !== null && newText.trim() !== '') {
-                              setTextElements((prev) =>
-                                prev.map((el) =>
-                                  el.id === element.id
-                                    ? { ...el, text: newText.trim() }
-                                    : el
-                                )
-                              );
-                            }
+                            // 커스텀 텍스트 편집 모달 열기
+                            openTextEditor(element.id, element.text);
                           }}
                           title="텍스트 수정"
                         >
@@ -590,6 +595,69 @@ export default function EditorPage() {
           </div>
         </div>
       </div>
+
+      {/* 커스텀 텍스트 편집 모달 */}
+      {editingTextId && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={closeTextEditor}
+        >
+          <div
+            className="bg-white rounded-lg p-6 shadow-xl"
+            style={{ width: '800px', height: '600px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">텍스트 편집</h3>
+            <div
+              className="relative"
+              style={{ width: '100%', height: '300px' }}
+            >
+              <textarea
+                value={editingText}
+                onChange={(e) => setEditingText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    closeTextEditor();
+                  } else if (e.key === 'Enter' && e.ctrlKey) {
+                    saveTextEdit();
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  padding: '4px 8px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  resize: 'none',
+                  outline: 'none',
+                  fontFamily:
+                    textElements.find((el) => el.id === editingTextId)
+                      ?.fontFamily || 'Arial',
+                  fontSize: `${
+                    textElements.find((el) => el.id === editingTextId)
+                      ?.fontSize || 12
+                  }px`,
+                  color:
+                    textElements.find((el) => el.id === editingTextId)?.color ||
+                    '#000000',
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  whiteSpace: 'pre',
+                }}
+                placeholder="텍스트를 입력하세요... (Ctrl+Enter로 저장, Esc로 취소)"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button onClick={closeTextEditor} variant="outline" size="sm">
+                취소
+              </Button>
+              <Button onClick={saveTextEdit} size="sm">
+                저장
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
