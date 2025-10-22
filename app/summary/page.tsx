@@ -61,7 +61,7 @@ export default function SummaryPage() {
     ];
 
     const hasEmptyRequired = requiredFields.some(
-      (field) => !field || field === '정보 부족'
+      (field) => !field || field.trim() === ''
     );
 
     if (hasEmptyRequired) {
@@ -122,7 +122,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="제품의 핵심 가치를 한 문장으로 설명해주세요"
+                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
                   required
                 />
               </div>
@@ -143,7 +143,7 @@ export default function SummaryPage() {
                     handleInputChange('target_customer', e.target.value)
                   }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="주요 고객층을 입력해주세요"
+                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
                   required
                 />
               </div>
@@ -164,7 +164,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="경쟁사 대비 차별화 포인트를 설명해주세요"
+                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
                   required
                 />
               </div>
@@ -185,7 +185,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="고객이 얻을 수 있는 구체적인 이득을 설명해주세요"
+                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
                   required
                 />
               </div>
@@ -216,7 +216,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="주요 기능들을 간단히 요약해주세요"
+                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
                 />
               </div>
 
@@ -236,7 +236,7 @@ export default function SummaryPage() {
                     handleInputChange('emotional_keyword', e.target.value)
                   }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="고객이 느낄 감정을 키워드로 입력해주세요 (예: 효율적, 자신감, 혁신적)"
+                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
                 />
               </div>
 
@@ -256,7 +256,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="언제, 어떤 상황에서 사용하는지 설명해주세요"
+                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
                 />
               </div>
             </div>

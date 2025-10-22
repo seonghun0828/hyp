@@ -15,6 +15,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
 
+    // 캐시 체크 - 기존 데이터가 있는지 확인
+    if (supabase) {
+      try {
+        console.log('Checking cache for URL:', url);
+        const { data: existingData, error: fetchError } = await supabase
+          .from('product_summaries')
+          .select('*')
+          .eq('url', url)
+          .single();
+
+        if (!fetchError && existingData) {
+          console.log('Cache hit - returning existing data');
+          return NextResponse.json({
+            id: existingData.id,
+            core_value: existingData.core_value,
+            target_customer: existingData.target_customer,
+            competitive_edge: existingData.competitive_edge,
+            customer_benefit: existingData.customer_benefit,
+            emotional_keyword: existingData.emotional_keyword,
+            feature_summary: existingData.feature_summary,
+            usage_scenario: existingData.usage_scenario,
+          });
+        } else {
+          console.log('Cache miss - proceeding with AI analysis');
+        }
+      } catch (cacheError) {
+        console.log(
+          'Cache check failed, proceeding with AI analysis:',
+          cacheError
+        );
+      }
+    }
+
     // URL에서 메타데이터 추출
     const response = await fetch(url, {
       headers: {
@@ -106,13 +139,13 @@ URL: ${url}
       console.error('JSON Parse Error:', parseError);
       // JSON 파싱 실패 시 기본값 사용
       summaryData = {
-        core_value: '정보 부족',
-        target_customer: '정보 부족',
-        competitive_edge: '정보 부족',
-        customer_benefit: '정보 부족',
-        emotional_keyword: '정보 부족',
-        feature_summary: '정보 부족',
-        usage_scenario: '정보 부족',
+        core_value: '',
+        target_customer: '',
+        competitive_edge: '',
+        customer_benefit: '',
+        emotional_keyword: '',
+        feature_summary: '',
+        usage_scenario: '',
       };
     }
 
