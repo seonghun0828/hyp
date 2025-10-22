@@ -5,10 +5,13 @@
 CREATE TABLE IF NOT EXISTS product_summaries (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   url TEXT NOT NULL,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  features TEXT[] NOT NULL DEFAULT '{}',
-  target_users TEXT[] NOT NULL DEFAULT '{}',
+  core_value TEXT NOT NULL,
+  target_customer TEXT NOT NULL,
+  competitive_edge TEXT NOT NULL,
+  customer_benefit TEXT NOT NULL,
+  emotional_keyword TEXT,
+  feature_summary TEXT,
+  usage_scenario TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

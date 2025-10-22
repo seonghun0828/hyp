@@ -20,10 +20,13 @@ export default function SummaryPage() {
   const { summary, setSummary, url } = useFunnelStore();
   const [formData, setFormData] = useState<ProductSummary>({
     url: '',
-    title: '',
-    description: '',
-    features: ['', '', ''],
-    targetUsers: ['', ''],
+    core_value: '',
+    target_customer: '',
+    competitive_edge: '',
+    customer_benefit: '',
+    emotional_keyword: '',
+    feature_summary: '',
+    usage_scenario: '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -38,37 +41,34 @@ export default function SummaryPage() {
     }
   }, [url, summary, router]);
 
-  const handleInputChange = (
-    field: keyof ProductSummary,
-    value: string | string[]
-  ) => {
+  const handleInputChange = (field: keyof ProductSummary, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const handleFeatureChange = (index: number, value: string) => {
-    const newFeatures = [...formData.features];
-    newFeatures[index] = value;
-    setFormData((prev) => ({
-      ...prev,
-      features: newFeatures,
-    }));
-  };
-
-  const handleTargetUserChange = (index: number, value: string) => {
-    const newTargetUsers = [...formData.targetUsers];
-    newTargetUsers[index] = value;
-    setFormData((prev) => ({
-      ...prev,
-      targetUsers: newTargetUsers,
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // 필수 필드 검증
+    const requiredFields = [
+      formData.core_value,
+      formData.target_customer,
+      formData.competitive_edge,
+      formData.customer_benefit,
+    ];
+
+    const hasEmptyRequired = requiredFields.some(
+      (field) => !field || field === '정보 부족'
+    );
+
+    if (hasEmptyRequired) {
+      alert('필수 항목을 모두 입력해주세요.');
+      setLoading(false);
+      return;
+    }
 
     try {
       setSummary(formData);
@@ -100,85 +100,164 @@ export default function SummaryPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* 제품명 */}
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                제품명
-              </label>
-              <input
-                type="text"
-                id="title"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="제품명을 입력하세요"
-                required
-              />
-            </div>
+            {/* 필수 필드 섹션 */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                필수 정보
+              </h2>
 
-            {/* 제품 설명 */}
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                제품 설명
-              </label>
-              <textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) =>
-                  handleInputChange('description', e.target.value)
-                }
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="제품에 대한 간단한 설명을 입력하세요"
-                required
-              />
-            </div>
+              {/* 제품 핵심 가치 */}
+              <div className="mb-6">
+                <label
+                  htmlFor="core_value"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  제품 핵심 가치 *
+                </label>
+                <textarea
+                  id="core_value"
+                  value={formData.core_value}
+                  onChange={(e) =>
+                    handleInputChange('core_value', e.target.value)
+                  }
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="제품의 핵심 가치를 한 문장으로 설명해주세요"
+                  required
+                />
+              </div>
 
-            {/* 주요 기능 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                주요 기능 (3개)
-              </label>
-              <div className="space-y-3">
-                {formData.features.map((feature, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    value={feature}
-                    onChange={(e) => handleFeatureChange(index, e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={`주요 기능 ${index + 1}`}
-                    required
-                  />
-                ))}
+              {/* 타겟 고객 */}
+              <div className="mb-6">
+                <label
+                  htmlFor="target_customer"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  타겟 고객 *
+                </label>
+                <input
+                  type="text"
+                  id="target_customer"
+                  value={formData.target_customer}
+                  onChange={(e) =>
+                    handleInputChange('target_customer', e.target.value)
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="주요 고객층을 입력해주세요"
+                  required
+                />
+              </div>
+
+              {/* 주요 경쟁 우위 */}
+              <div className="mb-6">
+                <label
+                  htmlFor="competitive_edge"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  주요 경쟁 우위 *
+                </label>
+                <textarea
+                  id="competitive_edge"
+                  value={formData.competitive_edge}
+                  onChange={(e) =>
+                    handleInputChange('competitive_edge', e.target.value)
+                  }
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="경쟁사 대비 차별화 포인트를 설명해주세요"
+                  required
+                />
+              </div>
+
+              {/* 고객이 느낄 이득 */}
+              <div>
+                <label
+                  htmlFor="customer_benefit"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  고객이 느낄 이득 *
+                </label>
+                <textarea
+                  id="customer_benefit"
+                  value={formData.customer_benefit}
+                  onChange={(e) =>
+                    handleInputChange('customer_benefit', e.target.value)
+                  }
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="고객이 얻을 수 있는 구체적인 이득을 설명해주세요"
+                  required
+                />
               </div>
             </div>
 
-            {/* 타겟 고객 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                타겟 고객 (2개)
-              </label>
-              <div className="space-y-3">
-                {formData.targetUsers.map((targetUser, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    value={targetUser}
-                    onChange={(e) =>
-                      handleTargetUserChange(index, e.target.value)
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder={`타겟 고객 ${index + 1}`}
-                    required
-                  />
-                ))}
+            {/* 선택 필드 섹션 */}
+            <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-gray-300">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                추가 정보{' '}
+                <span className="text-sm font-normal text-gray-500">
+                  (입력하시면 더 정확한 결과를 얻을 수 있습니다.)
+                </span>
+              </h2>
+
+              {/* 주요 기능 요약 */}
+              <div className="mb-6">
+                <label
+                  htmlFor="feature_summary"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  주요 기능 요약
+                </label>
+                <textarea
+                  id="feature_summary"
+                  value={formData.feature_summary}
+                  onChange={(e) =>
+                    handleInputChange('feature_summary', e.target.value)
+                  }
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="주요 기능들을 간단히 요약해주세요"
+                />
+              </div>
+
+              {/* 감정 키워드 */}
+              <div className="mb-6">
+                <label
+                  htmlFor="emotional_keyword"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  감정 키워드
+                </label>
+                <input
+                  type="text"
+                  id="emotional_keyword"
+                  value={formData.emotional_keyword}
+                  onChange={(e) =>
+                    handleInputChange('emotional_keyword', e.target.value)
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="고객이 느낄 감정을 키워드로 입력해주세요 (예: 효율적, 자신감, 혁신적)"
+                />
+              </div>
+
+              {/* 사용 시나리오 */}
+              <div>
+                <label
+                  htmlFor="usage_scenario"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  사용 시나리오
+                </label>
+                <textarea
+                  id="usage_scenario"
+                  value={formData.usage_scenario}
+                  onChange={(e) =>
+                    handleInputChange('usage_scenario', e.target.value)
+                  }
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="언제, 어떤 상황에서 사용하는지 설명해주세요"
+                />
               </div>
             </div>
 

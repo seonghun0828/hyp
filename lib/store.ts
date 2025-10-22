@@ -4,10 +4,13 @@ import { persist } from 'zustand/middleware';
 export interface ProductSummary {
   id?: string;
   url: string;
-  title: string;
-  description: string;
-  features: string[];
-  targetUsers: string[];
+  core_value: string; // 필수
+  target_customer: string; // 필수
+  competitive_edge: string; // 필수
+  customer_benefit: string; // 필수
+  emotional_keyword?: string; // 선택
+  feature_summary?: string; // 선택
+  usage_scenario?: string; // 선택
   createdAt?: string;
 }
 

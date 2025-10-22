@@ -60,10 +60,13 @@ export default function HomePage() {
       const summaryData: ProductSummary = {
         id: data.id,
         url: inputUrl,
-        title: data.title,
-        description: data.description,
-        features: data.features,
-        targetUsers: data.targetUsers,
+        core_value: data.core_value,
+        target_customer: data.target_customer,
+        competitive_edge: data.competitive_edge,
+        customer_benefit: data.customer_benefit,
+        emotional_keyword: data.emotional_keyword,
+        feature_summary: data.feature_summary,
+        usage_scenario: data.usage_scenario,
       };
       setSummary(summaryData);
 
