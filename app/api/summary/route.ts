@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
           console.log('Cache hit - returning existing data');
           return NextResponse.json({
             id: existingData.id,
+            title: existingData.title,
             core_value: existingData.core_value,
             target_customer: existingData.target_customer,
             competitive_edge: existingData.competitive_edge,
@@ -92,15 +93,16 @@ Follow these rules:
         },
         {
           role: 'user',
-          content: `다음 제품 링크 정보를 요약해서 아래 7가지 마케팅 요소로 구조화해줘.
+          content: `다음 제품 링크 정보를 요약해서 아래 8가지 마케팅 요소로 구조화해줘.
 
-1. 제품 핵심 가치 (Core Value)
-2. 타깃 고객 (Target Customer)
-3. 주요 경쟁 우위 (Competitive Edge)
-4. 고객이 느낄 이득 (Customer Benefit)
-5. 감정 키워드 (Emotional Keyword)
-6. 주요 기능 요약 (Feature Summary)
-7. 사용 시나리오 (Usage Scenario)
+1. 제품명 (Title) - 간결하고 명확한 제품/서비스명
+2. 제품 핵심 가치 (Core Value)
+3. 타깃 고객 (Target Customer)
+4. 주요 경쟁 우위 (Competitive Edge)
+5. 고객이 느낄 이득 (Customer Benefit)
+6. 감정 키워드 (Emotional Keyword)
+7. 주요 기능 요약 (Feature Summary)
+8. 사용 시나리오 (Usage Scenario)
 
 Title: ${title}
 Description: ${description}
@@ -108,6 +110,7 @@ URL: ${url}
 
 반드시 다음 JSON 형식으로 응답해주세요:
 {
+  "title": "제품명",
   "core_value": "제품 핵심 가치",
   "target_customer": "타깃 고객",
   "competitive_edge": "주요 경쟁 우위",
@@ -139,6 +142,7 @@ URL: ${url}
       console.error('JSON Parse Error:', parseError);
       // JSON 파싱 실패 시 기본값 사용
       summaryData = {
+        title: '',
         core_value: '',
         target_customer: '',
         competitive_edge: '',
@@ -157,6 +161,7 @@ URL: ${url}
       try {
         console.log('Attempting to save to Supabase with data:', {
           url,
+          title: summaryData.title,
           core_value: summaryData.core_value,
           target_customer: summaryData.target_customer,
           competitive_edge: summaryData.competitive_edge,
@@ -170,6 +175,7 @@ URL: ${url}
           .from('product_summaries')
           .insert({
             url,
+            title: summaryData.title,
             core_value: summaryData.core_value,
             target_customer: summaryData.target_customer,
             competitive_edge: summaryData.competitive_edge,
@@ -196,6 +202,7 @@ URL: ${url}
 
     return NextResponse.json({
       id: summaryId,
+      title: summaryData.title,
       core_value: summaryData.core_value,
       target_customer: summaryData.target_customer,
       competitive_edge: summaryData.competitive_edge,

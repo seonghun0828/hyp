@@ -60,6 +60,7 @@ export default function HomePage() {
       const summaryData: ProductSummary = {
         id: data.id,
         url: inputUrl,
+        title: data.title,
         core_value: data.core_value,
         target_customer: data.target_customer,
         competitive_edge: data.competitive_edge,

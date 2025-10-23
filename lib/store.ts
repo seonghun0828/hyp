@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware';
 export interface ProductSummary {
   id?: string;
   url: string;
+  title?: string; // 제품명
   core_value: string; // 필수
   target_customer: string; // 필수
   competitive_edge: string; // 필수

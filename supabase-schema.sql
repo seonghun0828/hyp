@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS product_summaries (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   url TEXT NOT NULL,
+  title TEXT,
   core_value TEXT NOT NULL,
   target_customer TEXT NOT NULL,
   competitive_edge TEXT NOT NULL,

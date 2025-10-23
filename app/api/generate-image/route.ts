@@ -96,7 +96,7 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
           AI Generated Image
         </text>
         <text x="400" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#374151">
-          ${summary.title || '제품'}
+          ${summary.title || summary.core_value || '제품'}
         </text>
         <text x="400" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6b7280">
           ${summary.feature_summary || '주요 기능'}

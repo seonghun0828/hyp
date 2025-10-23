@@ -67,16 +67,20 @@ export async function POST(request: NextRequest) {
     } catch {
       // JSON 파싱 실패 시 기본값 사용
       textOptions = [
-        `${summary.title}로 새로운 경험을 시작하세요.`,
-        `${summary.title} - 당신의 일상을 바꾸는 혁신적인 솔루션.`,
+        `${summary.title || summary.core_value}로 새로운 경험을 시작하세요.`,
+        `${
+          summary.title || summary.core_value
+        } - 당신의 일상을 바꾸는 혁신적인 솔루션.`,
       ];
     }
 
     // 배열이 아니거나 길이가 부족한 경우 처리
     if (!Array.isArray(textOptions) || textOptions.length < 2) {
       textOptions = [
-        `${summary.title}로 새로운 경험을 시작하세요.`,
-        `${summary.title} - 당신의 일상을 바꾸는 혁신적인 솔루션.`,
+        `${summary.title || summary.core_value}로 새로운 경험을 시작하세요.`,
+        `${
+          summary.title || summary.core_value
+        } - 당신의 일상을 바꾸는 혁신적인 솔루션.`,
       ];
     }
 

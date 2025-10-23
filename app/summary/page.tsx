@@ -20,6 +20,7 @@ export default function SummaryPage() {
   const { summary, setSummary, url } = useFunnelStore();
   const [formData, setFormData] = useState<ProductSummary>({
     url: '',
+    title: '',
     core_value: '',
     target_customer: '',
     competitive_edge: '',

@@ -65,7 +65,7 @@ export default function ResultPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = generateFileName(summary.title);
+      link.download = generateFileName(summary.title || summary.core_value);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -141,7 +141,9 @@ export default function ResultPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="font-medium text-gray-700">제품명</p>
-                    <p className="text-gray-600">{summary.title}</p>
+                    <p className="text-gray-600">
+                      {summary.title || summary.core_value}
+                    </p>
                   </div>
                   <div>
                     <p className="font-medium text-gray-700">원본 링크</p>
