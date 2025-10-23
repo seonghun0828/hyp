@@ -18,6 +18,10 @@ export interface Concept {
   id: string;
   name: string;
   description: string;
+  tone: string;
+  structure: string;
+  template: string;
+  example: string;
   exampleImage: string;
   promptTemplate: string;
 }

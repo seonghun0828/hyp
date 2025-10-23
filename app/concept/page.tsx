@@ -6,6 +6,14 @@ import { useFunnelStore } from '@/lib/store';
 import { concepts } from '@/lib/concepts';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const stepNames = [
   '링크 입력',
@@ -18,7 +26,7 @@ const stepNames = [
 
 export default function ConceptPage() {
   const router = useRouter();
-  const { summary } = useFunnelStore();
+  const { summary, setConcept } = useFunnelStore();
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
@@ -39,8 +47,9 @@ export default function ConceptPage() {
     }
   }, [summary, router, isHydrated]);
 
-  const handleConceptSelect = (conceptId: string) => {
-    router.push(`/concept/${conceptId}/preview`);
+  const handleConceptSelect = (concept: any) => {
+    setConcept(concept);
+    router.push('/upload');
   };
 
   // hydration이 완료되기 전에는 로딩 표시
@@ -78,33 +87,74 @@ export default function ConceptPage() {
             {concepts.map((concept) => (
               <div
                 key={concept.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleConceptSelect(concept.id)}
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
               >
                 <div className="p-6">
-                  <div className="h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <div className="text-4xl mb-2">🎨</div>
-                      <p className="text-sm">예시 이미지</p>
-                    </div>
-                  </div>
-
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     {concept.name}
                   </h3>
 
-                  <p className="text-gray-600 mb-4">{concept.description}</p>
+                  <p className="text-gray-600 mb-4 line-clamp-3">
+                    {concept.description}
+                  </p>
 
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleConceptSelect(concept.id);
-                    }}
-                  >
-                    이 컨셉으로 진행
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        자세히 보기
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-2xl font-bold">
+                          {concept.name}
+                        </DialogTitle>
+                        <DialogDescription className="text-base">
+                          {concept.description}
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="space-y-6">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-blue-900 mb-2">
+                            📝 문구 템플릿
+                          </h4>
+                          <div className="text-blue-800 text-sm whitespace-pre-line">
+                            {concept.template}
+                          </div>
+                        </div>
+
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-green-900 mb-2">
+                            💡 예시
+                          </h4>
+                          <div className="text-green-800 text-sm whitespace-pre-line">
+                            {concept.example}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 text-xs text-gray-500">
+                          <span>톤: {concept.tone}</span>
+                          <span>•</span>
+                          <span>구조: {concept.structure}</span>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="flex-1">
+                              닫기
+                            </Button>
+                          </DialogTrigger>
+                          <Button
+                            className="flex-1"
+                            onClick={() => handleConceptSelect(concept)}
+                          >
+                            이 컨셉으로 진행
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             ))}

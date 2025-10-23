@@ -2,36 +2,94 @@ import { Concept } from './store';
 
 export const concepts: Concept[] = [
   {
-    id: 'modern-minimal',
-    name: 'Modern Minimal',
-    description: '깔끔하고 모던한 디자인으로 제품의 핵심을 강조합니다.',
-    exampleImage: '/concepts/modern-minimal.jpg',
+    id: 'ProblemSolving',
+    name: '문제해결형',
+    description:
+      '고객이 겪는 불편함이나 과제를 명확히 제시하고, 제품이 그것을 어떻게 해결하는지를 강조합니다. 실용적이고 논리적인 어조를 사용하며, 제품의 구체적 기능과 효용에 초점을 맞춥니다.',
+    tone: '실용적, 명료한, 솔루션 중심',
+    structure: '문제 제시 → 해결 제안 → 결과 강조',
+    template:
+      '[Problem] 당신은 ___ 때문에 불편함을 느낀 적 있나요?\n[Solution] 이제 ___이 그 문제를 해결합니다.\n[Benefit] 단 몇 분 만에 ___이 가능해집니다.',
+    example:
+      '매번 SNS 홍보 문구를 고민하시나요?\nHYP가 대신 만들어드립니다.\n이제 개발자는 개발에만 집중하세요.',
+    exampleImage: '/concepts/problem-solving.jpg',
     promptTemplate:
-      'Create a modern, minimal marketing copy that emphasizes the core value of the product. Use clean, professional language with a focus on simplicity and effectiveness.',
+      "Create a problem-solving marketing copy using this structure: 1) Present the user's pain point with empathy, 2) Propose your product as the solution, 3) Emphasize the concrete benefits. Use practical, clear, solution-focused language.",
   },
   {
-    id: 'trendy-bold',
-    name: 'Trendy Bold',
-    description: '트렌디하고 대담한 스타일로 주목도를 높입니다.',
-    exampleImage: '/concepts/trendy-bold.jpg',
+    id: 'Empathy',
+    name: '공감형',
+    description:
+      "고객의 감정과 상황을 이해하고, '당신의 고민을 이해한다'는 메시지를 전달합니다. 따뜻하고 인간적인 어조로 신뢰와 친근감을 형성합니다.",
+    tone: '따뜻한, 공감 어린, 진정성 있는',
+    structure: '감정 공감 → 연결 → 희망적인 변화 제시',
+    template:
+      '[Empathy] 당신도 ___하고 싶은 순간이 있죠.\n[Connection] 우리도 그 마음을 잘 알아요.\n[Resolution] 그래서 ___을 만들었어요.',
+    example:
+      '당신의 아이디어가 더 많은 사람에게 닿길 바라죠.\n우리도 같은 마음이에요.\nHYP는 그 시작을 함께합니다.',
+    exampleImage: '/concepts/empathy.jpg',
     promptTemplate:
-      'Create a trendy, bold marketing copy that grabs attention and creates excitement. Use dynamic, energetic language with trendy expressions and strong calls to action.',
+      "Create an empathetic marketing copy using this structure: 1) Show understanding of user's emotions, 2) Build connection by sharing similar feelings, 3) Present your product as the resolution. Use warm, genuine, emotionally resonant language.",
   },
   {
-    id: 'emotional-soft',
-    name: 'Emotional Soft',
-    description: '감성적이고 부드러운 톤으로 사용자의 마음을 움직입니다.',
-    exampleImage: '/concepts/emotional-soft.jpg',
+    id: 'Pride',
+    name: '자부심형',
+    description:
+      '고객이 제품을 통해 자신을 더 특별하게 느끼거나 자신의 가치를 표현할 수 있도록 돕습니다. 자신감 있고 긍정적인 어조로 제품 사용이 자아를 강화한다는 메시지를 전달합니다.',
+    tone: '당당한, 고급스러운, 긍정적인',
+    structure: '자기 표현 → 제품 연결 → 자아 강화',
+    template:
+      '[Pride] 당신이 만든 ___, 이제 세상에 보여줄 차례예요.\n[Empower] 당신의 작품은 충분히 가치 있어요.\n[Action] HYP로 그 가치를 알리세요.',
+    example:
+      "당신의 제품은 세상에 나설 준비가 되어 있습니다.\n누가 봐도 '프로다운 홍보', HYP가 만들어드립니다.",
+    exampleImage: '/concepts/pride.jpg',
     promptTemplate:
-      'Create an emotional, soft marketing copy that connects with users on a personal level. Use warm, empathetic language that tells a story and creates emotional resonance.',
+      "Create a pride-focused marketing copy using this structure: 1) Acknowledge the user's creation and its worth, 2) Empower them by validating their work, 3) Encourage action to showcase their value. Use confident, premium, positive language that reinforces self-identity.",
   },
   {
-    id: 'technical-pro',
-    name: 'Technical Pro',
-    description: '전문적이고 기술적인 접근으로 신뢰성을 강조합니다.',
-    exampleImage: '/concepts/technical-pro.jpg',
+    id: 'Trust',
+    name: '신뢰형',
+    description:
+      '제품의 안정성, 전문성, 혹은 사회적 증거를 강조합니다. 수치, 인증, 후기 등을 활용해 객관적인 신뢰를 형성하며, 안정감 있는 어조를 유지합니다.',
+    tone: '객관적, 전문적, 신뢰감 있는',
+    structure: '증거 제시 → 안정성 강조 → 안심 유도',
+    template:
+      '[Proof] 이미 ___명이 사용 중입니다.\n[Authority] 전문가들이 인정한 ___.\n[Trust] 당신의 제품도 지금 시작하세요.',
+    example:
+      '이미 10,000개 이상의 스타트업이 HYP를 선택했습니다.\n당신의 제품도 더 많은 사람에게 닿을 시간입니다.',
+    exampleImage: '/concepts/trust.jpg',
     promptTemplate:
-      'Create a technical, professional marketing copy that emphasizes expertise and reliability. Use precise, technical language with data-driven benefits and professional credibility.',
+      'Create a trust-focused marketing copy using this structure: 1) Present social proof and numbers, 2) Highlight authority and expertise, 3) Encourage immediate action with confidence. Use objective, professional, trustworthy language with data and testimonials.',
+  },
+  {
+    id: 'Emotion',
+    name: '감성형',
+    description:
+      '고객의 감정에 직접 호소하며, 따뜻하거나 서정적인 표현을 사용합니다. 스토리텔링 구조를 활용해 제품이 일상에 주는 감정적 변화를 표현합니다.',
+    tone: '감성적, 서정적, 따뜻한',
+    structure: '감정 유발 → 경험 묘사 → 감정적 결말',
+    template:
+      '[Emotion] 당신의 제품이 전하고 싶은 마음은 무엇인가요?\n[Story] 그 이야기를 HYP가 세상에 전해드립니다.\n[Inspire] 누군가의 하루가 바뀔지도 몰라요.',
+    example:
+      '당신의 제품은 작은 아이디어에서 시작했죠.\nHYP가 그 진심을 세상에 전합니다.',
+    exampleImage: '/concepts/emotion.jpg',
+    promptTemplate:
+      'Create an emotional marketing copy using this structure: 1) Connect with the emotional core of the product, 2) Tell the story of how it makes a difference, 3) Inspire hope for positive change. Use warm, poetic expressions and storytelling.',
+  },
+  {
+    id: 'Action',
+    name: '행동유도형',
+    description:
+      '주의를 끌고 즉각적인 행동(구매, 클릭, 시도 등)을 유도합니다. 명확한 혜택 제시와 강렬한 CTA(Call to Action)를 포함합니다.',
+    tone: '직설적, 강렬한, 동기부여적',
+    structure: '문제 인식 → 기회 제시 → 행동 촉구',
+    template:
+      '[Attention] 한 줄의 문구로 시선을 끄세요.\n[Interest] AI가 당신의 제품을 돋보이게 만듭니다.\n[Action] 지금 바로 시작하세요 — 무료로.',
+    example:
+      '한 문장으로 더 많은 사람의 시선을 끌고 싶다면,\n지금 바로 HYP에서 시작하세요.',
+    exampleImage: '/concepts/action.jpg',
+    promptTemplate:
+      'Create an action-driven marketing copy using this structure: 1) Grab attention with a compelling hook, 2) Build interest by highlighting AI benefits, 3) Drive immediate action with a strong CTA. Use direct, powerful, motivational language.',
   },
 ];
 
