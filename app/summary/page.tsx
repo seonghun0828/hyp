@@ -71,7 +71,19 @@ export default function SummaryPage() {
     }
 
     try {
+      console.log('=== SUMMARY PAGE - SAVING DATA ===');
+      console.log('Form data being saved:', formData);
+      console.log('Form data keys:', Object.keys(formData));
+      console.log('Form data values:', Object.values(formData));
+      console.log('=== END SUMMARY PAGE DATA ===');
+
       setSummary(formData);
+
+      // 저장 후 확인
+      console.log('=== AFTER SETTING SUMMARY ===');
+      console.log('Summary after setSummary:', formData);
+      console.log('=== END AFTER SETTING ===');
+
       router.push('/concept');
     } catch (err) {
       console.error('Error saving summary:', err);

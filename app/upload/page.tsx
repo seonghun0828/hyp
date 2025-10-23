@@ -84,6 +84,13 @@ export default function UploadPage() {
     setError('');
 
     try {
+      // 전달할 데이터 로깅
+      console.log('=== UPLOAD PAGE - SENDING DATA ===');
+      console.log('Concept ID:', concept?.id);
+      console.log('Summary object:', summary);
+      console.log('Concept object:', concept);
+      console.log('=== END UPLOAD PAGE DATA ===');
+
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
@@ -92,6 +99,7 @@ export default function UploadPage() {
         body: JSON.stringify({
           conceptId: concept?.id,
           summary: summary,
+          concept: concept,
         }),
       });
 
@@ -220,7 +228,8 @@ export default function UploadPage() {
                 AI로 이미지 생성
               </Button>
               <p className="text-xs text-gray-500 mt-2">
-                AI 이미지 품질이 만족스럽지 않을 수 있습니다
+                AI가 자동으로 이미지를 생성합니다.
+                <br />더 정확한 결과를 원하시면 직접 업로드해주세요.
               </p>
             </div>
 

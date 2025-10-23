@@ -5,44 +5,55 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
-    const { conceptId, summary } = await request.json();
+    const { conceptId, summary, concept } = await request.json();
 
-    console.log('Generate image API - Received data:', { conceptId, summary });
+    console.log('Generate image API - Received data:', {
+      conceptId,
+      summary,
+      concept,
+    });
 
-    if (!conceptId || !summary) {
+    if (!conceptId || !summary || !concept) {
       return NextResponse.json(
-        { error: 'conceptId and summary are required' },
+        { error: 'conceptId, summary, and concept are required' },
         { status: 400 }
       );
     }
 
-    // 이미지 생성 프롬프트 생성
-    const features = Array.isArray(summary.features)
-      ? summary.features.join(', ')
-      : '주요 기능 정보 없음';
-
-    const imagePrompt = `Create a modern, professional product marketing image for: ${
-      summary.title || '제품'
+    // 제품 중심의 이미지 생성 프롬프트
+    const imagePrompt = `Create a compelling marketing image for: ${
+      summary.core_value || '제품'
     }
-    
-    Product description: ${summary.description || '제품 설명 없음'}
-    Key features: ${features}
-    
-    Style requirements:
-    - Clean, modern design
-    - Professional product photography style
-    - High quality, commercial use
-    - Minimal text overlay space
-    - Suitable for social media marketing
-    
-    IMPORTANT: The image should contain ONLY the product name "${
-      summary.title || '제품'
-    }" as text. Do not include any other text, descriptions, or features in the image.`;
+
+Product essence: ${summary.customer_benefit || '제품 설명'}
+Target audience: ${summary.target_customer || '일반 사용자'}
+Emotional appeal: ${summary.emotional_keyword || '긍정적'}
+Unique advantage: ${summary.competitive_edge || '차별화 포인트'}
+
+CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN THE IMAGE. This includes product names, titles, labels, or any readable text. Create a purely visual image using only colors, shapes, objects, and composition.`;
+
+    // 프롬프트 로깅 추가
+    console.log('=== IMAGE GENERATION PROMPT ===');
+    console.log(imagePrompt);
+    console.log('=== END PROMPT ===');
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
 
     const result = await model.generateContent(imagePrompt);
     const response = await result.response;
+
+    // 응답 정보 로깅
+    console.log('=== IMAGE GENERATION RESPONSE ===');
+    console.log('Response candidates:', response.candidates?.length);
+    console.log(
+      'First candidate finish reason:',
+      response.candidates?.[0]?.finishReason
+    );
+    console.log(
+      'Parts count:',
+      response.candidates?.[0]?.content?.parts?.length
+    );
+    console.log('=== END RESPONSE ===');
 
     // Gemini 2.5 Flash Image는 실제 이미지를 생성합니다
     if (response.candidates && response.candidates[0]?.content?.parts) {
@@ -53,6 +64,11 @@ export async function POST(request: NextRequest) {
       if (imagePart?.inlineData) {
         const imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
 
+        console.log('=== IMAGE GENERATION SUCCESS ===');
+        console.log('Image MIME type:', imagePart.inlineData.mimeType);
+        console.log('Image data length:', imagePart.inlineData.data.length);
+        console.log('=== END SUCCESS ===');
+
         return NextResponse.json({
           imageUrl: imageUrl,
           note: 'AI generated image using Gemini 2.5 Flash Image model',
@@ -61,6 +77,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 이미지 생성 실패 시 placeholder 이미지 반환
+    console.log('=== IMAGE GENERATION FAILED - USING PLACEHOLDER ===');
+    console.log('No image data found in response');
+    console.log('=== END PLACEHOLDER ===');
+
     const placeholderImageUrl = `data:image/svg+xml;base64,${Buffer.from(
       `
       <svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
@@ -79,7 +99,7 @@ export async function POST(request: NextRequest) {
           ${summary.title || '제품'}
         </text>
         <text x="400" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6b7280">
-          ${features}
+          ${summary.feature_summary || '주요 기능'}
         </text>
         <circle cx="400" cy="450" r="30" fill="#3b82f6" opacity="0.1"/>
         <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#3b82f6">
@@ -94,7 +114,13 @@ export async function POST(request: NextRequest) {
       note: 'Image generation failed, using placeholder image',
     });
   } catch (error) {
-    console.error('Generate image API error:', error);
+    console.error('=== IMAGE GENERATION ERROR ===');
+    console.error('Error details:', error);
+    console.error(
+      'Error message:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+    console.error('=== END ERROR ===');
 
     // 에러 시 기본 placeholder 이미지 반환
     const fallbackImageUrl = `data:image/svg+xml;base64,${Buffer.from(

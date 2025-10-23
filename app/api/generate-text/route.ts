@@ -44,10 +44,10 @@ export async function POST(request: NextRequest) {
         },
         {
           role: 'user',
-          content: `Product: ${summary.title}
-          Description: ${summary.description}
-          Features: ${summary.features.join(', ')}
-          Target Users: ${summary.targetUsers.join(', ')}`,
+          content: `Product: ${summary.core_value || '제품'}
+          Description: ${summary.customer_benefit || '제품 설명'}
+          Features: ${summary.feature_summary || '주요 기능'}
+          Target Users: ${summary.target_customer || '일반 사용자'}`,
         },
       ],
       // GPT-5-mini는 temperature 파라미터를 지원하지 않음
