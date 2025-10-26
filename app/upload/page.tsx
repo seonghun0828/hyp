@@ -17,11 +17,16 @@ const stepNames = [
 
 export default function UploadPage() {
   const router = useRouter();
-  const { concept, summary, setImageUrl } = useFunnelStore();
+  const { concept, summary, setImageUrl, setSuccessTexts, successTexts } =
+    useFunnelStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // SUCCESs 문구 생성 관련 상태 (백그라운드에서만 사용)
+  const [textsGenerating, setTextsGenerating] = useState(false);
+  const [textsReady, setTextsReady] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -59,6 +64,7 @@ export default function UploadPage() {
     setError('');
 
     try {
+      // 문구 생성 대기하지 않고 즉시 진행
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
@@ -84,6 +90,7 @@ export default function UploadPage() {
     setError('');
 
     try {
+      // 문구 생성 대기하지 않고 즉시 진행
       // 전달할 데이터 로깅
       console.log('=== UPLOAD PAGE - SENDING DATA ===');
       console.log('Concept ID:', concept?.id);
@@ -124,6 +131,94 @@ export default function UploadPage() {
     // Zustand persist가 hydration을 완료할 때까지 기다림
     setIsHydrated(true);
   }, []);
+
+  // SUCCESs 문구 생성 함수
+  const generateSuccessTexts = async () => {
+    if (textsGenerating || textsReady) return;
+
+    setTextsGenerating(true);
+    try {
+      console.log('Generating SUCCESs texts for:', {
+        url: summary?.url,
+        conceptName: concept?.name,
+      });
+
+      const response = await fetch('/api/generate-success-texts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: summary?.url,
+          conceptName: concept?.name,
+          summary,
+          concept,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('SUCCESs 문구 생성에 실패했습니다.');
+      }
+
+      const data = await response.json();
+      setSuccessTexts(data.texts);
+      setTextsReady(true);
+
+      console.log(
+        'SUCCESs texts generated:',
+        data.cached ? '(cached)' : '(new)'
+      );
+    } catch (err) {
+      console.error('Error generating SUCCESs texts:', err);
+      setError('문구 생성 중 오류가 발생했습니다.');
+    } finally {
+      setTextsGenerating(false);
+    }
+  };
+
+  // URL 변경 감지 및 문구 생성
+  const [lastSummaryUrl, setLastSummaryUrl] = useState<string | null>(null);
+  const [lastConceptId, setLastConceptId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isHydrated && summary) {
+      const currentUrl = summary.url;
+
+      // URL이 변경되었을 때 successTexts 초기화
+      if (lastSummaryUrl && lastSummaryUrl !== currentUrl) {
+        console.log('URL changed in upload page, clearing successTexts');
+        setSuccessTexts(undefined);
+        setTextsReady(false);
+        setTextsGenerating(false);
+      }
+
+      setLastSummaryUrl(currentUrl);
+    }
+  }, [summary, isHydrated, lastSummaryUrl, setSuccessTexts]);
+
+  // 컨셉 변경 감지
+  useEffect(() => {
+    if (isHydrated && concept) {
+      const currentConceptId = concept.id;
+
+      // 컨셉이 변경되었을 때 successTexts 초기화
+      if (lastConceptId && lastConceptId !== currentConceptId) {
+        console.log('Concept changed in upload page, clearing successTexts');
+        setSuccessTexts(undefined);
+        setTextsReady(false);
+        setTextsGenerating(false);
+      }
+
+      setLastConceptId(currentConceptId);
+    }
+  }, [concept, isHydrated, lastConceptId, setSuccessTexts]);
+
+  // 페이지 진입 시 백그라운드로 문구 생성
+  useEffect(() => {
+    if (isHydrated && summary && concept && !successTexts) {
+      generateSuccessTexts();
+    }
+  }, [isHydrated, summary, concept, successTexts]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인

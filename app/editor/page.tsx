@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFunnelStore } from '@/lib/store';
+import { useFunnelStore, SuccessTexts } from '@/lib/store';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 
@@ -33,18 +33,17 @@ export default function EditorPage() {
     summary,
     concept,
     imageUrl,
-    textOptions,
-    setTextOptions,
-    setSelectedTextIndex,
+    successTexts,
+    setSuccessTexts,
     setFinalImageUrl,
   } = useFunnelStore();
-  // Canvas 대신 HTML/CSS 방식 사용
-  const [loading, setLoading] = useState(false);
+  // SUCCESs 원칙 관련 상태
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [textElements, setTextElements] = useState<TextElement[]>([]);
-  const [selectedTextIndex, setSelectedTextIndexLocal] = useState(0);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [loading, setLoading] = useState(false);
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
@@ -52,6 +51,53 @@ export default function EditorPage() {
   // 텍스트 편집 모달 상태
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
+
+  // SUCCESs 원칙 정의 (한글)
+  const principles = [
+    {
+      key: 'simple',
+      label: '단순성',
+      desc: '메시지를 한눈에 이해할 수 있게 핵심만 전달해요.',
+      color: 'bg-blue-500',
+    },
+    {
+      key: 'unexpected',
+      label: '의외성',
+      desc: '예상 밖의 전개로 주목을 끌어요.',
+      color: 'bg-purple-500',
+    },
+    {
+      key: 'concrete',
+      label: '구체성',
+      desc: '생생한 사실과 사례로 보여줘요.',
+      color: 'bg-green-500',
+    },
+    {
+      key: 'credible',
+      label: '신뢰성',
+      desc: '근거와 데이터로 믿음을 줘요.',
+      color: 'bg-orange-500',
+    },
+    {
+      key: 'emotional',
+      label: '감성',
+      desc: '사람의 마음을 움직이는 감정을 담아요.',
+      color: 'bg-pink-500',
+    },
+    {
+      key: 'story',
+      label: '스토리',
+      desc: '이야기로 제품의 가치를 자연스럽게 전달해요.',
+      color: 'bg-indigo-500',
+    },
+  ] as const;
+
+  // 로드된 원칙들만 필터링
+  const loadedPrinciples = principles.filter((p) => successTexts?.[p.key]);
+  const currentPrinciple =
+    loadedPrinciples[currentIndex] || loadedPrinciples[0];
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex < loadedPrinciples.length - 1;
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
@@ -70,56 +116,104 @@ export default function EditorPage() {
       router.push('/upload');
       return;
     }
+    if (!successTexts) {
+      router.push('/upload');
+      return;
+    }
 
-    generateTextOptions();
-  }, [summary, concept, imageUrl, router, isHydrated]);
+    // 선택된 원칙의 문구로 텍스트 요소 생성
+    createTextElement();
+  }, [
+    summary,
+    concept,
+    imageUrl,
+    successTexts,
+    router,
+    isHydrated,
+    currentIndex,
+  ]);
+
+  // summary가 변경될 때 successTexts 초기화
+  const [lastSummaryUrl, setLastSummaryUrl] = useState<string | null>(null);
+  const [lastConceptId, setLastConceptId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isHydrated && summary) {
+      const currentUrl = summary.url;
+
+      // URL이 변경되었을 때 successTexts 초기화
+      if (lastSummaryUrl && lastSummaryUrl !== currentUrl) {
+        console.log('Summary URL changed, clearing successTexts:', {
+          lastSummaryUrl,
+          currentUrl,
+        });
+        // successTexts 초기화
+        setSuccessTexts(undefined);
+        // 이미지 업로드 페이지로 리다이렉트하여 새로 생성
+        router.push('/upload');
+      }
+
+      setLastSummaryUrl(currentUrl);
+    }
+  }, [summary, isHydrated, lastSummaryUrl, setSuccessTexts, router]);
+
+  // 컨셉 변경 감지
+  useEffect(() => {
+    if (isHydrated && concept) {
+      const currentConceptId = concept.id;
+
+      // 컨셉이 변경되었을 때 successTexts 초기화
+      if (lastConceptId && lastConceptId !== currentConceptId) {
+        console.log('Concept changed in editor page, clearing successTexts:', {
+          lastConceptId,
+          currentConceptId,
+        });
+        // successTexts 초기화
+        setSuccessTexts(undefined);
+        // 이미지 업로드 페이지로 리다이렉트하여 새로 생성
+        router.push('/upload');
+      }
+
+      setLastConceptId(currentConceptId);
+    }
+  }, [concept, isHydrated, lastConceptId, setSuccessTexts, router]);
 
   useEffect(() => {
     // Zustand persist가 hydration을 완료할 때까지 기다림
     setIsHydrated(true);
   }, []);
 
-  const generateTextOptions = async () => {
-    if (textOptions) return;
+  // 선택된 원칙의 문구로 텍스트 요소 생성
+  const createTextElement = () => {
+    if (!successTexts || !currentPrinciple) return;
 
-    setLoading(true);
-    try {
-      const response = await fetch('/api/generate-text', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conceptId: concept?.id,
-          summary: summary,
-        }),
-      });
+    const currentText = successTexts[currentPrinciple.key];
+    if (!currentText) return;
 
-      if (!response.ok) {
-        throw new Error('텍스트 생성에 실패했습니다.');
-      }
+    // 기존 텍스트 요소가 있으면 업데이트, 없으면 새로 생성
+    const existingElement = textElements.find((el) => el.text === currentText);
 
-      const data = await response.json();
-      setTextOptions(data.options);
+    if (!existingElement) {
+      const newElement: TextElement = {
+        id: `text-${Date.now()}`,
+        text: currentText,
+        x: 50,
+        y: 100,
+        fontSize: 12,
+        color: '#000000',
+        fontFamily: 'Arial',
+        backgroundColor: 'white',
+        isSelected: true,
+      };
 
-      // 기본 텍스트 요소 생성
-      const elements: TextElement[] = data.options.map(
-        (text: string, index: number) => ({
-          id: `text-${index}`,
-          text,
-          x: 50,
-          y: 100 + index * 60,
-          fontSize: 12,
-          color: '#000000',
-          fontFamily: 'Arial',
-          isSelected: index === 0,
-        })
+      setTextElements([newElement]);
+      setSelectedElement(newElement.id);
+    } else {
+      // 기존 요소 선택
+      setTextElements((prev) =>
+        prev.map((el) => ({ ...el, isSelected: el.id === existingElement.id }))
       );
-      setTextElements(elements);
-    } catch (err) {
-      console.error('Error generating text:', err);
-    } finally {
-      setLoading(false);
+      setSelectedElement(existingElement.id);
     }
   };
 
@@ -153,34 +247,16 @@ export default function EditorPage() {
     closeTextEditor();
   };
 
-  const handleTextOptionChange = (index: number) => {
-    setSelectedTextIndexLocal(index);
-    setSelectedTextIndex(index);
+  // 네비게이션 핸들러
+  const handlePrevPrinciple = () => {
+    if (canGoPrev) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+  };
 
-    // 해당 인덱스의 텍스트 박스가 이미 존재하는지 확인
-    const existingElement = textElements.find(
-      (el) => el.text === textOptions?.[index]
-    );
-
-    if (!existingElement) {
-      // 텍스트 박스가 없으면 새로 생성
-      const newElement: TextElement = {
-        id: `text-${Date.now()}`,
-        text: textOptions?.[index] || '샘플 텍스트',
-        x: 50 + index * 200, // 옵션별로 다른 위치
-        y: 100 + index * 100,
-        fontSize: 12,
-        fontFamily: 'Arial',
-        color: '#000000',
-        backgroundColor: 'white',
-        isSelected: true,
-      };
-
-      setTextElements((prev) => [...prev, newElement]);
-      setSelectedElement(newElement.id);
-    } else {
-      // 이미 존재하면 선택만 변경
-      setSelectedElement(existingElement.id);
+  const handleNextPrinciple = () => {
+    if (canGoNext) {
+      setCurrentIndex((prev) => prev + 1);
     }
   };
 
@@ -315,28 +391,71 @@ export default function EditorPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* 텍스트 옵션 선택 */}
+            {/* SUCCESs 원칙 네비게이션 */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  홍보 문구 선택
+                  홍보 문구 스타일
                 </h3>
-                <div className="space-y-3">
-                  {textOptions?.map((text, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleTextOptionChange(index)}
-                      className={`w-full p-3 text-left rounded-lg border transition-colors ${
-                        selectedTextIndex === index
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <p className="text-sm font-medium">옵션 {index + 1}</p>
-                      <p className="text-xs text-gray-600 mt-1">{text}</p>
-                    </button>
-                  ))}
-                </div>
+
+                {/* 현재 원칙 표시 */}
+                {currentPrinciple ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div
+                          className={`w-3 h-3 rounded-full ${currentPrinciple.color} mr-3`}
+                        ></div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {currentPrinciple.label}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {currentPrinciple.desc}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 네비게이션 버튼 */}
+                    <div className="flex justify-between">
+                      <button
+                        onClick={handlePrevPrinciple}
+                        disabled={!canGoPrev}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          canGoPrev
+                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        ← 이전
+                      </button>
+
+                      <div className="text-xs text-gray-500 flex items-center">
+                        {currentIndex + 1} / {loadedPrinciples.length}
+                      </div>
+
+                      <button
+                        onClick={handleNextPrinciple}
+                        disabled={!canGoNext}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          canGoNext
+                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        다음 →
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600 text-sm">
+                      문구를 생성하고 있습니다...
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* 텍스트 스타일 조정 */}

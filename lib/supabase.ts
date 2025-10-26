@@ -77,6 +77,100 @@ export interface Database {
           created_at?: string;
         };
       };
+      marketing_text_cache: {
+        Row: {
+          id: string;
+          cache_key: string;
+          url: string;
+          concept_name: string;
+          simple: string;
+          unexpected: string;
+          concrete: string;
+          credible: string;
+          emotional: string;
+          story: string;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          cache_key: string;
+          url: string;
+          concept_name: string;
+          simple: string;
+          unexpected: string;
+          concrete: string;
+          credible: string;
+          emotional: string;
+          story: string;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          cache_key?: string;
+          url?: string;
+          concept_name?: string;
+          simple?: string;
+          unexpected?: string;
+          concrete?: string;
+          credible?: string;
+          emotional?: string;
+          story?: string;
+          created_at?: string;
+          expires_at?: string;
+        };
+      };
     };
   };
+}
+
+// 캐시 조회 함수
+export async function getMarketingTextCache(cacheKey: string) {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized');
+  }
+
+  const { data, error } = await supabase
+    .from('marketing_text_cache')
+    .select('*')
+    .eq('cache_key', cacheKey)
+    .gt('expires_at', new Date().toISOString())
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    // PGRST116은 "no rows found" 에러
+    throw error;
+  }
+
+  return data;
+}
+
+// 캐시 저장 함수
+export async function saveMarketingTextCache(cacheData: {
+  cache_key: string;
+  url: string;
+  concept_name: string;
+  simple: string;
+  unexpected: string;
+  concrete: string;
+  credible: string;
+  emotional: string;
+  story: string;
+}) {
+  if (!supabase) {
+    throw new Error('Supabase client not initialized');
+  }
+
+  const { data, error } = await supabase
+    .from('marketing_text_cache')
+    .upsert(cacheData, { onConflict: 'cache_key' })
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }

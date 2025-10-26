@@ -87,8 +87,8 @@ Your task is to extract **7 key marketing summary elements** in Korean for gener
 Follow these rules:
 - Always output in JSON format (UTF-8).
 - Each field must contain a concise, natural-sounding Korean sentence (under 40 words).
-- If data is missing, write "정보 부족".
-- fill them only if sufficient info exists.
+- If data is missing, leave the field empty (empty string "").
+- Fill them only if sufficient info exists.
 - Focus on how customers perceive value, not just product specs.`,
         },
         {

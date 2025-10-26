@@ -39,6 +39,15 @@ export interface GeneratedContent {
   createdAt?: string;
 }
 
+export interface SuccessTexts {
+  simple: string;
+  unexpected: string;
+  concrete: string;
+  credible: string;
+  emotional: string;
+  story: string;
+}
+
 interface FunnelState {
   // Step 1: URL 입력
   url: string;
@@ -52,9 +61,8 @@ interface FunnelState {
   // Step 4: 이미지 업로드
   imageUrl?: string;
 
-  // Step 5: 텍스트 생성
-  textOptions?: string[];
-  selectedTextIndex?: number;
+  // Step 5: SUCCESs 원칙 홍보문구
+  successTexts?: SuccessTexts;
 
   // Step 6: 에디터
   finalImageUrl?: string;
@@ -64,8 +72,7 @@ interface FunnelState {
   setSummary: (summary: ProductSummary) => void;
   setConcept: (concept: Concept) => void;
   setImageUrl: (imageUrl: string) => void;
-  setTextOptions: (textOptions: string[]) => void;
-  setSelectedTextIndex: (index: number) => void;
+  setSuccessTexts: (texts: SuccessTexts | undefined) => void;
   setFinalImageUrl: (imageUrl: string) => void;
   reset: () => void;
 }
@@ -77,16 +84,14 @@ export const useFunnelStore = create<FunnelState>()(
       summary: undefined,
       concept: undefined,
       imageUrl: undefined,
-      textOptions: undefined,
-      selectedTextIndex: undefined,
+      successTexts: undefined,
       finalImageUrl: undefined,
 
       setUrl: (url) => set({ url }),
       setSummary: (summary) => set({ summary }),
       setConcept: (concept) => set({ concept }),
       setImageUrl: (imageUrl) => set({ imageUrl }),
-      setTextOptions: (textOptions) => set({ textOptions }),
-      setSelectedTextIndex: (selectedTextIndex) => set({ selectedTextIndex }),
+      setSuccessTexts: (successTexts) => set({ successTexts }),
       setFinalImageUrl: (finalImageUrl) => set({ finalImageUrl }),
       reset: () =>
         set({
@@ -94,8 +99,7 @@ export const useFunnelStore = create<FunnelState>()(
           summary: undefined,
           concept: undefined,
           imageUrl: undefined,
-          textOptions: undefined,
-          selectedTextIndex: undefined,
+          successTexts: undefined,
           finalImageUrl: undefined,
         }),
     }),
@@ -107,8 +111,7 @@ export const useFunnelStore = create<FunnelState>()(
         summary: state.summary,
         concept: state.concept,
         imageUrl: state.imageUrl,
-        textOptions: state.textOptions,
-        selectedTextIndex: state.selectedTextIndex,
+        successTexts: state.successTexts,
         // finalImageUrl은 localStorage에서 제외 (용량 초과 방지)
       }),
     }
