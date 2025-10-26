@@ -21,11 +21,18 @@ export async function POST(request: NextRequest) {
     // 캐시 키 생성: url_conceptName
     const cacheKey = `${url}_${conceptName}`;
 
+    console.log('=== SUCCESS TEXTS API DEBUG ===');
+    console.log('url:', url);
+    console.log('conceptName:', conceptName);
+    console.log('cacheKey:', cacheKey);
+    console.log('=== END SUCCESS TEXTS API DEBUG ===');
+
     // 1. 캐시 조회
     try {
       const cachedData = await getMarketingTextCache(cacheKey);
       if (cachedData) {
-        console.log('Cache HIT for key:', cacheKey);
+        console.log('🎯 Cache HIT for key:', cacheKey);
+        console.log('Cached data:', cachedData);
         return NextResponse.json({
           texts: {
             simple: cachedData.simple,
@@ -39,7 +46,8 @@ export async function POST(request: NextRequest) {
         });
       }
     } catch (error) {
-      console.log('Cache MISS for key:', cacheKey);
+      console.log('❌ Cache MISS for key:', cacheKey);
+      console.log('Cache error:', error);
     }
 
     // 2. 캐시 미스 - AI로 생성
@@ -64,7 +72,11 @@ export async function POST(request: NextRequest) {
     ];
     const successTexts: any = {};
 
+    console.log('🎯 Starting to generate texts for principles:', principles);
+
     for (const principle of principles) {
+      console.log(`📝 Generating text for principle: ${principle}`);
+
       const completion = await openai.chat.completions.create({
         model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
         messages: [
@@ -100,8 +112,16 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
       const text = completion.choices[0]?.message?.content?.trim();
       if (text) {
         successTexts[principle] = text;
+        console.log(
+          `✅ Generated text for ${principle}:`,
+          text.substring(0, 50) + '...'
+        );
+      } else {
+        console.log(`❌ Failed to generate text for ${principle}`);
       }
     }
+
+    console.log('🎉 All texts generated:', Object.keys(successTexts));
 
     // 기본값으로 빈 문구들 채우기
     const productName = summary.title || summary.core_value || '제품';

@@ -132,17 +132,15 @@ export default function UploadPage() {
     setIsHydrated(true);
   }, []);
 
-  // SUCCESs 문구 생성 함수
-  const generateSuccessTexts = async () => {
-    if (textsGenerating || textsReady) return;
+  // 캐시된 데이터를 한번에 가져오는 함수
+  const generateSuccessTextsFromCache = async () => {
+    console.log('🎯 Fetching cached SUCCESs texts for:', {
+      url: summary?.url,
+      conceptName: concept?.name,
+    });
 
     setTextsGenerating(true);
     try {
-      console.log('Generating SUCCESs texts for:', {
-        url: summary?.url,
-        conceptName: concept?.name,
-      });
-
       const response = await fetch('/api/generate-success-texts', {
         method: 'POST',
         headers: {
@@ -165,11 +163,107 @@ export default function UploadPage() {
       setTextsReady(true);
 
       console.log(
-        'SUCCESs texts generated:',
+        '✅ SUCCESs texts fetched from cache:',
         data.cached ? '(cached)' : '(new)'
       );
     } catch (err) {
-      console.error('Error generating SUCCESs texts:', err);
+      console.error('❌ Error fetching SUCCESs texts:', err);
+      setError('문구 생성 중 오류가 발생했습니다.');
+    } finally {
+      setTextsGenerating(false);
+    }
+  };
+
+  // SUCCESs 문구 생성 함수 (SSE 스트리밍)
+  const generateSuccessTextsStreaming = async () => {
+    console.log('🎯 Starting SSE streaming for:', {
+      url: summary?.url,
+      conceptName: concept?.name,
+    });
+
+    // 🔥 중요: SSE 시작 전에 완전히 초기화
+    setSuccessTexts(undefined);
+    setTextsGenerating(true);
+
+    // 로컬 상태로 SSE 데이터 관리
+    let streamingTexts: any = {};
+
+    try {
+      // POST 요청으로 SSE 스트림 시작
+      const response = await fetch('/api/generate-success-texts-stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: summary?.url,
+          conceptName: concept?.name,
+          summary,
+          concept,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('SUCCESs 문구 생성에 실패했습니다.');
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('스트림을 읽을 수 없습니다.');
+      }
+
+      let buffer = '';
+      let completedCount = 0;
+      const totalCount = 6;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          console.log('🎉 SSE stream completed');
+          setTextsReady(true);
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              const { principle, text, completed, total, cached } = data;
+
+              console.log(
+                `📝 Received ${principle}: ${completed}/${total} ${
+                  cached ? '(cached)' : '(new)'
+                }`
+              );
+
+              // 로컬 상태에 추가
+              streamingTexts[principle] = text;
+
+              // 즉시 successTexts 업데이트
+              setSuccessTexts({ ...streamingTexts } as any);
+
+              completedCount = completed;
+
+              // 모든 원칙이 완료되면 준비 완료
+              if (completed === total) {
+                console.log('✅ All SUCCESs texts completed');
+                setTextsReady(true);
+              }
+            } catch (error) {
+              console.error('❌ Error parsing SSE data:', error);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error in SSE streaming:', err);
       setError('문구 생성 중 오류가 발생했습니다.');
     } finally {
       setTextsGenerating(false);
@@ -196,29 +290,53 @@ export default function UploadPage() {
     }
   }, [summary, isHydrated, lastSummaryUrl, setSuccessTexts]);
 
-  // 컨셉 변경 감지
-  useEffect(() => {
-    if (isHydrated && concept) {
-      const currentConceptId = concept.id;
+  // 컨셉 변경 감지 로직 제거 - API가 캐시 키로 처리하므로 불필요
 
-      // 컨셉이 변경되었을 때 successTexts 초기화
-      if (lastConceptId && lastConceptId !== currentConceptId) {
-        console.log('Concept changed in upload page, clearing successTexts');
+  // 캐시 확인 후 초기화 함수
+  const checkCacheAndInitialize = async () => {
+    if (!summary || !concept) return;
+
+    const cacheKey = `${summary.url}_${concept.name}`;
+    console.log('🔍 Checking cache for:', cacheKey);
+
+    try {
+      const response = await fetch('/api/check-cache', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cacheKey }),
+      });
+
+      const { exists } = await response.json();
+      console.log('📋 Cache check result:', { cacheKey, exists });
+
+      if (!exists) {
+        // 캐시가 없으면 SSE로 새로 생성
+        console.log('🚨 No cache found, generating new data');
         setSuccessTexts(undefined);
         setTextsReady(false);
         setTextsGenerating(false);
+        generateSuccessTextsStreaming();
+      } else {
+        // 캐시가 있으면 기존 API로 한번에 가져오기
+        console.log('✅ Cache found, fetching cached data');
+        generateSuccessTextsFromCache();
       }
-
-      setLastConceptId(currentConceptId);
+    } catch (error) {
+      console.error('❌ Cache check failed:', error);
+      // 에러 시에도 새로 생성 (SSE 스트리밍)
+      setSuccessTexts(undefined);
+      generateSuccessTextsStreaming();
     }
-  }, [concept, isHydrated, lastConceptId, setSuccessTexts]);
+  };
 
-  // 페이지 진입 시 백그라운드로 문구 생성
+  // 페이지 진입 시 캐시 확인 후 처리
   useEffect(() => {
-    if (isHydrated && summary && concept && !successTexts) {
-      generateSuccessTexts();
+    if (isHydrated && summary && concept) {
+      checkCacheAndInitialize();
     }
-  }, [isHydrated, summary, concept, successTexts]);
+  }, [isHydrated, summary, concept]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인

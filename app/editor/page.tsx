@@ -92,12 +92,28 @@ export default function EditorPage() {
     },
   ] as const;
 
-  // 로드된 원칙들만 필터링
-  const loadedPrinciples = principles.filter((p) => successTexts?.[p.key]);
+  // 로드된 원칙들만 필터링 (로드된 순서 유지)
+  const loadedPrinciples = Object.keys(successTexts || {})
+    .map((key) => principles.find((p) => p.key === key))
+    .filter(Boolean);
   const currentPrinciple =
     loadedPrinciples[currentIndex] || loadedPrinciples[0];
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < loadedPrinciples.length - 1;
+
+  // 디버깅용 로그
+  console.log('🎯 Editor page - loaded principles:', {
+    totalPrinciples: principles.length,
+    loadedCount: loadedPrinciples.length,
+    loadedKeys: loadedPrinciples.map((p) => p.key),
+    currentIndex,
+    currentPrinciple: currentPrinciple?.key,
+    hasSuccessTexts: !!successTexts,
+    navigationText:
+      loadedPrinciples.length > 0
+        ? `${currentIndex + 1} / ${loadedPrinciples.length}`
+        : '0 / 0',
+  });
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
@@ -116,13 +132,16 @@ export default function EditorPage() {
       router.push('/upload');
       return;
     }
-    if (!successTexts) {
-      router.push('/upload');
-      return;
-    }
+    // successTexts가 없어도 에디터 페이지에 머물러서 로딩 표시
+    // if (!successTexts) {
+    //   router.push('/upload');
+    //   return;
+    // }
 
-    // 선택된 원칙의 문구로 텍스트 요소 생성
-    createTextElement();
+    // 선택된 원칙의 문구로 텍스트 요소 생성 (successTexts가 있을 때만)
+    if (successTexts && currentPrinciple) {
+      createTextElement();
+    }
   }, [
     summary,
     concept,
@@ -157,26 +176,7 @@ export default function EditorPage() {
     }
   }, [summary, isHydrated, lastSummaryUrl, setSuccessTexts, router]);
 
-  // 컨셉 변경 감지
-  useEffect(() => {
-    if (isHydrated && concept) {
-      const currentConceptId = concept.id;
-
-      // 컨셉이 변경되었을 때 successTexts 초기화
-      if (lastConceptId && lastConceptId !== currentConceptId) {
-        console.log('Concept changed in editor page, clearing successTexts:', {
-          lastConceptId,
-          currentConceptId,
-        });
-        // successTexts 초기화
-        setSuccessTexts(undefined);
-        // 이미지 업로드 페이지로 리다이렉트하여 새로 생성
-        router.push('/upload');
-      }
-
-      setLastConceptId(currentConceptId);
-    }
-  }, [concept, isHydrated, lastConceptId, setSuccessTexts, router]);
+  // 컨셉 변경 감지 로직 제거 - API가 캐시 키로 처리하므로 불필요
 
   useEffect(() => {
     // Zustand persist가 hydration을 완료할 때까지 기다림
@@ -399,19 +399,19 @@ export default function EditorPage() {
                 </h3>
 
                 {/* 현재 원칙 표시 */}
-                {currentPrinciple ? (
+                {loadedPrinciples.length > 0 ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div
-                          className={`w-3 h-3 rounded-full ${currentPrinciple.color} mr-3`}
+                          className={`w-3 h-3 rounded-full ${currentPrinciple?.color} mr-3`}
                         ></div>
                         <div>
                           <p className="text-sm font-medium">
-                            {currentPrinciple.label}
+                            {currentPrinciple?.label}
                           </p>
                           <p className="text-xs text-gray-600">
-                            {currentPrinciple.desc}
+                            {currentPrinciple?.desc}
                           </p>
                         </div>
                       </div>
@@ -432,7 +432,9 @@ export default function EditorPage() {
                       </button>
 
                       <div className="text-xs text-gray-500 flex items-center">
-                        {currentIndex + 1} / {loadedPrinciples.length}
+                        {loadedPrinciples.length > 0
+                          ? `${currentIndex + 1} / ${loadedPrinciples.length}`
+                          : '0 / 0'}
                       </div>
 
                       <button
@@ -453,6 +455,9 @@ export default function EditorPage() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                     <p className="text-gray-600 text-sm">
                       문구를 생성하고 있습니다...
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {loadedPrinciples.length} / 6 완료
                     </p>
                   </div>
                 )}
