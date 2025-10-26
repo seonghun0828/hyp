@@ -38,8 +38,7 @@ export async function POST(request: NextRequest) {
           });
         } else {
         }
-      } catch (cacheError) {
-      }
+      } catch (cacheError) {}
     }
 
     // URL에서 메타데이터 추출
@@ -148,15 +147,6 @@ URL: ${url}
 
     if (supabase) {
       try {
-          core_value: summaryData.core_value,
-          target_customer: summaryData.target_customer,
-          competitive_edge: summaryData.competitive_edge,
-          customer_benefit: summaryData.customer_benefit,
-          emotional_keyword: summaryData.emotional_keyword,
-          feature_summary: summaryData.feature_summary,
-          usage_scenario: summaryData.usage_scenario,
-        });
-
         const { data, error } = await supabase
           .from('product_summaries')
           .insert({
@@ -174,12 +164,13 @@ URL: ${url}
           .single();
 
         if (error) {
+          // 에러 발생 시에도 계속 진행
         } else {
           summaryId = data?.id;
         }
       } catch (supabaseError) {
+        // Supabase 연결 에러 시에도 계속 진행
       }
-    } else {
     }
 
     return NextResponse.json({
