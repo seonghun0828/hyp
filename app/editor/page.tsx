@@ -101,20 +101,6 @@ export default function EditorPage() {
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < loadedPrinciples.length - 1;
 
-  // 디버깅용 로그
-  console.log('🎯 Editor page - loaded principles:', {
-    totalPrinciples: principles.length,
-    loadedCount: loadedPrinciples.length,
-    loadedKeys: loadedPrinciples.map((p) => p.key),
-    currentIndex,
-    currentPrinciple: currentPrinciple?.key,
-    hasSuccessTexts: !!successTexts,
-    navigationText:
-      loadedPrinciples.length > 0
-        ? `${currentIndex + 1} / ${loadedPrinciples.length}`
-        : '0 / 0',
-  });
-
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
     if (!isHydrated) return;
@@ -162,10 +148,6 @@ export default function EditorPage() {
 
       // URL이 변경되었을 때 successTexts 초기화
       if (lastSummaryUrl && lastSummaryUrl !== currentUrl) {
-        console.log('Summary URL changed, clearing successTexts:', {
-          lastSummaryUrl,
-          currentUrl,
-        });
         // successTexts 초기화
         setSuccessTexts(undefined);
         // 이미지 업로드 페이지로 리다이렉트하여 새로 생성
@@ -354,7 +336,6 @@ export default function EditorPage() {
       setFinalImageUrl(finalImageUrl);
       router.push('/result');
     } catch (error) {
-      console.error('이미지 생성 실패:', error);
       alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
     }
   };

@@ -7,9 +7,6 @@ export async function POST(request: NextRequest) {
   try {
     const { conceptId, summary, concept } = await request.json();
 
-    console.log('Generate image API - Received data:', {
-      conceptId,
-      summary,
       concept,
     });
 
@@ -33,9 +30,6 @@ Unique advantage: ${summary.competitive_edge || '차별화 포인트'}
 CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN THE IMAGE. This includes product names, titles, labels, or any readable text. Create a purely visual image using only colors, shapes, objects, and composition.`;
 
     // 프롬프트 로깅 추가
-    console.log('=== IMAGE GENERATION PROMPT ===');
-    console.log(imagePrompt);
-    console.log('=== END PROMPT ===');
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
 
@@ -43,17 +37,6 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
     const response = await result.response;
 
     // 응답 정보 로깅
-    console.log('=== IMAGE GENERATION RESPONSE ===');
-    console.log('Response candidates:', response.candidates?.length);
-    console.log(
-      'First candidate finish reason:',
-      response.candidates?.[0]?.finishReason
-    );
-    console.log(
-      'Parts count:',
-      response.candidates?.[0]?.content?.parts?.length
-    );
-    console.log('=== END RESPONSE ===');
 
     // Gemini 2.5 Flash Image는 실제 이미지를 생성합니다
     if (response.candidates && response.candidates[0]?.content?.parts) {
@@ -64,10 +47,6 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
       if (imagePart?.inlineData) {
         const imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
 
-        console.log('=== IMAGE GENERATION SUCCESS ===');
-        console.log('Image MIME type:', imagePart.inlineData.mimeType);
-        console.log('Image data length:', imagePart.inlineData.data.length);
-        console.log('=== END SUCCESS ===');
 
         return NextResponse.json({
           imageUrl: imageUrl,
@@ -77,9 +56,6 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
     }
 
     // 이미지 생성 실패 시 placeholder 이미지 반환
-    console.log('=== IMAGE GENERATION FAILED - USING PLACEHOLDER ===');
-    console.log('No image data found in response');
-    console.log('=== END PLACEHOLDER ===');
 
     const placeholderImageUrl = `data:image/svg+xml;base64,${Buffer.from(
       `
@@ -114,13 +90,6 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
       note: 'Image generation failed, using placeholder image',
     });
   } catch (error) {
-    console.error('=== IMAGE GENERATION ERROR ===');
-    console.error('Error details:', error);
-    console.error(
-      'Error message:',
-      error instanceof Error ? error.message : 'Unknown error'
-    );
-    console.error('=== END ERROR ===');
 
     // 에러 시 기본 placeholder 이미지 반환
     const fallbackImageUrl = `data:image/svg+xml;base64,${Buffer.from(

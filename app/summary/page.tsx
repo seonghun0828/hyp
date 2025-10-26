@@ -72,17 +72,10 @@ export default function SummaryPage() {
     }
 
     try {
-      console.log('=== SUMMARY PAGE - SAVING DATA ===');
-      console.log('Form data being saved:', formData);
-      console.log('Form data keys:', Object.keys(formData));
-      console.log('Form data values:', Object.values(formData));
-      console.log('=== END SUMMARY PAGE DATA ===');
-
       // 1. Zustand store에 저장 (localStorage)
       setSummary(formData);
 
       // 2. DB에 유저가 수정한 데이터 저장
-      console.log('Sending data to update API...');
       const response = await fetch('/api/summary/update', {
         method: 'POST',
         headers: {
@@ -97,16 +90,11 @@ export default function SummaryPage() {
       }
 
       const result = await response.json();
-      console.log('Database save result:', result);
 
       // 저장 후 확인
-      console.log('=== AFTER SETTING SUMMARY ===');
-      console.log('Summary after setSummary:', formData);
-      console.log('=== END AFTER SETTING ===');
 
       router.push('/concept');
     } catch (err) {
-      console.error('Error saving summary:', err);
       alert(
         `저장 중 오류가 발생했습니다: ${
           err instanceof Error ? err.message : '알 수 없는 오류'

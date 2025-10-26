@@ -12,17 +12,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 Checking cache for key:', cacheKey);
-
     // 캐시 조회
     const cachedData = await getMarketingTextCache(cacheKey);
     const exists = !!cachedData;
 
-    console.log('Cache check result:', { cacheKey, exists });
-
     return NextResponse.json({ exists });
   } catch (error) {
-    console.error('Check cache API error:', error);
     return NextResponse.json(
       { error: 'Failed to check cache' },
       { status: 500 }

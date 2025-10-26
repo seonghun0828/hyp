@@ -92,12 +92,6 @@ export default function UploadPage() {
     try {
       // 문구 생성 대기하지 않고 즉시 진행
       // 전달할 데이터 로깅
-      console.log('=== UPLOAD PAGE - SENDING DATA ===');
-      console.log('Concept ID:', concept?.id);
-      console.log('Summary object:', summary);
-      console.log('Concept object:', concept);
-      console.log('=== END UPLOAD PAGE DATA ===');
-
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
@@ -134,11 +128,6 @@ export default function UploadPage() {
 
   // 캐시된 데이터를 한번에 가져오는 함수
   const generateSuccessTextsFromCache = async () => {
-    console.log('🎯 Fetching cached SUCCESs texts for:', {
-      url: summary?.url,
-      conceptName: concept?.name,
-    });
-
     setTextsGenerating(true);
     try {
       const response = await fetch('/api/generate-success-texts', {
@@ -161,13 +150,7 @@ export default function UploadPage() {
       const data = await response.json();
       setSuccessTexts(data.texts);
       setTextsReady(true);
-
-      console.log(
-        '✅ SUCCESs texts fetched from cache:',
-        data.cached ? '(cached)' : '(new)'
-      );
     } catch (err) {
-      console.error('❌ Error fetching SUCCESs texts:', err);
       setError('문구 생성 중 오류가 발생했습니다.');
     } finally {
       setTextsGenerating(false);
@@ -176,11 +159,6 @@ export default function UploadPage() {
 
   // SUCCESs 문구 생성 함수 (SSE 스트리밍)
   const generateSuccessTextsStreaming = async () => {
-    console.log('🎯 Starting SSE streaming for:', {
-      url: summary?.url,
-      conceptName: concept?.name,
-    });
-
     // 🔥 중요: SSE 시작 전에 완전히 초기화
     setSuccessTexts(undefined);
     setTextsGenerating(true);
@@ -222,7 +200,6 @@ export default function UploadPage() {
         const { done, value } = await reader.read();
 
         if (done) {
-          console.log('🎉 SSE stream completed');
           setTextsReady(true);
           break;
         }
@@ -237,12 +214,6 @@ export default function UploadPage() {
               const data = JSON.parse(line.slice(6));
               const { principle, text, completed, total, cached } = data;
 
-              console.log(
-                `📝 Received ${principle}: ${completed}/${total} ${
-                  cached ? '(cached)' : '(new)'
-                }`
-              );
-
               // 로컬 상태에 추가
               streamingTexts[principle] = text;
 
@@ -253,17 +224,13 @@ export default function UploadPage() {
 
               // 모든 원칙이 완료되면 준비 완료
               if (completed === total) {
-                console.log('✅ All SUCCESs texts completed');
                 setTextsReady(true);
               }
-            } catch (error) {
-              console.error('❌ Error parsing SSE data:', error);
-            }
+            } catch (error) {}
           }
         }
       }
     } catch (err) {
-      console.error('❌ Error in SSE streaming:', err);
       setError('문구 생성 중 오류가 발생했습니다.');
     } finally {
       setTextsGenerating(false);
@@ -280,7 +247,6 @@ export default function UploadPage() {
 
       // URL이 변경되었을 때 successTexts 초기화
       if (lastSummaryUrl && lastSummaryUrl !== currentUrl) {
-        console.log('URL changed in upload page, clearing successTexts');
         setSuccessTexts(undefined);
         setTextsReady(false);
         setTextsGenerating(false);
@@ -297,7 +263,6 @@ export default function UploadPage() {
     if (!summary || !concept) return;
 
     const cacheKey = `${summary.url}_${concept.name}`;
-    console.log('🔍 Checking cache for:', cacheKey);
 
     try {
       const response = await fetch('/api/check-cache', {
@@ -309,22 +274,18 @@ export default function UploadPage() {
       });
 
       const { exists } = await response.json();
-      console.log('📋 Cache check result:', { cacheKey, exists });
 
       if (!exists) {
         // 캐시가 없으면 SSE로 새로 생성
-        console.log('🚨 No cache found, generating new data');
         setSuccessTexts(undefined);
         setTextsReady(false);
         setTextsGenerating(false);
         generateSuccessTextsStreaming();
       } else {
         // 캐시가 있으면 기존 API로 한번에 가져오기
-        console.log('✅ Cache found, fetching cached data');
         generateSuccessTextsFromCache();
       }
     } catch (error) {
-      console.error('❌ Cache check failed:', error);
       // 에러 시에도 새로 생성 (SSE 스트리밍)
       setSuccessTexts(undefined);
       generateSuccessTextsStreaming();

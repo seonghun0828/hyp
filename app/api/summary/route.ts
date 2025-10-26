@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
     // 캐시 체크 - 기존 데이터가 있는지 확인
     if (supabase) {
       try {
-        console.log('Checking cache for URL:', url);
         const { data: existingData, error: fetchError } = await supabase
           .from('product_summaries')
           .select('*')
@@ -26,7 +25,6 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (!fetchError && existingData) {
-          console.log('Cache hit - returning existing data');
           return NextResponse.json({
             id: existingData.id,
             title: existingData.title,
@@ -39,13 +37,8 @@ export async function POST(request: NextRequest) {
             usage_scenario: existingData.usage_scenario,
           });
         } else {
-          console.log('Cache miss - proceeding with AI analysis');
         }
       } catch (cacheError) {
-        console.log(
-          'Cache check failed, proceeding with AI analysis:',
-          cacheError
-        );
       }
     }
 
@@ -128,7 +121,6 @@ URL: ${url}
     });
 
     const aiResponse = completion.choices[0]?.message?.content;
-    console.log('AI Response:', aiResponse);
 
     if (!aiResponse) {
       throw new Error('Failed to generate summary');
@@ -137,9 +129,7 @@ URL: ${url}
     let summaryData;
     try {
       summaryData = JSON.parse(aiResponse);
-      console.log('Parsed AI Response:', summaryData);
     } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
       // JSON 파싱 실패 시 기본값 사용
       summaryData = {
         title: '',
@@ -155,13 +145,9 @@ URL: ${url}
 
     // Supabase에 저장 (환경 변수가 있을 때만)
     let summaryId = null;
-    console.log('Supabase connection check:', !!supabase);
 
     if (supabase) {
       try {
-        console.log('Attempting to save to Supabase with data:', {
-          url,
-          title: summaryData.title,
           core_value: summaryData.core_value,
           target_customer: summaryData.target_customer,
           competitive_edge: summaryData.competitive_edge,
@@ -188,16 +174,12 @@ URL: ${url}
           .single();
 
         if (error) {
-          console.error('Supabase error:', error);
         } else {
-          console.log('Supabase save successful:', data);
           summaryId = data?.id;
         }
       } catch (supabaseError) {
-        console.error('Supabase connection error:', supabaseError);
       }
     } else {
-      console.log('Supabase not available - skipping database save');
     }
 
     return NextResponse.json({
@@ -212,7 +194,6 @@ URL: ${url}
       usage_scenario: summaryData.usage_scenario,
     });
   } catch (error) {
-    console.error('Summary API error:', error);
     return NextResponse.json(
       { error: 'Failed to analyze product' },
       { status: 500 }

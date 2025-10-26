@@ -71,7 +71,6 @@ export default function ResultPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Download failed:', err);
     } finally {
       setDownloading(false);
     }

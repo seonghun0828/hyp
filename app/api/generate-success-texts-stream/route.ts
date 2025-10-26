@@ -21,18 +21,10 @@ export async function POST(request: NextRequest) {
     // 캐시 키 생성: url_conceptName
     const cacheKey = `${url}_${conceptName}`;
 
-    console.log('=== SSE SUCCESS TEXTS API DEBUG ===');
-    console.log('url:', url);
-    console.log('conceptName:', conceptName);
-    console.log('cacheKey:', cacheKey);
-    console.log('=== END SSE SUCCESS TEXTS API DEBUG ===');
-
     // 1. 캐시 조회
     try {
       const cachedData = await getMarketingTextCache(cacheKey);
       if (cachedData) {
-        console.log('🎯 Cache HIT for key:', cacheKey);
-
         // 캐시된 데이터를 SSE로 스트리밍
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
@@ -72,12 +64,8 @@ export async function POST(request: NextRequest) {
         });
       }
     } catch (error) {
-      console.log('❌ Cache MISS for key:', cacheKey);
-      console.log('Cache error:', error);
+      // 캐시 미스 - AI로 생성 (SSE 스트리밍)
     }
-
-    // 2. 캐시 미스 - AI로 생성 (SSE 스트리밍)
-    console.log('Generating new SUCCESs texts for:', cacheKey);
 
     const conceptData = getConceptById(concept.id);
     if (!conceptData) {
@@ -100,15 +88,8 @@ export async function POST(request: NextRequest) {
         ];
         const successTexts: any = {};
 
-        console.log(
-          '🎯 Starting parallel SSE streaming for principles:',
-          principles
-        );
-
         // 병렬 처리: 모든 원칙을 동시에 생성
         const generateText = async (principle: string, index: number) => {
-          console.log(`📝 Generating text for principle: ${principle}`);
-
           try {
             const completion = await openai.chat.completions.create({
               model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
@@ -145,10 +126,6 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
             const text = completion.choices[0]?.message?.content?.trim();
             if (text) {
               successTexts[principle] = text;
-              console.log(
-                `✅ Generated text for ${principle}:`,
-                text.substring(0, 50) + '...'
-              );
             } else {
               // 기본값 사용
               const productName = summary.title || summary.core_value || '제품';
@@ -162,7 +139,6 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
               };
               successTexts[principle] =
                 defaultTexts[principle as keyof typeof defaultTexts];
-              console.log(`⚠️ Using default text for ${principle}`);
             }
 
             // 완료되는 순서대로 즉시 SSE로 전송
@@ -178,7 +154,6 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
 
             return { principle, text: successTexts[principle], index };
           } catch (error) {
-            console.error(`❌ Error generating text for ${principle}:`, error);
             // 에러 시에도 기본값으로 전송
             const productName = summary.title || summary.core_value || '제품';
             const defaultTexts = {
@@ -214,11 +189,6 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
         // 모든 Promise가 완료될 때까지 대기
         await Promise.all(promises);
 
-        console.log(
-          '🎉 All texts generated in parallel:',
-          Object.keys(successTexts)
-        );
-
         // 3. DB에 캐시 저장
         try {
           await saveMarketingTextCache({
@@ -232,10 +202,7 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
             emotional: successTexts.emotional,
             story: successTexts.story,
           });
-          console.log('Successfully cached texts for key:', cacheKey);
-        } catch (error) {
-          console.error('Failed to cache texts:', error);
-        }
+        } catch (error) {}
 
         controller.close();
       },
@@ -249,7 +216,6 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
       },
     });
   } catch (error) {
-    console.error('SSE Generate SUCCESs texts API error:', error);
     return NextResponse.json(
       { error: 'Failed to generate SUCCESs marketing texts' },
       { status: 500 }

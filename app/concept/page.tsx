@@ -48,12 +48,6 @@ export default function ConceptPage() {
   }, [summary, router, isHydrated]);
 
   const handleConceptSelect = (concept: any) => {
-    console.log('=== CONCEPT SELECTION ===');
-    console.log('Selected concept:', concept);
-    console.log('Concept ID:', concept.id);
-    console.log('Concept name:', concept.name);
-    console.log('=== END CONCEPT SELECTION ===');
-
     setConcept(concept);
     router.push('/upload');
   };
