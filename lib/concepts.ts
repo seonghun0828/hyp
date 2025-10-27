@@ -32,19 +32,19 @@ export const concepts: Concept[] = [
       "Create an empathetic marketing copy using this structure: 1) Show understanding of user's emotions, 2) Build connection by sharing similar feelings, 3) Present your product as the resolution. Use warm, genuine, emotionally resonant language.",
   },
   {
-    id: 'Pride',
-    name: '자부심형',
+    id: 'Insight',
+    name: '통찰형',
     description:
-      '고객이 제품을 통해 자신을 더 특별하게 느끼거나 자신의 가치를 표현할 수 있도록 돕습니다. 자신감 있고 긍정적인 어조로 제품 사용이 자아를 강화한다는 메시지를 전달합니다.',
-    tone: '당당한, 고급스러운, 긍정적인',
-    structure: '자기 표현 → 제품 연결 → 자아 강화',
+      '당연한 것을 새롭게 보게 만들어, 고객이 “이 브랜드는 깊이가 있다”고 느끼게 합니다. 즉각적 자극보다 사고의 여운으로 브랜드 신뢰와 철학적 매력을 쌓습니다.',
+    tone: '차분한, 사려 깊은, 진중한, 철학적인',
+    structure: '일상적 전제 → 새로운 관점 → 브랜드 철학 연결',
     template:
-      '[Pride] 당신이 만든 ___, 이제 세상에 보여줄 차례예요.\n[Empower] 당신의 작품은 충분히 가치 있어요.\n[Action] HYP로 그 가치를 알리세요.',
+      '[Setup] 모두가 ___를 중요하게 생각하지만,\n[Twist] 우리는 ___가 진짜 본질이라고 믿습니다.\n[Philosophy] 그래서 ___을(를) 이렇게 만듭니다.',
     example:
-      "당신의 제품은 세상에 나설 준비가 되어 있습니다.\n누가 봐도 '프로다운 홍보', HYP가 만들어드립니다.",
-    exampleImage: '/concepts/pride.jpg',
+      '“좋은 홍보는 자극이 아니라, 공감에서 시작됩니다. HYP는 제품의 철학이 더 멀리 닿도록 돕습니다.”',
+    exampleImage: '/concepts/insight.jpg',
     promptTemplate:
-      "Create a pride-focused marketing copy using this structure: 1) Acknowledge the user's creation and its worth, 2) Empower them by validating their work, 3) Encourage action to showcase their value. Use confident, premium, positive language that reinforces self-identity.",
+      "Create an insight-driven marketing copy. Follow this structure: 1) Present a common assumption or trend, 2) Offer a reflective or philosophical twist, 3) Connect that insight to the product's philosophy or purpose. The tone should be calm, thoughtful, and sincere.",
   },
   {
     id: 'Trust',
