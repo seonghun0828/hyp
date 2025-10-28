@@ -6,6 +6,8 @@ import { useFunnelStore } from '@/lib/store';
 import { generateFileName } from '@/lib/utils';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
+import { FeedbackPrompt } from '@/components/FeedbackPrompt';
+import { useButtonVisibilityFeedback } from '@/hooks/useButtonVisibilityFeedback';
 
 const stepNames = [
   '링크 입력',
@@ -21,14 +23,24 @@ export default function ResultPage() {
   const { summary, reset } = useFunnelStore();
   const [downloading, setDownloading] = useState(false);
   const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
+
+  // 버튼 가시성 감지
+  const shouldShowFeedback = useButtonVisibilityFeedback();
 
   useEffect(() => {
     // Zustand persist가 hydration을 완료할 때까지 기다림
     setIsHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (shouldShowFeedback) {
+      setShowFeedback(true);
+    }
+  }, [shouldShowFeedback]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
@@ -114,10 +126,10 @@ export default function ResultPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              🎉 홍보 콘텐츠 완성!
+              🎉 홍보 콘텐츠 완성
             </h1>
             <p className="text-gray-600">
-              AI가 생성한 홍보 콘텐츠가 완성되었습니다
+              AI와 함께 만든 멋진 작품이 완성됐습니다!
             </p>
           </div>
 
@@ -152,7 +164,7 @@ export default function ResultPage() {
               </div>
 
               {/* 액션 버튼들 */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="button-container flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                   onClick={handleDownload}
                   loading={downloading}
@@ -189,6 +201,11 @@ export default function ResultPage() {
           </div>
         </div>
       </div>
+
+      {/* 피드백 팝업 */}
+      {showFeedback && (
+        <FeedbackPrompt onClose={() => setShowFeedback(false)} />
+      )}
     </div>
   );
 }
