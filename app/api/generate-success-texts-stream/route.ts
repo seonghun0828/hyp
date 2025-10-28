@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
             ];
 
             principles.forEach((principle, index) => {
-              const text = cachedData[principle];
+              const text = cachedData[principle as keyof typeof cachedData];
               const data = JSON.stringify({
                 principle,
                 text,
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       // 캐시 미스 - AI로 생성 (SSE 스트리밍)
     }
 
+    // 2. 캐시 미스 - AI로 생성 (SSE 스트리밍)
     const conceptData = getConceptById(concept.id);
     if (!conceptData) {
       return NextResponse.json(
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
 
         // 병렬 처리: 모든 원칙을 동시에 생성
         const generateText = async (principle: string, index: number) => {
+          let generatedText = '';
           try {
             const completion = await openai.chat.completions.create({
               model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
@@ -125,7 +127,7 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
 
             const text = completion.choices[0]?.message?.content?.trim();
             if (text) {
-              successTexts[principle] = text;
+              generatedText = text;
             } else {
               // 기본값 사용
               const productName = summary.title || summary.core_value || '제품';
@@ -137,22 +139,9 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
                 emotional: `${productName}과 함께하는 따뜻한 순간들.\n당신의 마음을 움직이는 특별한 경험을 선사합니다.`,
                 story: `${productName}의 이야기가 시작됩니다.\n당신만의 특별한 여정을 함께 만들어가요.`,
               };
-              successTexts[principle] =
+              generatedText =
                 defaultTexts[principle as keyof typeof defaultTexts];
             }
-
-            // 완료되는 순서대로 즉시 SSE로 전송
-            const data = JSON.stringify({
-              principle,
-              text: successTexts[principle],
-              completed: Object.keys(successTexts).length,
-              total: principles.length,
-              cached: false,
-            });
-
-            controller.enqueue(encoder.encode(`data: ${data}\n\n`));
-
-            return { principle, text: successTexts[principle], index };
           } catch (error) {
             // 에러 시에도 기본값으로 전송
             const productName = summary.title || summary.core_value || '제품';
@@ -164,21 +153,25 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
               emotional: `${productName}과 함께하는 따뜻한 순간들.\n당신의 마음을 움직이는 특별한 경험을 선사합니다.`,
               story: `${productName}의 이야기가 시작됩니다.\n당신만의 특별한 여정을 함께 만들어가요.`,
             };
-            successTexts[principle] =
+            generatedText =
               defaultTexts[principle as keyof typeof defaultTexts];
-
-            const data = JSON.stringify({
-              principle,
-              text: successTexts[principle],
-              completed: Object.keys(successTexts).length,
-              total: principles.length,
-              cached: false,
-            });
-
-            controller.enqueue(encoder.encode(`data: ${data}\n\n`));
-
-            return { principle, text: successTexts[principle], index };
           }
+
+          // 로컬 successTexts에 추가 (캐시 저장을 위해)
+          successTexts[principle] = generatedText;
+
+          // 완료되는 순서대로 즉시 SSE로 전송
+          const data = JSON.stringify({
+            principle,
+            text: generatedText,
+            completed: Object.keys(successTexts).length, // 현재 완료된 개수
+            total: principles.length,
+            cached: false,
+          });
+
+          controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+
+          return { principle, text: generatedText, index };
         };
 
         // 모든 원칙을 병렬로 생성
@@ -202,7 +195,9 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
             emotional: successTexts.emotional,
             story: successTexts.story,
           });
-        } catch (error) {}
+        } catch (error) {
+          // 캐시 저장 실패해도 계속 진행
+        }
 
         controller.close();
       },

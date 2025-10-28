@@ -37,10 +37,11 @@ export async function POST(request: NextRequest) {
           cached: true,
         });
       }
-    } catch (error) {}
+    } catch (error) {
+      // 캐시 미스 - AI로 생성
+    }
 
     // 2. 캐시 미스 - AI로 생성
-
     const conceptData = getConceptById(concept.id);
     if (!conceptData) {
       return NextResponse.json(
@@ -97,22 +98,43 @@ Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
       if (text) {
         successTexts[principle] = text;
       } else {
+        // 기본값 사용
+        const productName = summary.title || summary.core_value || '제품';
+        const defaultTexts = {
+          simple: `${productName}로 시작하세요.\n간단하고 명확한 솔루션입니다.`,
+          unexpected: `${productName}의 놀라운 변화를 경험하세요.\n예상보다 훨씬 더 큰 효과를 얻을 수 있습니다.`,
+          concrete: `${productName}로 구체적인 결과를 얻으세요.\n정확한 수치와 명확한 혜택을 확인하세요.`,
+          credible: `이미 많은 사용자가 ${productName}을 선택했습니다.\n검증된 솔루션으로 안전하게 시작하세요.`,
+          emotional: `${productName}과 함께하는 따뜻한 순간들.\n당신의 마음을 움직이는 특별한 경험을 선사합니다.`,
+          story: `${productName}의 이야기가 시작됩니다.\n당신만의 특별한 여정을 함께 만들어가요.`,
+        };
+        successTexts[principle] =
+          defaultTexts[principle as keyof typeof defaultTexts];
       }
     }
 
     // 기본값으로 빈 문구들 채우기
     const productName = summary.title || summary.core_value || '제품';
-    const defaultTexts = {
-      simple: `${productName}로 시작하세요.\n간단하고 명확한 솔루션입니다.`,
-      unexpected: `${productName}의 놀라운 변화를 경험하세요.\n예상보다 훨씬 더 큰 효과를 얻을 수 있습니다.`,
-      concrete: `${productName}로 구체적인 결과를 얻으세요.\n정확한 수치와 명확한 혜택을 확인하세요.`,
-      credible: `이미 많은 사용자가 ${productName}을 선택했습니다.\n검증된 솔루션으로 안전하게 시작하세요.`,
-      emotional: `${productName}과 함께하는 따뜻한 순간들.\n당신의 마음을 움직이는 특별한 경험을 선사합니다.`,
-      story: `${productName}의 이야기가 시작됩니다.\n당신만의 특별한 여정을 함께 만들어가요.`,
+    const finalTexts = {
+      simple:
+        successTexts.simple ||
+        `${productName}로 시작하세요.\n간단하고 명확한 솔루션입니다.`,
+      unexpected:
+        successTexts.unexpected ||
+        `${productName}의 놀라운 변화를 경험하세요.\n예상보다 훨씬 더 큰 효과를 얻을 수 있습니다.`,
+      concrete:
+        successTexts.concrete ||
+        `${productName}로 구체적인 결과를 얻으세요.\n정확한 수치와 명확한 혜택을 확인하세요.`,
+      credible:
+        successTexts.credible ||
+        `이미 많은 사용자가 ${productName}을 선택했습니다.\n검증된 솔루션으로 안전하게 시작하세요.`,
+      emotional:
+        successTexts.emotional ||
+        `${productName}과 함께하는 따뜻한 순간들.\n당신의 마음을 움직이는 특별한 경험을 선사합니다.`,
+      story:
+        successTexts.story ||
+        `${productName}의 이야기가 시작됩니다.\n당신만의 특별한 여정을 함께 만들어가요.`,
     };
-
-    // 생성된 문구와 기본값 병합
-    const finalTexts = { ...defaultTexts, ...successTexts };
 
     // 3. DB에 캐시 저장
     try {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import * as cheerio from 'cheerio';
 import { supabase } from '@/lib/supabase';
 
 const openai = new OpenAI({
@@ -37,38 +36,30 @@ export async function POST(request: NextRequest) {
             usage_scenario: existingData.usage_scenario,
           });
         } else {
+          // 캐시 미스 - AI 분석 진행
         }
-      } catch (cacheError) {}
+      } catch (cacheError) {
+        // 캐시 체크 실패 시에도 AI 분석 진행
+      }
     }
 
-    // URL에서 메타데이터 추출
+    // URL에서 제품 정보 가져오기
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; HYP-Bot/1.0)',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch URL');
+      throw new Error('Failed to fetch URL content');
     }
 
     const html = await response.text();
-    const $ = cheerio.load(html);
-
-    // 메타데이터 추출
-    const title =
-      $('meta[property="og:title"]').attr('content') ||
-      $('title').text() ||
-      '제품명을 확인할 수 없습니다';
-
-    const description =
-      $('meta[property="og:description"]').attr('content') ||
-      $('meta[name="description"]').attr('content') ||
-      '제품 설명을 확인할 수 없습니다';
 
     // OpenAI로 제품 정보 요약
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-5-mini',
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -81,36 +72,25 @@ Follow these rules:
 - Each field must contain a concise, natural-sounding Korean sentence (under 40 words).
 - If data is missing, leave the field empty (empty string "").
 - Fill them only if sufficient info exists.
-- Focus on how customers perceive value, not just product specs.`,
+- Focus on how customers perceive value, not just product specs.
+
+Required JSON structure:
+{
+  "title": "제품명",
+  "core_value": "핵심 가치",
+  "target_customer": "주요 고객층",
+  "competitive_edge": "경쟁 우위",
+  "customer_benefit": "고객 혜택",
+  "emotional_keyword": "감정 키워드",
+  "feature_summary": "주요 기능",
+  "usage_scenario": "사용 시나리오"
+}`,
         },
         {
           role: 'user',
-          content: `다음 제품 링크 정보를 요약해서 아래 8가지 마케팅 요소로 구조화해줘.
+          content: `Analyze this product information and extract the marketing summary elements:
 
-1. 제품명 (Title) - 간결하고 명확한 제품/서비스명
-2. 제품 핵심 가치 (Core Value)
-3. 타깃 고객 (Target Customer)
-4. 주요 경쟁 우위 (Competitive Edge)
-5. 고객이 느낄 이득 (Customer Benefit)
-6. 감정 키워드 (Emotional Keyword)
-7. 주요 기능 요약 (Feature Summary)
-8. 사용 시나리오 (Usage Scenario)
-
-Title: ${title}
-Description: ${description}
-URL: ${url}
-
-반드시 다음 JSON 형식으로 응답해주세요:
-{
-  "title": "제품명",
-  "core_value": "제품 핵심 가치",
-  "target_customer": "타깃 고객",
-  "competitive_edge": "주요 경쟁 우위",
-  "customer_benefit": "고객이 느낄 이득",
-  "emotional_keyword": "감정 키워드",
-  "feature_summary": "주요 기능 요약",
-  "usage_scenario": "사용 시나리오"
-}`,
+${html.substring(0, 4000)}`,
         },
       ],
       // GPT-5-mini는 temperature 파라미터를 지원하지 않음

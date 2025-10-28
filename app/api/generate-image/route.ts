@@ -7,9 +7,6 @@ export async function POST(request: NextRequest) {
   try {
     const { conceptId, summary, concept } = await request.json();
 
-      concept,
-    });
-
     if (!conceptId || !summary || !concept) {
       return NextResponse.json(
         { error: 'conceptId, summary, and concept are required' },
@@ -46,7 +43,6 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
 
       if (imagePart?.inlineData) {
         const imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-
 
         return NextResponse.json({
           imageUrl: imageUrl,
@@ -90,7 +86,6 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
       note: 'Image generation failed, using placeholder image',
     });
   } catch (error) {
-
     // 에러 시 기본 placeholder 이미지 반환
     const fallbackImageUrl = `data:image/svg+xml;base64,${Buffer.from(
       `
