@@ -32,10 +32,7 @@ export const FeedbackPrompt = ({ onClose }: FeedbackPromptProps) => {
         </div>
 
         <div className="quick-actions">
-          <button
-            onClick={() => handleFeedbackClick('survey')}
-            className="feedback-btn survey"
-          >
+          <button onClick={handleFeedbackClick} className="feedback-btn survey">
             💬 피드백 남기기
           </button>
         </div>
