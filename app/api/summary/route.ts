@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch URL content');
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const html = await response.text();
@@ -165,8 +165,55 @@ ${html.substring(0, 4000)}`,
       usage_scenario: summaryData.usage_scenario,
     });
   } catch (error) {
+    // 에러 메시지 분석
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // 봇 차단 관련 에러 패턴들
+    const isBotBlocked =
+      errorMessage.includes('429') ||
+      errorMessage.includes('Too Many Requests') ||
+      errorMessage.includes('403') ||
+      errorMessage.includes('Forbidden') ||
+      errorMessage.includes('bot detection') ||
+      errorMessage.includes('웹사이트에 접근할 수 없습니다');
+
+    // 서버 내부 에러 패턴들
+    const isServerError =
+      errorMessage.includes('Failed to generate summary') ||
+      errorMessage.includes('OpenAI') ||
+      errorMessage.includes('JSON.parse');
+
+    if (isBotBlocked) {
+      return NextResponse.json(
+        {
+          error: 'BOT_BLOCKED',
+          message: '이 사이트는 봇 접근을 차단합니다. 직접 입력해주세요.',
+          requiresManualInput: true,
+          originalError: errorMessage,
+        },
+        { status: 403 }
+      );
+    }
+
+    if (isServerError) {
+      return NextResponse.json(
+        {
+          error: 'SERVER_ERROR',
+          message:
+            '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+          retryable: true,
+          originalError: errorMessage,
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to analyze product' },
+      {
+        error: 'UNKNOWN_ERROR',
+        message: '알 수 없는 오류가 발생했습니다.',
+        originalError: errorMessage,
+      },
       { status: 500 }
     );
   }

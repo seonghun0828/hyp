@@ -51,7 +51,32 @@ export default function HomePage() {
       });
 
       if (!response.ok) {
-        throw new Error('제품 분석에 실패했습니다.');
+        const errorData = await response.json();
+
+        // 에러 타입별 처리
+        if (response.status === 403 && errorData.error === 'BOT_BLOCKED') {
+          alert(
+            '이 사이트의 보안 정책으로 인해 자동 분석이 불가능합니다. 직접 입력해주세요.'
+          );
+          router.push('/summary?manual=true');
+          return;
+        }
+
+        if (response.status === 500 && errorData.error === 'SERVER_ERROR') {
+          if (
+            confirm(
+              '서버에 일시적인 문제가 발생했습니다. 다시 시도하시겠습니까?'
+            )
+          ) {
+            // 재시도 로직
+            handleSubmit(e);
+            return;
+          }
+          setError(errorData.message || '서버 오류가 발생했습니다.');
+          return;
+        }
+
+        throw new Error(errorData.message || '제품 분석에 실패했습니다.');
       }
 
       const data = await response.json();
