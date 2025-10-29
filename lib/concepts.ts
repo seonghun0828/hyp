@@ -15,6 +15,13 @@ export const concepts: Concept[] = [
     exampleImage: '/concepts/problem-solving.jpg',
     promptTemplate:
       "Create a problem-solving marketing copy using this structure: 1) Present the user's pain point with empathy, 2) Propose your product as the solution, 3) Emphasize the concrete benefits. Use practical, clear, solution-focused language.",
+    imageStyle: {
+      name: '프로페셔널 테크',
+      description:
+        '명확하고 신뢰감 있는 비즈니스/테크 스타일. 파란색과 흰색 중심의 깨끗한 시각 디자인.',
+      promptTemplate:
+        'Create a professional, clean tech-style marketing image with modern business aesthetics. Use blue and white tones, geometric composition, and subtle gradients to convey clarity and reliability.',
+    },
   },
   {
     id: 'Empathy',
@@ -30,21 +37,35 @@ export const concepts: Concept[] = [
     exampleImage: '/concepts/empathy.jpg',
     promptTemplate:
       "Create an empathetic marketing copy using this structure: 1) Show understanding of user's emotions, 2) Build connection by sharing similar feelings, 3) Present your product as the resolution. Use warm, genuine, emotionally resonant language.",
+    imageStyle: {
+      name: '라이프스타일 포토',
+      description:
+        '사람 중심의 현실적인 장면. 자연광, 따뜻한 색감, 일상적인 배경.',
+      promptTemplate:
+        'Create a realistic lifestyle photo-style image showing human connection and empathy. Use natural light, warm tones, and everyday environments to evoke trust and relatability.',
+    },
   },
   {
     id: 'Insight',
     name: '통찰형',
     description:
-      '당연한 것을 새롭게 보게 만들어, 고객이 “이 브랜드는 깊이가 있다”고 느끼게 합니다. 즉각적 자극보다 사고의 여운으로 브랜드 신뢰와 철학적 매력을 쌓습니다.',
+      '당연한 것을 새롭게 보게 만들어, 고객이 "이 브랜드는 깊이가 있다"고 느끼게 합니다. 즉각적 자극보다 사고의 여운으로 브랜드 신뢰와 철학적 매력을 쌓습니다.',
     tone: '차분한, 사려 깊은, 진중한, 철학적인',
     structure: '일상적 전제 → 새로운 관점 → 브랜드 철학 연결',
     template:
       '[Setup] 모두가 ___를 중요하게 생각하지만,\n[Twist] 우리는 ___가 진짜 본질이라고 믿습니다.\n[Philosophy] 그래서 ___을(를) 이렇게 만듭니다.',
     example:
-      '“좋은 홍보는 자극이 아니라, 공감에서 시작됩니다. HYP는 제품의 철학이 더 멀리 닿도록 돕습니다.”',
+      '"좋은 홍보는 자극이 아니라, 공감에서 시작됩니다. HYP는 제품의 철학이 더 멀리 닿도록 돕습니다."',
     exampleImage: '/concepts/insight.jpg',
     promptTemplate:
       "Create an insight-driven marketing copy. Follow this structure: 1) Present a common assumption or trend, 2) Offer a reflective or philosophical twist, 3) Connect that insight to the product's philosophy or purpose. The tone should be calm, thoughtful, and sincere.",
+    imageStyle: {
+      name: '미니멀 철학 아트',
+      description:
+        '사색적이고 상징적인 미니멀 일러스트. 여백과 단순한 색조 사용.',
+      promptTemplate:
+        'Create a minimalist conceptual art-style marketing image that conveys insight and reflection. Use subtle colors, symbolic shapes, and negative space to create a calm and thoughtful atmosphere.',
+    },
   },
   {
     id: 'Trust',
@@ -60,6 +81,13 @@ export const concepts: Concept[] = [
     exampleImage: '/concepts/trust.jpg',
     promptTemplate:
       'Create a trust-focused marketing copy using this structure: 1) Present social proof and numbers, 2) Highlight authority and expertise, 3) Encourage immediate action with confidence. Use objective, professional, trustworthy language with data and testimonials.',
+    imageStyle: {
+      name: '프리미엄 코퍼레이트',
+      description:
+        '고급스럽고 안정감 있는 기업 이미지. 짙은 네이비와 골드 포인트.',
+      promptTemplate:
+        'Create a premium corporate-style marketing image. Use deep navy and gold accents, elegant layout, and high-end aesthetics to express credibility, stability, and authority.',
+    },
   },
   {
     id: 'Emotion',
@@ -75,6 +103,12 @@ export const concepts: Concept[] = [
     exampleImage: '/concepts/emotion.jpg',
     promptTemplate:
       'Create an emotional marketing copy using this structure: 1) Connect with the emotional core of the product, 2) Tell the story of how it makes a difference, 3) Inspire hope for positive change. Use warm, poetic expressions and storytelling.',
+    imageStyle: {
+      name: '소프트 감성 일러스트',
+      description: '따뜻한 파스텔톤과 부드러운 터치의 감성 일러스트.',
+      promptTemplate:
+        'Create a soft emotional illustration-style image using pastel colors, gentle lighting, and poetic atmosphere. Focus on warmth, sincerity, and emotional storytelling.',
+    },
   },
   {
     id: 'Action',
@@ -90,6 +124,13 @@ export const concepts: Concept[] = [
     exampleImage: '/concepts/action.jpg',
     promptTemplate:
       'Create an action-driven marketing copy using this structure: 1) Grab attention with a compelling hook, 2) Build interest by highlighting AI benefits, 3) Drive immediate action with a strong CTA. Use direct, powerful, motivational language.',
+    imageStyle: {
+      name: '네온 에너지',
+      description:
+        '강렬한 네온 라이트와 다이내믹한 구도의 에너지 넘치는 스타일.',
+      promptTemplate:
+        'Create a high-energy neon-style marketing image. Use dynamic composition, glowing lights, and bold color contrast (blue, magenta, cyan). Express excitement, motion, and innovation.',
+    },
   },
 ];
 

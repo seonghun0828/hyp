@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 제품 중심의 이미지 생성 프롬프트
+    // 컨셉별 이미지 스타일 프롬프트 적용
     const imagePrompt = `Create a compelling marketing image for: ${
       summary.core_value || '제품'
     }
@@ -23,6 +23,8 @@ Product essence: ${summary.customer_benefit || '제품 설명'}
 Target audience: ${summary.target_customer || '일반 사용자'}
 Emotional appeal: ${summary.emotional_keyword || '긍정적'}
 Unique advantage: ${summary.competitive_edge || '차별화 포인트'}
+
+Image Style: ${concept.imageStyle.promptTemplate}
 
 CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN THE IMAGE. This includes product names, titles, labels, or any readable text. Create a purely visual image using only colors, shapes, objects, and composition.`;
 

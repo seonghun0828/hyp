@@ -25,6 +25,11 @@ export interface Concept {
   example: string;
   exampleImage: string;
   promptTemplate: string;
+  imageStyle: {
+    name: string;
+    description: string;
+    promptTemplate: string;
+  };
 }
 
 export interface GeneratedContent {
