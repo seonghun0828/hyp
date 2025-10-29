@@ -155,13 +155,27 @@ export default function HomePage() {
           {/* 예시 */}
           <div className="mt-12 p-6 bg-white rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              지원하는 링크 예시
+              추천하는 링크 유형
             </h3>
             <div className="space-y-2 text-sm text-gray-600">
-              <p>• 제품 웹사이트</p>
-              <p>• 앱스토어 링크</p>
-              <p>• GitHub 프로젝트</p>
-              <p>• 온라인 쇼핑몰 상품</p>
+              <p>
+                • 웹서비스{' '}
+                <span className="text-gray-400">
+                  ex) https://www.microsoft.com/ko-kr/microsoft-365
+                </span>
+              </p>
+              <p>
+                • 제품 설명 및 기능 페이지{' '}
+                <span className="text-gray-400">
+                  ex) https://www.apple.com/kr/macbook-air/
+                </span>
+              </p>
+            </div>
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-xs text-yellow-800">
+                ⚠️ 사이트의 보안 정책에 따라 일부 웹페이지는 분석이 제한될 수
+                있습니다.
+              </p>
             </div>
           </div>
         </div>
