@@ -27,8 +27,11 @@ export const FeedbackPrompt = ({ onClose }: FeedbackPromptProps) => {
     <div className="feedback-popup-overlay">
       <div className="feedback-popup">
         <div className="feedback-header">
-          <h3>HYP은 지금 여러분과 함께 성장 중이에요 🌱</h3>
-          <p>딱 1분이면, 당신의 의견이 다음 버전에 반영됩니다.</p>
+          <h3>당신의 한마디가 HYP의 다음 버전을 만듭니다 🚀</h3>
+          <p>
+            어떤 점이 좋았고, 어떤 점이 아쉬웠나요?
+            <br />딱 1분으로 베타테스터로서 당신의 의견을 들려주세요.
+          </p>
         </div>
 
         <div className="quick-actions">
