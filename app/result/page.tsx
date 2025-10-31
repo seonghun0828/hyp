@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore } from '@/lib/store';
 import { generateFileName } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import { FeedbackPrompt } from '@/components/FeedbackPrompt';
@@ -68,6 +69,13 @@ export default function ResultPage() {
 
     setDownloading(true);
 
+    // 이벤트 추적
+    trackEvent('download', {
+      step: 6,
+      page: 'result',
+      action: 'download',
+    });
+
     try {
       // Base64 이미지를 Blob으로 변환
       const response = await fetch(finalImageUrl);
@@ -89,6 +97,13 @@ export default function ResultPage() {
   };
 
   const handleNewProject = () => {
+    // 이벤트 추적
+    trackEvent('new_project', {
+      step: 6,
+      page: 'result',
+      action: 'new_project',
+    });
+
     // sessionStorage도 초기화
     sessionStorage.removeItem('finalImageUrl');
     reset();

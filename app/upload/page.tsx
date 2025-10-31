@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore } from '@/lib/store';
+import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 
@@ -69,6 +70,14 @@ export default function UploadPage() {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setImageUrl(result);
+
+        // 이벤트 추적
+        trackEvent('image_ready', {
+          step: 4,
+          page: 'upload',
+          method: 'upload',
+        });
+
         router.push('/editor');
       };
       reader.readAsDataURL(file);
@@ -110,6 +119,14 @@ export default function UploadPage() {
 
       const data = await response.json();
       setImageUrl(data.imageUrl);
+
+      // 이벤트 추적
+      trackEvent('image_ready', {
+        step: 4,
+        page: 'upload',
+        method: 'ai_generate',
+      });
+
       router.push('/editor');
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');

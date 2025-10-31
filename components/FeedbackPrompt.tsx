@@ -1,11 +1,20 @@
 'use client';
 
+import { trackEvent } from '@/lib/analytics';
+
 interface FeedbackPromptProps {
   onClose?: () => void;
 }
 
 export const FeedbackPrompt = ({ onClose }: FeedbackPromptProps) => {
   const handleFeedbackClick = () => {
+    // 이벤트 추적
+    trackEvent('feedback', {
+      step: 6,
+      page: 'result',
+      action: 'feedback',
+    });
+
     // Google Forms로 이동
     window.open('https://forms.gle/6yxH79hG1ize2cCE9', '_blank');
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore, ProductSummary } from '@/lib/store';
 import { isValidUrl } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 
@@ -95,6 +96,12 @@ export default function HomePage() {
         usage_scenario: data.usage_scenario,
       };
       setSummary(summaryData);
+
+      // 이벤트 추적
+      trackEvent('link_submit', {
+        step: 1,
+        page: 'home',
+      });
 
       // 제품 요약 페이지로 이동
       router.push('/summary');

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore, SuccessTexts } from '@/lib/store';
+import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 
@@ -334,6 +335,13 @@ export default function EditorPage() {
 
       // Zustand store에도 저장 (UI 업데이트용)
       setFinalImageUrl(finalImageUrl);
+
+      // 이벤트 추적
+      trackEvent('editor_complete', {
+        step: 5,
+        page: 'editor',
+      });
+
       router.push('/result');
     } catch (error) {
       alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');

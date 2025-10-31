@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore } from '@/lib/store';
 import { concepts } from '@/lib/concepts';
+import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import {
@@ -49,6 +50,15 @@ export default function ConceptPage() {
 
   const handleConceptSelect = (concept: any) => {
     setConcept(concept);
+
+    // 이벤트 추적
+    trackEvent('concept_select', {
+      step: 3,
+      page: 'concept',
+      concept_id: concept.id,
+      concept_name: concept.name,
+    });
+
     router.push('/upload');
   };
 

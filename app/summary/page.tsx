@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore, ProductSummary } from '@/lib/store';
+import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 
@@ -92,6 +93,12 @@ export default function SummaryPage() {
       const result = await response.json();
 
       // 저장 후 확인
+
+      // 이벤트 추적
+      trackEvent('summary_next', {
+        step: 2,
+        page: 'summary',
+      });
 
       router.push('/concept');
     } catch (err) {
