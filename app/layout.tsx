@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'HYP',
+  title: {
+    default: 'HYP',
+    template: '%s | HYP',
+  },
   description: 'Highlight Your Product',
 };
 
