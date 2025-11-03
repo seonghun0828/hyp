@@ -113,7 +113,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar currentStep={1} totalSteps={6} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 py-12">
@@ -123,7 +123,8 @@ export default function HomePage() {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">HYP</h1>
             <p className="text-xl text-gray-600 mb-2">Highlight Your Product</p>
             <p className="text-gray-500">
-              제품 링크만 입력하면 AI가 홍보 콘텐츠를 자동 생성해드립니다
+              AI가 제안하고, 당신이 선택해 완성합니다.
+              <br />단 몇 초 만에 홍보 콘텐츠를 만들어보세요.
             </p>
           </div>
 
@@ -134,7 +135,7 @@ export default function HomePage() {
                 htmlFor="url"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                홍보할 제품의 링크를 입력하세요
+                아래에 서비스나 제품 설명 페이지의 링크를 입력해보세요 👇
               </label>
               <input
                 type="url"
@@ -155,7 +156,7 @@ export default function HomePage() {
               disabled={!inputUrl.trim()}
               className="w-full"
             >
-              {loading ? '제품을 분석하고 있습니다...' : '다음'}
+              {loading ? '제품을 분석하고 있습니다...' : '홍보 콘텐츠 만들기'}
             </Button>
           </form>
 
@@ -178,7 +179,7 @@ export default function HomePage() {
                 </span>
               </p>
             </div>
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div className="mt-4 p-3   rounded-md">
               <p className="text-xs text-yellow-800">
                 ⚠️ 사이트의 보안 정책에 따라 일부 웹페이지는 분석이 제한될 수
                 있습니다.
