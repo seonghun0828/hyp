@@ -169,7 +169,7 @@ export default function HomePage() {
               <p>
                 • 웹서비스{' '}
                 <span className="text-gray-400">
-                  ex) https://www.microsoft.com/ko-kr/microsoft-365
+                  ex) https://www.figma.com/ko-kr/
                 </span>
               </p>
               <p>
