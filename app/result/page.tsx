@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore } from '@/lib/store';
-import { generateFileName } from '@/lib/utils';
+import { generateFileName, getOrCreateSessionId } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import { FeedbackPrompt } from '@/components/FeedbackPrompt';
-import { useButtonVisibilityFeedback } from '@/hooks/useButtonVisibilityFeedback';
 
 const stepNames = [
   '링크 입력',
@@ -25,23 +24,16 @@ export default function ResultPage() {
   const [downloading, setDownloading] = useState(false);
   const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [hasQuickFeedback, setHasQuickFeedback] = useState(false);
+  const [resultId, setResultId] = useState<string | null>(null);
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
-
-  // 버튼 가시성 감지
-  const shouldShowFeedback = useButtonVisibilityFeedback();
 
   useEffect(() => {
     // Zustand persist가 hydration을 완료할 때까지 기다림
     setIsHydrated(true);
   }, []);
-
-  useEffect(() => {
-    if (shouldShowFeedback) {
-      setShowFeedback(true);
-    }
-  }, [shouldShowFeedback]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
@@ -62,7 +54,77 @@ export default function ResultPage() {
       router.push('/editor');
       return;
     }
+
+    // resultId 가져오기 (우선순위: URL 쿼리 파라미터 > sessionStorage)
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlResultId = searchParams.get('result-id');
+    const storedResultId = sessionStorage.getItem('resultId');
+
+    const finalResultId = urlResultId || storedResultId;
+
+    if (!finalResultId) {
+      // resultId가 없으면 에러 처리
+      console.error('resultId가 없습니다. 결과물을 불러올 수 없습니다.');
+      router.push('/editor');
+      return;
+    }
+
+    // URL에서 가져온 경우 sessionStorage에도 저장
+    if (urlResultId && !storedResultId) {
+      sessionStorage.setItem('resultId', urlResultId);
+    }
+
+    setResultId(finalResultId);
+
+    // 간단 설문 참여 여부 확인
+    const quickFeedbackDone = sessionStorage.getItem('quickFeedbackDone');
+    if (quickFeedbackDone === 'true') {
+      setHasQuickFeedback(true);
+    }
   }, [summary, router, isHydrated]);
+
+  const handleQuickFeedback = async (feedback: 'good' | 'neutral' | 'bad') => {
+    if (!resultId || hasQuickFeedback) return;
+
+    try {
+      const userId = getOrCreateSessionId();
+
+      // DB에 저장
+      const response = await fetch('/api/quick-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          resultId,
+          quickFeedback: feedback,
+        }),
+      });
+
+      // 응답을 받으면 성공/실패 관계없이 모달 표시
+      if (response.ok) {
+        // 간단 설문 완료 표시
+        sessionStorage.setItem('quickFeedbackDone', 'true');
+        setHasQuickFeedback(true);
+
+        // 이벤트 추적
+        trackEvent('quick_feedback', {
+          step: 6,
+          page: 'result',
+          action: 'quick_feedback',
+          feedback,
+        });
+      }
+
+      // 응답을 받으면 즉시 모달 표시 (성공/실패 관계없이)
+      setShowFeedback(true);
+    } catch (err) {
+      console.error('Failed to save quick feedback:', err);
+      // 에러가 발생해도 모달은 표시
+      setShowFeedback(true);
+    }
+  };
 
   const handleDownload = async () => {
     if (!finalImageUrl || !summary) return;
@@ -90,6 +152,13 @@ export default function ResultPage() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+
+      // 간단 설문 미참여 유저만 1초 후 모달 표시
+      if (!hasQuickFeedback) {
+        setTimeout(() => {
+          setShowFeedback(true);
+        }, 1000);
+      }
     } catch (err) {
     } finally {
       setDownloading(false);
@@ -106,6 +175,8 @@ export default function ResultPage() {
 
     // sessionStorage도 초기화
     sessionStorage.removeItem('finalImageUrl');
+    sessionStorage.removeItem('resultId');
+    sessionStorage.removeItem('quickFeedbackDone');
     reset();
     router.push('/');
   };
@@ -158,6 +229,44 @@ export default function ResultPage() {
                   className="rounded-lg shadow-md mx-auto"
                 />
               </div>
+
+              {/* 간단 설문 CTA */}
+              {!hasQuickFeedback && (
+                <div className="mb-6 text-center">
+                  <p className="text-lg font-medium text-gray-700 mb-4">
+                    이 결과, 어땠나요?
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={() => handleQuickFeedback('good')}
+                      className="cursor-pointer flex flex-col items-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                    >
+                      <span className="text-2xl">👍</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        좋았어요
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickFeedback('neutral')}
+                      className="cursor-pointer flex flex-col items-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                    >
+                      <span className="text-2xl">🤔</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        보통이에요
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickFeedback('bad')}
+                      className="cursor-pointer flex flex-col items-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                    >
+                      <span className="text-2xl">👎</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        별로예요
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* 액션 버튼들 */}
               <div className="button-container flex flex-col sm:flex-row gap-4 justify-center">

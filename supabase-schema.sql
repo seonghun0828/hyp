@@ -45,6 +45,15 @@ CREATE TABLE IF NOT EXISTS marketing_text_cache (
   expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '7 days')
 );
 
+-- 간단 피드백 테이블
+CREATE TABLE IF NOT EXISTS quick_feedback (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  result_id TEXT NOT NULL,
+  quick_feedback TEXT NOT NULL CHECK (quick_feedback IN ('good', 'neutral', 'bad')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_product_summaries_url ON product_summaries(url);
 CREATE INDEX IF NOT EXISTS idx_product_summaries_created_at ON product_summaries(created_at);
@@ -53,11 +62,15 @@ CREATE INDEX IF NOT EXISTS idx_generated_contents_concept_id ON generated_conten
 CREATE INDEX IF NOT EXISTS idx_generated_contents_created_at ON generated_contents(created_at);
 CREATE INDEX IF NOT EXISTS idx_marketing_cache_key ON marketing_text_cache(cache_key);
 CREATE INDEX IF NOT EXISTS idx_marketing_cache_expires ON marketing_text_cache(expires_at);
+CREATE INDEX IF NOT EXISTS idx_quick_feedback_user_id ON quick_feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_quick_feedback_result_id ON quick_feedback(result_id);
+CREATE INDEX IF NOT EXISTS idx_quick_feedback_created_at ON quick_feedback(created_at);
 
 -- RLS (Row Level Security) 정책 설정
 ALTER TABLE product_summaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE generated_contents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE marketing_text_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quick_feedback ENABLE ROW LEVEL SECURITY;
 
 -- 모든 사용자가 읽기/쓰기 가능하도록 설정 (MVP용)
 CREATE POLICY "Allow all operations on product_summaries" ON product_summaries
@@ -67,6 +80,9 @@ CREATE POLICY "Allow all operations on generated_contents" ON generated_contents
   FOR ALL USING (true);
 
 CREATE POLICY "Allow all operations on marketing_text_cache" ON marketing_text_cache
+  FOR ALL USING (true);
+
+CREATE POLICY "Allow all operations on quick_feedback" ON quick_feedback
   FOR ALL USING (true);
 
 -- 만료된 캐시 자동 삭제는 애플리케이션 레벨에서 처리
