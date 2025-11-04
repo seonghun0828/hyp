@@ -113,7 +113,7 @@ export default function ResultPage() {
   // hydration이 완료되기 전에는 로딩 표시
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">로딩 중...</p>
@@ -124,7 +124,7 @@ export default function ResultPage() {
 
   if (!summary || !finalImageUrl) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">이미지를 불러오는 중...</p>
@@ -134,7 +134,7 @@ export default function ResultPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar currentStep={6} totalSteps={6} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 py-12">
@@ -157,25 +157,6 @@ export default function ResultPage() {
                   alt="완성된 홍보 콘텐츠"
                   className="rounded-lg shadow-md mx-auto"
                 />
-              </div>
-
-              {/* 제품 정보 요약 */}
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  생성된 콘텐츠 정보
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="font-medium text-gray-700">제품명</p>
-                    <p className="text-gray-600">
-                      {summary.title || summary.core_value}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">원본 링크</p>
-                    <p className="text-gray-600 break-all">{summary.url}</p>
-                  </div>
-                </div>
               </div>
 
               {/* 액션 버튼들 */}
@@ -204,9 +185,6 @@ export default function ResultPage() {
           {/* 추가 정보 */}
           <div className="mt-8 text-center">
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                HYP로 만든 콘텐츠
-              </h3>
               <p className="text-gray-600 text-sm">
                 이 콘텐츠는 HYP(Highlight Your Product)로 생성되었습니다.
                 <br />
