@@ -276,11 +276,21 @@ export default function EditorPage() {
   };
 
   const handleSave = async () => {
+    if (!summary || !concept || !currentPrinciple) {
+      alert('필수 정보가 없습니다. 다시 시도해주세요.');
+      return;
+    }
+
+    setLoading(true);
+
     // html2canvas-pro를 사용하여 div를 이미지로 변환 (lab() 색상 함수 지원)
     const { default: html2canvas } = await import('html2canvas-pro');
     const element = document.querySelector('.editor-container') as HTMLElement;
 
-    if (!element) return;
+    if (!element) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const canvas = await html2canvas(element, {
@@ -330,7 +340,66 @@ export default function EditorPage() {
 
       const finalImageUrl = canvas.toDataURL('image/png');
 
-      // sessionStorage에 저장 (localStorage 용량 초과 방지)
+      // 1. Supabase Storage에 업로드
+      const uploadResponse = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          base64Image: finalImageUrl,
+        }),
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('이미지 업로드에 실패했습니다.');
+      }
+
+      const uploadData = await uploadResponse.json();
+      const storageUrl = uploadData.imageUrl;
+
+      // 2. 이미지 생성 프롬프트 재구성 (generate-image API와 동일한 형식)
+      const imagePrompt = `Create a compelling marketing image for: ${
+        summary.core_value || '제품'
+      }
+
+Product essence: ${summary.customer_benefit || '제품 설명'}
+Target audience: ${summary.target_customer || '일반 사용자'}
+Emotional appeal: ${summary.emotional_keyword || '긍정적'}
+Unique advantage: ${summary.competitive_edge || '차별화 포인트'}
+
+Image Style: ${concept.imageStyle.promptTemplate}
+
+CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN THE IMAGE. This includes product names, titles, labels, or any readable text. Create a purely visual image using only colors, shapes, objects, and composition.`;
+
+      // 3. 텍스트 배열 생성
+      const texts = textElements.map((el) => el.text);
+
+      // 4. DB에 저장
+      const saveResponse = await fetch('/api/save-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          summaryId: summary.id,
+          conceptId: concept.id,
+          selectedPrinciple: currentPrinciple.key,
+          texts: texts,
+          imagePrompt: imagePrompt,
+          finalImageUrl: storageUrl,
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('콘텐츠 저장에 실패했습니다.');
+      }
+
+      const saveData = await saveResponse.json();
+      const contentId = saveData.contentId;
+
+      // 5. resultId를 sessionStorage와 URL에 저장
+      sessionStorage.setItem('resultId', contentId);
       sessionStorage.setItem('finalImageUrl', finalImageUrl);
 
       // Zustand store에도 저장 (UI 업데이트용)
@@ -342,9 +411,17 @@ export default function EditorPage() {
         page: 'editor',
       });
 
-      router.push('/result');
+      // 결과 페이지로 이동 (URL 쿼리 파라미터에 result-id 추가)
+      router.push(`/result?result-id=${contentId}`);
     } catch (error) {
-      alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
+      console.error('Save error:', error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : '저장 중 오류가 발생했습니다. 다시 시도해주세요.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 

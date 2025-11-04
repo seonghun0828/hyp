@@ -21,11 +21,10 @@ CREATE TABLE IF NOT EXISTS generated_contents (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   summary_id UUID NOT NULL REFERENCES product_summaries(id) ON DELETE CASCADE,
   concept_id TEXT NOT NULL,
-  prompt TEXT NOT NULL,
+  image_prompt TEXT NOT NULL,
   image_url TEXT,
-  text_options TEXT[] NOT NULL DEFAULT '{}',
-  selected_text_index INTEGER,
-  final_image_url TEXT,
+  texts TEXT[] NOT NULL DEFAULT '{}',
+  selected_principle TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

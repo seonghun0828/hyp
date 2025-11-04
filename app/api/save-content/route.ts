@@ -3,19 +3,27 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
-    const { summaryId, conceptId, selectedTextIndex, finalImageUrl } =
-      await request.json();
+    const {
+      summaryId,
+      conceptId,
+      selectedPrinciple,
+      texts,
+      imagePrompt,
+      finalImageUrl,
+    } = await request.json();
 
     if (
       !summaryId ||
       !conceptId ||
-      selectedTextIndex === undefined ||
+      !selectedPrinciple ||
+      !Array.isArray(texts) ||
+      !imagePrompt ||
       !finalImageUrl
     ) {
       return NextResponse.json(
         {
           error:
-            'summaryId, conceptId, selectedTextIndex, and finalImageUrl are required',
+            'summaryId, conceptId, selectedPrinciple, texts, imagePrompt, and finalImageUrl are required',
         },
         { status: 400 }
       );
@@ -34,16 +42,16 @@ export async function POST(request: NextRequest) {
       .insert({
         summary_id: summaryId,
         concept_id: conceptId,
-        prompt: 'Generated marketing content',
+        image_prompt: imagePrompt,
         image_url: finalImageUrl,
-        text_options: [], // 실제로는 textOptions를 저장해야 함
-        selected_text_index: selectedTextIndex,
-        final_image_url: finalImageUrl,
+        texts: texts,
+        selected_principle: selectedPrinciple,
       })
       .select()
       .single();
 
     if (error) {
+      console.error('Supabase insert error:', error);
       return NextResponse.json(
         { error: 'Failed to save content' },
         { status: 500 }
