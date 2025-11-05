@@ -39,7 +39,7 @@ export const FeedbackPrompt = ({ onClose }: FeedbackPromptProps) => {
           <h3>당신의 한마디가 HYP의 다음 버전을 만듭니다 🚀</h3>
           <p>
             어떤 점이 좋았고, 어떤 점이 아쉬웠나요?
-            <br />딱 1분이면 됩니다. 베타테스터로서 당신의 의견을 들려주세요.
+            <br />딱 1분만, 베타테스터로서 당신의 의견을 들려주세요.
           </p>
         </div>
 

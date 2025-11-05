@@ -86,11 +86,24 @@ export default function ResultPage() {
   const handleQuickFeedback = async (feedback: 'good' | 'neutral' | 'bad') => {
     if (!resultId || hasQuickFeedback) return;
 
+    // 1. 즉시 UI 반영 (optimistic update)
+    sessionStorage.setItem('quickFeedbackDone', 'true');
+    setHasQuickFeedback(true);
+    setShowFeedback(true); // 모달도 즉시 표시
+
+    // 2. 이벤트 추적
+    trackEvent('quick_feedback', {
+      step: 6,
+      page: 'result',
+      action: 'quick_feedback',
+      feedback,
+    });
+
+    // 3. 백그라운드에서 API 요청 (await 없이)
     try {
       const userId = getOrCreateSessionId();
 
-      // DB에 저장
-      const response = await fetch('/api/quick-feedback', {
+      fetch('/api/quick-feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,29 +113,12 @@ export default function ResultPage() {
           resultId,
           quickFeedback: feedback,
         }),
+      }).catch((err) => {
+        console.error('Failed to save quick feedback:', err);
+        // 에러 발생해도 UI는 이미 반영되었으므로 그대로 유지
       });
-
-      // 응답을 받으면 성공/실패 관계없이 모달 표시
-      if (response.ok) {
-        // 간단 설문 완료 표시
-        sessionStorage.setItem('quickFeedbackDone', 'true');
-        setHasQuickFeedback(true);
-
-        // 이벤트 추적
-        trackEvent('quick_feedback', {
-          step: 6,
-          page: 'result',
-          action: 'quick_feedback',
-          feedback,
-        });
-      }
-
-      // 응답을 받으면 즉시 모달 표시 (성공/실패 관계없이)
-      setShowFeedback(true);
     } catch (err) {
       console.error('Failed to save quick feedback:', err);
-      // 에러가 발생해도 모달은 표시
-      setShowFeedback(true);
     }
   };
 
