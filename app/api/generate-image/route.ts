@@ -1,28 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getImagePrompt } from '@/lib/prompts';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
-    const { conceptId, summary, concept } = await request.json();
+    const { imagePrompt } = await request.json();
 
-    if (!conceptId || !summary || !concept) {
+    if (!imagePrompt) {
       return NextResponse.json(
-        { error: 'conceptId, summary, and concept are required' },
+        { error: 'imagePrompt is required' },
         { status: 400 }
       );
     }
 
-    // 컨셉별 이미지 스타일 프롬프트 적용
-    const imagePrompt = getImagePrompt(summary, concept);
+    // 텍스트 넣지 말라는 지시 추가
+    const finalPrompt = `${imagePrompt}
 
-    // 프롬프트 로깅 추가
+CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN THE IMAGE. This includes product names, titles, labels, or any readable text. Create a purely visual image using only colors, shapes, objects, and composition.`;
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
 
-    const result = await model.generateContent(imagePrompt);
+    const result = await model.generateContent(finalPrompt);
     const response = await result.response;
 
     // 응답 정보 로깅
@@ -60,10 +59,10 @@ export async function POST(request: NextRequest) {
           AI Generated Image
         </text>
         <text x="400" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#374151">
-          ${summary.title || summary.core_value || '제품'}
+          AI Generated Image
         </text>
         <text x="400" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#6b7280">
-          ${summary.feature_summary || '주요 기능'}
+          Loading...
         </text>
         <circle cx="400" cy="450" r="30" fill="#3b82f6" opacity="0.1"/>
         <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#3b82f6">

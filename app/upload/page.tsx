@@ -29,6 +29,9 @@ export default function UploadPage() {
   const [textsGenerating, setTextsGenerating] = useState(false);
   const [textsReady, setTextsReady] = useState(false);
 
+  // 이미지 프롬프트 생성 관련 상태 (Promise로 관리)
+  const imagePromptPromiseRef = useRef<Promise<string> | null>(null);
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -99,17 +102,43 @@ export default function UploadPage() {
     setError('');
 
     try {
-      // 문구 생성 대기하지 않고 즉시 진행
-      // 전달할 데이터 로깅
+      // Promise가 없으면 여기서 생성 (fallback)
+      if (!imagePromptPromiseRef.current) {
+        if (!summary) {
+          throw new Error('제품 정보가 없습니다.');
+        }
+
+        imagePromptPromiseRef.current = (async () => {
+          const response = await fetch('/api/generate-image-prompt', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              summary: summary,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('이미지 프롬프트 생성에 실패했습니다.');
+          }
+
+          const data = await response.json();
+          return data.imagePrompt;
+        })();
+      }
+
+      // 프롬프트 준비될 때까지 대기
+      const prompt = await imagePromptPromiseRef.current;
+
+      // 이미지 생성
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          conceptId: concept?.id,
-          summary: summary,
-          concept: concept,
+          imagePrompt: prompt,
         }),
       });
 
@@ -315,6 +344,30 @@ export default function UploadPage() {
       checkCacheAndInitialize();
     }
   }, [isHydrated, summary, concept]);
+
+  // 페이지 진입 시 이미지 프롬프트 미리 생성 (Promise로 시작)
+  useEffect(() => {
+    if (isHydrated && summary && !imagePromptPromiseRef.current) {
+      imagePromptPromiseRef.current = (async () => {
+        const response = await fetch('/api/generate-image-prompt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            summary: summary,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('이미지 프롬프트 생성에 실패했습니다.');
+        }
+
+        const data = await response.json();
+        return data.imagePrompt;
+      })();
+    }
+  }, [isHydrated, summary]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인

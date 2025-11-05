@@ -108,3 +108,35 @@ Features: ${summary.feature_summary || '주요 기능'}
 Target Users: ${summary.target_customer || '일반 사용자'}
 Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`;
 };
+
+/**
+ * 이미지 생성 프롬프트 생성을 위한 시스템 프롬프트
+ */
+export const getImagePromptSystemPrompt = (): string => {
+  return `You are a marketing image prompt generator. Your task is to create a detailed, compelling image generation prompt for a marketing image based on product information.
+
+Generate a comprehensive image generation prompt that:
+- Describes the visual elements, composition, mood, and atmosphere
+- Includes specific details about colors, lighting, and style
+- Is suitable for AI image generation models
+- Creates a compelling marketing image that represents the product
+
+Return only the image generation prompt text, no additional explanations or formatting.`;
+};
+
+/**
+ * 이미지 생성 프롬프트 생성을 위한 사용자 프롬프트
+ */
+export const getImagePromptUserPrompt = (summary: {
+  core_value?: string;
+  emotional_keyword?: string;
+  usage_scenario?: string;
+}): string => {
+  return `Create an image generation prompt for a marketing image based on this product information:
+
+Core Value: ${summary.core_value || '제품'}
+Emotional Keyword: ${summary.emotional_keyword || '긍정적'}
+Usage Scenario: ${summary.usage_scenario || '사용 시나리오'}
+
+Generate a detailed, visual description that captures the essence of this product for marketing purposes.`;
+};
