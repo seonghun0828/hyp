@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getConceptById } from '@/lib/concepts';
 import { getMarketingTextCache, saveMarketingTextCache } from '@/lib/supabase';
+import {
+  getSuccessTextSystemPrompt,
+  getSuccessTextUserPrompt,
+} from '@/lib/prompts';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -98,29 +102,11 @@ export async function POST(request: NextRequest) {
               messages: [
                 {
                   role: 'system',
-                  content: `Generate a marketing copy based on SUCCESs principle "${principle}" in Korean.
-The copy should be 2-3 lines like this example:
-"${conceptData.example}"
-
-Principle: ${principle}
-- Simple: Clear and concise message
-- Unexpected: Surprising or counterintuitive
-- Concrete: Specific and tangible
-- Credible: Trustworthy with proof
-- Emotional: Appeals to feelings
-- Story: Narrative-driven
-
-Style: ${conceptData.name} - ${conceptData.description}
-
-Return only the text content, no JSON format.`,
+                  content: getSuccessTextSystemPrompt(principle, conceptData),
                 },
                 {
                   role: 'user',
-                  content: `Product: ${summary.core_value || '제품'}
-Description: ${summary.customer_benefit || '제품 설명'}
-Features: ${summary.feature_summary || '주요 기능'}
-Target Users: ${summary.target_customer || '일반 사용자'}
-Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`,
+                  content: getSuccessTextUserPrompt(summary),
                 },
               ],
             });

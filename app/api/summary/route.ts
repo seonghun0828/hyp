@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { supabase } from '@/lib/supabase';
+import { getSummarySystemPrompt, getSummaryUserPrompt } from '@/lib/prompts';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -63,34 +64,11 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You are a marketing copywriting assistant specialized in extracting structured product summaries.
-You will receive product information (URL text).
-Your task is to extract **7 key marketing summary elements** in Korean for generating promotional content later.
-
-Follow these rules:
-- Always output in JSON format (UTF-8).
-- Each field must contain a concise, natural-sounding Korean sentence (under 40 words).
-- If data is missing, leave the field empty (empty string "").
-- Fill them only if sufficient info exists.
-- Focus on how customers perceive value, not just product specs.
-
-Required JSON structure:
-{
-  "title": "제품명",
-  "core_value": "핵심 가치",
-  "target_customer": "주요 고객층",
-  "competitive_edge": "경쟁 우위",
-  "customer_benefit": "고객 혜택",
-  "emotional_keyword": "감정 키워드",
-  "feature_summary": "주요 기능",
-  "usage_scenario": "사용 시나리오"
-}`,
+          content: getSummarySystemPrompt(),
         },
         {
           role: 'user',
-          content: `Analyze this product information and extract the marketing summary elements:
-
-${html.substring(0, 4000)}`,
+          content: getSummaryUserPrompt(html),
         },
       ],
       // GPT-5-mini는 temperature 파라미터를 지원하지 않음
