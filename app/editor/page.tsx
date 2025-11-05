@@ -34,6 +34,7 @@ export default function EditorPage() {
     summary,
     concept,
     imageUrl,
+    imagePrompt,
     successTexts,
     setSuccessTexts,
     setFinalImageUrl,
@@ -358,19 +359,9 @@ export default function EditorPage() {
       const uploadData = await uploadResponse.json();
       const storageUrl = uploadData.imageUrl;
 
-      // 2. 이미지 생성 프롬프트 재구성 (generate-image API와 동일한 형식)
-      const imagePrompt = `Create a compelling marketing image for: ${
-        summary.core_value || '제품'
-      }
-
-Product essence: ${summary.customer_benefit || '제품 설명'}
-Target audience: ${summary.target_customer || '일반 사용자'}
-Emotional appeal: ${summary.emotional_keyword || '긍정적'}
-Unique advantage: ${summary.competitive_edge || '차별화 포인트'}
-
-Image Style: ${concept.imageStyle.promptTemplate}
-
-CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN THE IMAGE. This includes product names, titles, labels, or any readable text. Create a purely visual image using only colors, shapes, objects, and composition.`;
+      // 2. 이미지 생성에 사용된 프롬프트 사용 (store에서 가져옴)
+      // 프롬프트가 없거나 사용자 업로드인 경우 명시적 메시지 사용
+      const promptToSave = imagePrompt || '[PROMPT_NOT_AVAILABLE]';
 
       // 3. 텍스트 배열 생성
       const texts = textElements.map((el) => el.text);
@@ -386,7 +377,7 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
           conceptId: concept.id,
           selectedPrinciple: currentPrinciple.key,
           texts: texts,
-          imagePrompt: imagePrompt,
+          imagePrompt: promptToSave,
           finalImageUrl: storageUrl,
         }),
       });

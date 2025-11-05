@@ -65,6 +65,7 @@ interface FunnelState {
 
   // Step 4: 이미지 업로드
   imageUrl?: string;
+  imagePrompt?: string; // 이미지 생성에 사용된 프롬프트
 
   // Step 5: SUCCESs 원칙 홍보문구
   successTexts?: SuccessTexts;
@@ -77,6 +78,7 @@ interface FunnelState {
   setSummary: (summary: ProductSummary) => void;
   setConcept: (concept: Concept) => void;
   setImageUrl: (imageUrl: string) => void;
+  setImagePrompt: (imagePrompt: string | undefined) => void;
   setSuccessTexts: (texts: SuccessTexts | undefined) => void;
   setFinalImageUrl: (imageUrl: string) => void;
   reset: () => void;
@@ -89,6 +91,7 @@ export const useFunnelStore = create<FunnelState>()(
       summary: undefined,
       concept: undefined,
       imageUrl: undefined,
+      imagePrompt: undefined,
       successTexts: undefined,
       finalImageUrl: undefined,
 
@@ -96,6 +99,7 @@ export const useFunnelStore = create<FunnelState>()(
       setSummary: (summary) => set({ summary }),
       setConcept: (concept) => set({ concept }),
       setImageUrl: (imageUrl) => set({ imageUrl }),
+      setImagePrompt: (imagePrompt) => set({ imagePrompt }),
       setSuccessTexts: (successTexts) => set({ successTexts }),
       setFinalImageUrl: (finalImageUrl) => set({ finalImageUrl }),
       reset: () =>
@@ -104,6 +108,7 @@ export const useFunnelStore = create<FunnelState>()(
           summary: undefined,
           concept: undefined,
           imageUrl: undefined,
+          imagePrompt: undefined,
           successTexts: undefined,
           finalImageUrl: undefined,
         }),
@@ -116,6 +121,7 @@ export const useFunnelStore = create<FunnelState>()(
         summary: state.summary,
         concept: state.concept,
         imageUrl: state.imageUrl,
+        imagePrompt: state.imagePrompt,
         successTexts: state.successTexts,
         // finalImageUrl은 localStorage에서 제외 (용량 초과 방지)
       }),

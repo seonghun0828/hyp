@@ -18,8 +18,14 @@ const stepNames = [
 
 export default function UploadPage() {
   const router = useRouter();
-  const { concept, summary, setImageUrl, setSuccessTexts, successTexts } =
-    useFunnelStore();
+  const {
+    concept,
+    summary,
+    setImageUrl,
+    setImagePrompt,
+    setSuccessTexts,
+    successTexts,
+  } = useFunnelStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
@@ -73,6 +79,8 @@ export default function UploadPage() {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setImageUrl(result);
+        // 직접 업로드임을 명시적으로 표시
+        setImagePrompt('[USER_UPLOADED]');
 
         // 이벤트 추적
         trackEvent('image_ready', {
@@ -130,6 +138,9 @@ export default function UploadPage() {
 
       // 프롬프트 준비될 때까지 대기
       const prompt = await imagePromptPromiseRef.current;
+
+      // 프롬프트를 store에 저장
+      setImagePrompt(prompt);
 
       // 이미지 생성
       const response = await fetch('/api/generate-image', {
@@ -364,10 +375,12 @@ export default function UploadPage() {
         }
 
         const data = await response.json();
+        // 프롬프트를 store에 저장
+        setImagePrompt(data.imagePrompt);
         return data.imagePrompt;
       })();
     }
-  }, [isHydrated, summary]);
+  }, [isHydrated, summary, setImagePrompt]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
