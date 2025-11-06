@@ -35,9 +35,6 @@ export default function UploadPage() {
   const [textsGenerating, setTextsGenerating] = useState(false);
   const [textsReady, setTextsReady] = useState(false);
 
-  // 이미지 프롬프트 생성 관련 상태 (Promise로 관리)
-  const imagePromptPromiseRef = useRef<Promise<string> | null>(null);
-
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -109,47 +106,21 @@ export default function UploadPage() {
     setLoading(true);
     setError('');
 
+    if (!summary) {
+      setError('제품 정보가 없습니다.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Promise가 없으면 여기서 생성 (fallback)
-      if (!imagePromptPromiseRef.current) {
-        if (!summary) {
-          throw new Error('제품 정보가 없습니다.');
-        }
-
-        imagePromptPromiseRef.current = (async () => {
-          const response = await fetch('/api/generate-image-prompt', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              summary: summary,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error('이미지 프롬프트 생성에 실패했습니다.');
-          }
-
-          const data = await response.json();
-          return data.imagePrompt;
-        })();
-      }
-
-      // 프롬프트 준비될 때까지 대기
-      const prompt = await imagePromptPromiseRef.current;
-
-      // 프롬프트를 store에 저장
-      setImagePrompt(prompt);
-
-      // 이미지 생성
+      // 이미지 생성 (API 내부에서 프롬프트 생성)
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          imagePrompt: prompt,
+          summary: summary,
         }),
       });
 
@@ -159,6 +130,11 @@ export default function UploadPage() {
 
       const data = await response.json();
       setImageUrl(data.imageUrl);
+
+      // 생성된 프롬프트를 store에 저장
+      if (data.imagePrompt) {
+        setImagePrompt(data.imagePrompt);
+      }
 
       // 이벤트 추적
       trackEvent('image_ready', {
@@ -355,32 +331,6 @@ export default function UploadPage() {
       checkCacheAndInitialize();
     }
   }, [isHydrated, summary, concept]);
-
-  // 페이지 진입 시 이미지 프롬프트 미리 생성 (Promise로 시작)
-  useEffect(() => {
-    if (isHydrated && summary && !imagePromptPromiseRef.current) {
-      imagePromptPromiseRef.current = (async () => {
-        const response = await fetch('/api/generate-image-prompt', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            summary: summary,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('이미지 프롬프트 생성에 실패했습니다.');
-        }
-
-        const data = await response.json();
-        // 프롬프트를 store에 저장
-        setImagePrompt(data.imagePrompt);
-        return data.imagePrompt;
-      })();
-    }
-  }, [isHydrated, summary, setImagePrompt]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인

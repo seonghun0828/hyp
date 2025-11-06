@@ -1,35 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getImagePrompt } from '@/lib/prompts';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
-    const { imagePrompt } = await request.json();
+    const { summary } = await request.json();
 
-    if (!imagePrompt) {
+    if (!summary) {
       return NextResponse.json(
-        { error: 'imagePrompt is required' },
+        { error: 'summary is required' },
         { status: 400 }
       );
     }
 
-    // 텍스트 넣지 말라는 지시 추가
-    const finalPrompt = `${imagePrompt}
-
-CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN THE IMAGE. This includes product names, titles, labels, or any readable text. Create a purely visual image using only colors, shapes, objects, and composition.`;
+    // prompts.ts의 getImagePrompt 함수 사용
+    const prompt = getImagePrompt(summary);
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
 
-    const result = await model.generateContent(finalPrompt);
+    const result = await model.generateContent(prompt);
     const response = await result.response;
 
-    // 응답 정보 로깅
+    // Gemini 응답 구조 로깅
+    console.log('[Image Generation] Gemini Response:', {
+      hasCandidates: !!response.candidates,
+      candidatesLength: response.candidates?.length || 0,
+      firstCandidate: response.candidates?.[0]
+        ? {
+            hasContent: !!response.candidates[0].content,
+            hasParts: !!response.candidates[0].content?.parts,
+            partsLength: response.candidates[0].content?.parts?.length || 0,
+            partsTypes:
+              response.candidates[0].content?.parts?.map((p: any) => ({
+                hasInlineData: !!p.inlineData,
+                hasText: !!p.text,
+                textPreview: p.text ? p.text.substring(0, 100) : null,
+                inlineDataType: p.inlineData?.mimeType || null,
+              })) || [],
+            finishReason: response.candidates[0].finishReason,
+            safetyRatings: response.candidates[0].safetyRatings,
+          }
+        : null,
+    });
 
     // Gemini 2.5 Flash Image는 실제 이미지를 생성합니다
     if (response.candidates && response.candidates[0]?.content?.parts) {
       const imagePart = response.candidates[0].content.parts.find(
-        (part) => part.inlineData
+        (part: any) => part.inlineData
       );
 
       if (imagePart?.inlineData) {
@@ -37,6 +56,7 @@ CRITICAL: ABSOLUTELY NO TEXT, WORDS, LETTERS, OR WRITTEN CONTENT OF ANY KIND IN 
 
         return NextResponse.json({
           imageUrl: imageUrl,
+          imagePrompt: prompt, // 사용된 프롬프트 반환
           note: 'AI generated image using Gemini 2.5 Flash Image model',
         });
       }
