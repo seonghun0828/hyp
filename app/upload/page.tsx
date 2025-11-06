@@ -125,7 +125,11 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
-        throw new Error('이미지 생성에 실패했습니다.');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message ||
+            '이미지 생성에 실패했습니다. 잠시 후 다시 시도해주세요.'
+        );
       }
 
       const data = await response.json();

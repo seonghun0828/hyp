@@ -72,7 +72,7 @@ Now, generate a **single, detailed visual description** suitable for AI image ge
 - Matches the target audience and the brand’s identity
 - Evokes the feeling of a high-end fashion campaign or SNS marketing image
 - Is cinematic, refined, and modern in composition
-- Includes no words, letters, logos, or written elements of any kind
+- Includes no korean words, letters, logos, or written elements of any kind
 
 Output only the detailed visual description text — nothing else.`;
 };
