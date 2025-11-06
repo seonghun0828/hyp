@@ -37,44 +37,44 @@ export const getSummaryUserPrompt = (html: string): string => {
 ${html.substring(0, 4000)}`;
 };
 
-/**
- * 이미지 생성을 위한 프롬프트 (Gemini)
- */
-/**
- * 단일 요청으로 고품질 이미지 생성 프롬프트 생성 (Gemini 등 이미지 생성 모델용)
- */
 export const getImagePrompt = (summary: {
-  core_value?: string;
-  customer_benefit?: string;
-  target_customer?: string;
+  core_value: string;
+  target_customer: string;
+  competitive_edge: string;
+  customer_benefit: string;
   emotional_keyword?: string;
-  competitive_edge?: string;
+  feature_summary?: string;
+  usage_scenario?: string;
 }): string => {
   return `
-Create a visually stunning and emotionally engaging marketing image.
+Create a visually stunning, cinematic marketing image that captures the essence of this product.
 
 Product Information:
-- Core Value: ${summary.core_value || '최신 트렌드 패션 제공'}
-- Customer Benefit: ${
-    summary.customer_benefit || '사용자가 손쉽게 트렌디한 스타일을 탐색 가능'
-  }
-- Target Audience: ${summary.target_customer || '20~30대 글로벌 패션 소비자'}
-- Emotional Keyword: ${
-    summary.emotional_keyword || '트렌디함, 자신감, 스타일리시함'
-  }
-- Competitive Edge: ${
-    summary.competitive_edge || 'K-패션의 감성과 큐레이션 기술 결합'
-  }
+- Core Value: ${summary.core_value}
+- Customer Benefit: ${summary.customer_benefit}
+- Target Customer: ${summary.target_customer}
+- Competitive Edge: ${summary.competitive_edge}
+${
+  summary.emotional_keyword
+    ? `- Emotional Keyword: ${summary.emotional_keyword}`
+    : ''
+}
+${summary.feature_summary ? `- Key Features: ${summary.feature_summary}` : ''}
+${summary.usage_scenario ? `- Usage Scenario: ${summary.usage_scenario}` : ''}
 
-Now, generate a **single, detailed visual description** suitable for AI image generation that:
-- Describes the scene, people, fashion, setting, lighting, mood, and colors in vivid detail
-- Reflects the emotional keyword visually (e.g. confident, stylish, trendy)
-- Matches the target audience and the brand’s identity
-- Evokes the feeling of a high-end fashion campaign or SNS marketing image
-- Is cinematic, refined, and modern in composition
-- Includes no korean words, letters, logos, or written elements of any kind
+Generate a **single, vivid visual description** directly suitable for AI image generation.
 
-Output only the detailed visual description text — nothing else.`;
+Describe the image as if composing a professional campaign photo:
+1. **Scene Composition:** The environment, angle, and layout — e.g., street fashion, minimal studio, or lifestyle background.  
+2. **People or Objects:** Who or what is in the scene, their pose, emotion, and fashion style.  
+3. **Lighting & Colors:** Direction, tone, and color palette that reinforce mood and brand style.  
+4. **Atmosphere & Emotion:** The emotional impression (e.g., trendy, confident, energetic, luxurious).  
+5. **Marketing Appeal:** Make it look like a premium social media or fashion campaign image — cinematic, stylish, refined.
+
+Important:
+- Do **not** include any text, logos, words, or letters of any kind in the image.  
+- Focus purely on visual storytelling through people, environment, light, and color.  
+- Output only the final detailed visual description, nothing else.`;
 };
 
 /**
