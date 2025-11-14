@@ -11,7 +11,7 @@ const stepNames = [
   '링크 입력',
   '제품 요약',
   '컨셉 선택',
-  '이미지 업로드',
+  '이미지 선택',
   '에디터',
   '결과',
 ];
@@ -354,7 +354,7 @@ export default function UploadPage() {
   // hydration이 완료되기 전에는 로딩 표시
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">로딩 중...</p>
@@ -368,14 +368,14 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar currentStep={4} totalSteps={6} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              이미지 업로드
+              이미지 선택
             </h1>
             <p className="text-gray-600">
               제품 이미지를 업로드하거나 AI로 생성해보세요
