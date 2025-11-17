@@ -25,6 +25,9 @@ export interface Database {
           emotional_keyword: string | null;
           feature_summary: string | null;
           usage_scenario: string | null;
+          category_industry: string | null;
+          category_form: string | null;
+          category_purpose: string | null;
           created_at: string;
         };
         Insert: {
@@ -38,6 +41,9 @@ export interface Database {
           emotional_keyword?: string | null;
           feature_summary?: string | null;
           usage_scenario?: string | null;
+          category_industry?: string | null;
+          category_form?: string | null;
+          category_purpose?: string | null;
           created_at?: string;
         };
         Update: {
@@ -51,6 +57,9 @@ export interface Database {
           emotional_keyword?: string | null;
           feature_summary?: string | null;
           usage_scenario?: string | null;
+          category_industry?: string | null;
+          category_form?: string | null;
+          category_purpose?: string | null;
           created_at?: string;
         };
       };

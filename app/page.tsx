@@ -94,6 +94,7 @@ export default function HomePage() {
         emotional_keyword: data.emotional_keyword,
         feature_summary: data.feature_summary,
         usage_scenario: data.usage_scenario,
+        category: data.category, // ✅ category 필드 추가
       };
       setSummary(summaryData);
 

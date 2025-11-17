@@ -93,6 +93,9 @@ export async function POST(request: NextRequest) {
         ];
         const successTexts: any = {};
 
+        // summary에서 category 추출
+        const category = summary.category;
+
         // 병렬 처리: 모든 원칙을 동시에 생성
         const generateText = async (principle: string, index: number) => {
           let generatedText = '';
@@ -106,7 +109,7 @@ export async function POST(request: NextRequest) {
                 },
                 {
                   role: 'user',
-                  content: getSuccessTextUserPrompt(summary),
+                  content: getSuccessTextUserPrompt(summary, category),
                 },
               ],
             });

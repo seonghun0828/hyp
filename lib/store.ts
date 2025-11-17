@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { ProductCategory } from './categories/types';
 
 export interface ProductSummary {
   id?: string;
@@ -12,6 +13,7 @@ export interface ProductSummary {
   emotional_keyword?: string; // 선택
   feature_summary?: string; // 선택
   usage_scenario?: string; // 선택
+  category?: ProductCategory; // 카테고리 (industry, form, purpose)
   createdAt?: string;
 }
 

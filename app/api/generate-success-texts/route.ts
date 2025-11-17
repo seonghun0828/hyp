@@ -65,6 +65,9 @@ export async function POST(request: NextRequest) {
     ];
     const successTexts: any = {};
 
+    // summary에서 category 추출
+    const category = summary.category;
+
     for (const principle of principles) {
       const completion = await openai.chat.completions.create({
         model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
@@ -75,7 +78,7 @@ export async function POST(request: NextRequest) {
           },
           {
             role: 'user',
-            content: getSuccessTextUserPrompt(summary),
+            content: getSuccessTextUserPrompt(summary, category),
           },
         ],
       });

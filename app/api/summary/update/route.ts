@@ -39,6 +39,9 @@ export async function POST(request: NextRequest) {
             emotional_keyword: summaryData.emotional_keyword,
             feature_summary: summaryData.feature_summary,
             usage_scenario: summaryData.usage_scenario,
+            category_industry: summaryData.category?.industry || null, // ✅ 추가
+            category_form: summaryData.category?.form || null, // ✅ 추가
+            category_purpose: summaryData.category?.purpose || null, // ✅ 추가
           })
           .eq('url', summaryData.url)
           .select()
@@ -63,6 +66,9 @@ export async function POST(request: NextRequest) {
             emotional_keyword: summaryData.emotional_keyword,
             feature_summary: summaryData.feature_summary,
             usage_scenario: summaryData.usage_scenario,
+            category_industry: summaryData.category?.industry || null, // ✅ 추가
+            category_form: summaryData.category?.form || null, // ✅ 추가
+            category_purpose: summaryData.category?.purpose || null, // ✅ 추가
           })
           .select()
           .single();

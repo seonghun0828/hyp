@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS product_summaries (
   emotional_keyword TEXT,
   feature_summary TEXT,
   usage_scenario TEXT,
+  category_industry TEXT,
+  category_form TEXT,
+  category_purpose TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

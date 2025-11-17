@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (!fetchError && existingData) {
-          return NextResponse.json({
+          const responseData: any = {
             id: existingData.id,
             title: existingData.title,
             core_value: existingData.core_value,
@@ -35,7 +35,22 @@ export async function POST(request: NextRequest) {
             emotional_keyword: existingData.emotional_keyword,
             feature_summary: existingData.feature_summary,
             usage_scenario: existingData.usage_scenario,
-          });
+          };
+
+          // 카테고리 정보 추가
+          if (
+            existingData.category_industry ||
+            existingData.category_form ||
+            existingData.category_purpose
+          ) {
+            responseData.category = {
+              industry: existingData.category_industry || '',
+              form: existingData.category_form || '',
+              purpose: existingData.category_purpose || '',
+            };
+          }
+
+          return NextResponse.json(responseData);
         } else {
           // 캐시 미스 - AI 분석 진행
         }
@@ -97,6 +112,20 @@ export async function POST(request: NextRequest) {
         emotional_keyword: '',
         feature_summary: '',
         usage_scenario: '',
+        category: {
+          industry: '',
+          form: '',
+          purpose: '',
+        },
+      };
+    }
+
+    // 카테고리 기본값 설정 (없을 경우)
+    if (!summaryData.category) {
+      summaryData.category = {
+        industry: '',
+        form: '',
+        purpose: '',
       };
     }
 
@@ -117,6 +146,9 @@ export async function POST(request: NextRequest) {
             emotional_keyword: summaryData.emotional_keyword,
             feature_summary: summaryData.feature_summary,
             usage_scenario: summaryData.usage_scenario,
+            category_industry: summaryData.category?.industry || null,
+            category_form: summaryData.category?.form || null,
+            category_purpose: summaryData.category?.purpose || null,
           })
           .select()
           .single();
@@ -131,7 +163,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    const responseData: any = {
       id: summaryId,
       title: summaryData.title,
       core_value: summaryData.core_value,
@@ -141,7 +173,14 @@ export async function POST(request: NextRequest) {
       emotional_keyword: summaryData.emotional_keyword,
       feature_summary: summaryData.feature_summary,
       usage_scenario: summaryData.usage_scenario,
-    });
+    };
+
+    // 카테고리 정보 추가
+    if (summaryData.category) {
+      responseData.category = summaryData.category;
+    }
+
+    return NextResponse.json(responseData);
   } catch (error) {
     // 에러 메시지 분석
     const errorMessage = error instanceof Error ? error.message : String(error);

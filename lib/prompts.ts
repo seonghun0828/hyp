@@ -1,9 +1,21 @@
 import { Concept } from './store';
+import { ProductCategory } from './categories/types';
+import { getCategoryModules } from './categories/utils';
+import {
+  INDUSTRY_LABELS,
+  FORM_LABELS,
+  PURPOSE_LABELS,
+} from './categories/templates';
 
 /**
  * 제품 정보 요약을 위한 시스템 프롬프트
  */
 export const getSummarySystemPrompt = (): string => {
+  // templates.ts에서 정의된 카테고리 값들을 동적으로 가져오기
+  const industryOptions = Object.values(INDUSTRY_LABELS).join(', ');
+  const formOptions = Object.values(FORM_LABELS).join(', ');
+  const purposeOptions = Object.values(PURPOSE_LABELS).join(', ');
+
   return `You are a marketing copywriting assistant specialized in extracting structured product summaries.
 You will receive product information (URL text).
 Your task is to extract **7 key marketing summary elements** in Korean for generating promotional content later.
@@ -24,7 +36,12 @@ Required JSON structure:
   "customer_benefit": "고객 혜택",
   "emotional_keyword": "감정 키워드",
   "feature_summary": "주요 기능",
-  "usage_scenario": "사용 시나리오"
+  "usage_scenario": "사용 시나리오",
+  "category": {
+    "industry": "산업 분야 (What). Must be one of: ${industryOptions}",
+    "form": "제품 형태 (How). Must be one of: ${formOptions}",
+    "purpose": "제품 목적 (Why). Must be one of: ${purposeOptions}"
+  }
 }`;
 };
 
@@ -37,44 +54,96 @@ export const getSummaryUserPrompt = (html: string): string => {
 ${html.substring(0, 4000)}`;
 };
 
-export const getImagePrompt = (summary: {
-  core_value: string;
-  target_customer: string;
-  competitive_edge: string;
-  customer_benefit: string;
-  emotional_keyword?: string;
-  feature_summary?: string;
-  usage_scenario?: string;
-}): string => {
-  return `
-Create a visually stunning, cinematic marketing image that captures the essence of this product.
+export const getImagePrompt = (
+  summary: {
+    core_value: string;
+    target_customer: string;
+    competitive_edge: string;
+    customer_benefit: string;
+    emotional_keyword?: string;
+    feature_summary?: string;
+    usage_scenario?: string;
+  },
+  category?: ProductCategory
+): string => {
+  // Main Prompt (베이스)
+  const mainPrompt = `
+  Create a highly tailored, cinematic marketing image description **based primarily on the product’s assigned category modules**.
+  
+  Your output must integrate and prioritize all information from the following blocks:
+  
+  1. **Product Information Block (WHAT the product is)**
+     - Core Value: ${summary.core_value}
+     - Customer Benefit: ${summary.customer_benefit}
+     - Target Customer: ${summary.target_customer}
+     - Competitive Edge: ${summary.competitive_edge}
+     ${
+       summary.emotional_keyword
+         ? `- Emotional Keyword: ${summary.emotional_keyword}`
+         : ''
+     }
+     ${
+       summary.feature_summary
+         ? `- Key Features: ${summary.feature_summary}`
+         : ''
+     }
+     ${
+       summary.usage_scenario
+         ? `- Usage Scenario: ${summary.usage_scenario}`
+         : ''
+     }
+  
+  2. **Category Modules Block (HOW it should visually appear)**
+     - This includes:
+       • Industry Category (대분류)
+       • Form / Product Type (중분류)
+       • Marketing Objective (소분류)
+       • Style Option (Hero / Lifestyle / Detail)
+     These modules determine the **visual tone, composition style, atmosphere, and marketing intention**.  
+     **Category modules must override any default assumptions.**  
+     If any instruction from the category modules conflicts with the Product Information Block, the **Category Modules take priority** in visual direction.
+  
+  ---
+  
+  ### OUTPUT REQUIREMENTS
+  
+  Generate a **single, vivid, highly specific visual description** suitable for AI image generation.
+  
+  Your description must contain:
+  1. **Scene Composition**  
+     - Environment, angle, layout, props, and context appropriate for the assigned category modules.
+  
+  2. **People or Objects**  
+     - Who or what appears, their pose, expression, styling, or product placement.
+  
+  3. **Lighting & Colors**  
+     - Use lighting and palette appropriate for the category modules (e.g., warm lifestyle, cool SaaS tech, high-contrast fitness, appetizing food tones).
+  
+  4. **Atmosphere & Emotion**  
+     - The emotional tone should connect the product’s core value with the marketing objective.
+  
+  5. **Marketing Appeal**  
+     - Make it look like a premium campaign asset, with mood, composition, and cues aligned to the INDUSTRY + FORM + GOAL module.
+  
+  ---
+  
+  ### STRICT RULES
+  - Do **not** include any text, letters, logos, symbols, UI text, or readable characters.
+  - Describe only the visuals — no meta commentary or explanation.
+  - Only one final, contiguous visual description should be produced.
+  - Always follow the Style Option (Hero / Lifestyle / Detail) as the final layer of direction.
+  
+  Begin the final description now.`;
 
-Product Information:
-- Core Value: ${summary.core_value}
-- Customer Benefit: ${summary.customer_benefit}
-- Target Customer: ${summary.target_customer}
-- Competitive Edge: ${summary.competitive_edge}
-${
-  summary.emotional_keyword
-    ? `- Emotional Keyword: ${summary.emotional_keyword}`
-    : ''
-}
-${summary.feature_summary ? `- Key Features: ${summary.feature_summary}` : ''}
-${summary.usage_scenario ? `- Usage Scenario: ${summary.usage_scenario}` : ''}
+  // 카테고리 모듈 조합
+  if (category) {
+    const categoryModules = getCategoryModules(category);
+    if (categoryModules.trim() !== '') {
+      return `${mainPrompt}\n\n${categoryModules}`;
+    }
+  }
 
-Generate a **single, vivid visual description** directly suitable for AI image generation.
-
-Describe the image as if composing a professional campaign photo:
-1. **Scene Composition:** The environment, angle, and layout — e.g., street fashion, minimal studio, or lifestyle background.  
-2. **People or Objects:** Who or what is in the scene, their pose, emotion, and fashion style.  
-3. **Lighting & Colors:** Direction, tone, and color palette that reinforce mood and brand style.  
-4. **Atmosphere & Emotion:** The emotional impression (e.g., trendy, confident, energetic, luxurious).  
-5. **Marketing Appeal:** Make it look like a premium social media or fashion campaign image — cinematic, stylish, refined.
-
-Important:
-- Do **not** include any text, logos, words, or letters of any kind in the image.  
-- Focus purely on visual storytelling through people, environment, light, and color.  
-- Output only the final detailed visual description, nothing else.`;
+  return mainPrompt;
 };
 
 /**
@@ -104,16 +173,29 @@ Return only the text content, no JSON format.`;
 /**
  * SUCCESs 원칙 기반 홍보문구 생성을 위한 사용자 프롬프트
  */
-export const getSuccessTextUserPrompt = (summary: {
-  core_value?: string;
-  customer_benefit?: string;
-  feature_summary?: string;
-  target_customer?: string;
-  competitive_edge?: string;
-}): string => {
-  return `Product: ${summary.core_value || '제품'}
+export const getSuccessTextUserPrompt = (
+  summary: {
+    core_value?: string;
+    customer_benefit?: string;
+    feature_summary?: string;
+    target_customer?: string;
+    competitive_edge?: string;
+  },
+  category?: ProductCategory
+): string => {
+  const basePrompt = `Product: ${summary.core_value || '제품'}
 Description: ${summary.customer_benefit || '제품 설명'}
 Features: ${summary.feature_summary || '주요 기능'}
 Target Users: ${summary.target_customer || '일반 사용자'}
 Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`;
+
+  // 카테고리 모듈 조합
+  if (category) {
+    const categoryModules = getCategoryModules(category);
+    if (categoryModules.trim() !== '') {
+      return `${basePrompt}\n\nCategory Context:\n${categoryModules}`;
+    }
+  }
+
+  return basePrompt;
 };
