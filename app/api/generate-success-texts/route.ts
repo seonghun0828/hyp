@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { getConceptById } from '@/lib/concepts';
 import { getMarketingTextCache, saveMarketingTextCache } from '@/lib/supabase';
 import {
   getSuccessTextSystemPrompt,
@@ -13,17 +12,17 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { url, conceptName, summary, concept } = await request.json();
+    const { url, summary, styles } = await request.json();
 
-    if (!url || !conceptName || !summary || !concept) {
+    if (!url || !summary || !styles) {
       return NextResponse.json(
-        { error: 'url, conceptName, summary, and concept are required' },
+        { error: 'url, summary, and styles are required' },
         { status: 400 }
       );
     }
 
-    // 캐시 키 생성: url_conceptName
-    const cacheKey = `${url}_${conceptName}`;
+    // 캐시 키 생성: url_스타일조합
+    const cacheKey = `${url}_${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}`;
 
     // 1. 캐시 조회
     try {
@@ -46,14 +45,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. 캐시 미스 - AI로 생성
-    const conceptData = getConceptById(concept.id);
-    if (!conceptData) {
-      return NextResponse.json(
-        { error: 'Invalid concept ID' },
-        { status: 400 }
-      );
-    }
-
     // SUCCESs 원칙에 맞는 홍보문구 생성 (하나씩)
     const principles = [
       'simple',
@@ -74,11 +65,11 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: getSuccessTextSystemPrompt(principle, conceptData),
+            content: getSuccessTextSystemPrompt(principle, styles),
           },
           {
             role: 'user',
-            content: getSuccessTextUserPrompt(summary, category),
+            content: getSuccessTextUserPrompt(summary, category, styles),
           },
         ],
       });
@@ -130,7 +121,7 @@ export async function POST(request: NextRequest) {
       await saveMarketingTextCache({
         cache_key: cacheKey,
         url: url,
-        concept_name: conceptName,
+        concept_name: `${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}`,
         simple: finalTexts.simple,
         unexpected: finalTexts.unexpected,
         concrete: finalTexts.concrete,

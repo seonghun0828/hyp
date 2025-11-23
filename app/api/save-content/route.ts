@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const {
       summaryId,
-      conceptId,
+      styles,
       selectedPrinciple,
       texts,
       imagePrompt,
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
     if (
       !summaryId ||
-      !conceptId ||
+      !styles ||
       !selectedPrinciple ||
       !Array.isArray(texts) ||
       !imagePrompt ||
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'summaryId, conceptId, selectedPrinciple, texts, imagePrompt, and finalImageUrl are required',
+            'summaryId, styles, selectedPrinciple, texts, imagePrompt, and finalImageUrl are required',
         },
         { status: 400 }
       );
@@ -37,11 +37,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 생성된 콘텐츠 저장
+    // styles를 JSON 문자열로 저장 (DB 스키마에 styles 컬럼이 있다고 가정)
     const { data, error } = await supabase
       .from('generated_contents')
       .insert({
         summary_id: summaryId,
-        concept_id: conceptId,
+        concept_id: JSON.stringify(styles), // 임시로 concept_id에 저장 (나중에 스키마 변경 필요)
         image_prompt: imagePrompt,
         image_url: finalImageUrl,
         texts: texts,

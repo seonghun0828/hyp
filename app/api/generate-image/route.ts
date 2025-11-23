@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
-    const { summary } = await request.json();
+    const { summary, styles } = await request.json();
 
     if (!summary) {
       return NextResponse.json(
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // prompts.ts의 getImagePrompt 함수 사용
     // summary에서 category 추출하여 전달
     const category = summary.category;
-    const prompt = getImagePrompt(summary, category);
+    const prompt = getImagePrompt(summary, category, styles);
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
 

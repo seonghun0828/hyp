@@ -10,8 +10,11 @@ import ProgressBar from '@/components/ProgressBar';
 const stepNames = [
   '링크 입력',
   '제품 요약',
-  '컨셉 선택',
-  '이미지 선택',
+  '메시지 타입',
+  '표현 방식',
+  '톤 & 무드',
+  '모델 구성',
+  '이미지 업로드',
   '에디터',
   '결과',
 ];
@@ -19,7 +22,7 @@ const stepNames = [
 export default function UploadPage() {
   const router = useRouter();
   const {
-    concept,
+    styles,
     summary,
     setImageUrl,
     setImagePrompt,
@@ -121,6 +124,7 @@ export default function UploadPage() {
         },
         body: JSON.stringify({
           summary: summary,
+          styles: styles,
         }),
       });
 
@@ -174,9 +178,8 @@ export default function UploadPage() {
         },
         body: JSON.stringify({
           url: summary?.url,
-          conceptName: concept?.name,
           summary,
-          concept,
+          styles,
         }),
       });
 
@@ -212,9 +215,8 @@ export default function UploadPage() {
         },
         body: JSON.stringify({
           url: summary?.url,
-          conceptName: concept?.name,
           summary,
-          concept,
+          styles,
         }),
       });
 
@@ -297,9 +299,9 @@ export default function UploadPage() {
 
   // 캐시 확인 후 초기화 함수
   const checkCacheAndInitialize = async () => {
-    if (!summary || !concept) return;
+    if (!summary || !styles) return;
 
-    const cacheKey = `${summary.url}_${concept.name}`;
+    const cacheKey = `${summary.url}_${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}`;
 
     try {
       const response = await fetch('/api/check-cache', {
@@ -331,10 +333,10 @@ export default function UploadPage() {
 
   // 페이지 진입 시 캐시 확인 후 처리
   useEffect(() => {
-    if (isHydrated && summary && concept) {
+    if (isHydrated && summary && styles) {
       checkCacheAndInitialize();
     }
-  }, [isHydrated, summary, concept]);
+  }, [isHydrated, summary, styles]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
@@ -345,11 +347,17 @@ export default function UploadPage() {
       router.push('/');
       return;
     }
-    if (!concept) {
-      router.push('/concept');
+    if (
+      !styles ||
+      !styles.messageType ||
+      !styles.expressionStyle ||
+      !styles.toneMood ||
+      !styles.modelComposition
+    ) {
+      router.push('/styles/messages');
       return;
     }
-  }, [summary, concept, router, isHydrated]);
+  }, [summary, styles, router, isHydrated]);
 
   // hydration이 완료되기 전에는 로딩 표시
   if (!isHydrated) {
@@ -363,13 +371,20 @@ export default function UploadPage() {
     );
   }
 
-  if (!summary || !concept) {
+  if (
+    !summary ||
+    !styles ||
+    !styles.messageType ||
+    !styles.expressionStyle ||
+    !styles.toneMood ||
+    !styles.modelComposition
+  ) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <ProgressBar currentStep={4} totalSteps={6} stepNames={stepNames} />
+      <ProgressBar currentStep={7} totalSteps={9} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">

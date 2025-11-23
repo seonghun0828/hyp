@@ -10,7 +10,10 @@ import ProgressBar from '@/components/ProgressBar';
 const stepNames = [
   '링크 입력',
   '제품 요약',
-  '컨셉 선택',
+  '메시지 타입',
+  '표현 방식',
+  '톤 & 무드',
+  '모델 구성',
   '이미지 업로드',
   '에디터',
   '결과',
@@ -100,7 +103,7 @@ export default function SummaryPage() {
         page: 'summary',
       });
 
-      router.push('/concept');
+      router.push('/styles/messages');
     } catch (err) {
       alert(
         `저장 중 오류가 발생했습니다: ${
@@ -118,7 +121,7 @@ export default function SummaryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <ProgressBar currentStep={2} totalSteps={6} stepNames={stepNames} />
+      <ProgressBar currentStep={2} totalSteps={9} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">

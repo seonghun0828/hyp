@@ -10,7 +10,10 @@ import ProgressBar from '@/components/ProgressBar';
 const stepNames = [
   '링크 입력',
   '제품 요약',
-  '컨셉 선택',
+  '메시지 타입',
+  '표현 방식',
+  '톤 & 무드',
+  '모델 구성',
   '이미지 업로드',
   '에디터',
   '결과',
@@ -32,7 +35,7 @@ export default function EditorPage() {
   const router = useRouter();
   const {
     summary,
-    concept,
+    styles,
     imageUrl,
     imagePrompt,
     successTexts,
@@ -112,8 +115,14 @@ export default function EditorPage() {
       router.push('/');
       return;
     }
-    if (!concept) {
-      router.push('/concept');
+    if (
+      !styles ||
+      !styles.messageType ||
+      !styles.expressionStyle ||
+      !styles.toneMood ||
+      !styles.modelComposition
+    ) {
+      router.push('/styles/messages');
       return;
     }
     if (!imageUrl) {
@@ -132,7 +141,7 @@ export default function EditorPage() {
     }
   }, [
     summary,
-    concept,
+    styles,
     imageUrl,
     successTexts,
     router,
@@ -277,7 +286,15 @@ export default function EditorPage() {
   };
 
   const handleSave = async () => {
-    if (!summary || !concept || !currentPrinciple) {
+    if (
+      !summary ||
+      !styles ||
+      !styles.messageType ||
+      !styles.expressionStyle ||
+      !styles.toneMood ||
+      !styles.modelComposition ||
+      !currentPrinciple
+    ) {
       alert('필수 정보가 없습니다. 다시 시도해주세요.');
       return;
     }
@@ -374,7 +391,7 @@ export default function EditorPage() {
         },
         body: JSON.stringify({
           summaryId: summary.id,
-          conceptId: concept.id,
+          styles: styles,
           selectedPrinciple: currentPrinciple.key,
           texts: texts,
           imagePrompt: promptToSave,
@@ -428,13 +445,21 @@ export default function EditorPage() {
     );
   }
 
-  if (!summary || !concept || !imageUrl) {
+  if (
+    !summary ||
+    !styles ||
+    !styles.messageType ||
+    !styles.expressionStyle ||
+    !styles.toneMood ||
+    !styles.modelComposition ||
+    !imageUrl
+  ) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <ProgressBar currentStep={5} totalSteps={6} stepNames={stepNames} />
+      <ProgressBar currentStep={8} totalSteps={9} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">

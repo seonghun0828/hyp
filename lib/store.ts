@@ -17,21 +17,11 @@ export interface ProductSummary {
   createdAt?: string;
 }
 
-export interface Concept {
-  id: string;
-  name: string;
-  description: string;
-  tone: string;
-  structure: string;
-  template: string;
-  example: string;
-  exampleImage: string;
-  promptTemplate: string;
-  imageStyle: {
-    name: string;
-    description: string;
-    promptTemplate: string;
-  };
+export interface Styles {
+  messageType?: string;
+  expressionStyle?: string;
+  toneMood?: string;
+  modelComposition?: string;
 }
 
 export interface GeneratedContent {
@@ -62,23 +52,27 @@ interface FunnelState {
   // Step 2: 제품 요약
   summary?: ProductSummary;
 
-  // Step 3: 컨셉 선택
-  concept?: Concept;
+  // Step 3-6: 스타일 선택 (4단계)
+  styles?: Styles;
 
-  // Step 4: 이미지 업로드
+  // Step 7: 이미지 업로드
   imageUrl?: string;
   imagePrompt?: string; // 이미지 생성에 사용된 프롬프트
 
-  // Step 5: SUCCESs 원칙 홍보문구
+  // Step 8: SUCCESs 원칙 홍보문구
   successTexts?: SuccessTexts;
 
-  // Step 6: 에디터
+  // Step 9: 에디터
   finalImageUrl?: string;
 
   // Actions
   setUrl: (url: string) => void;
   setSummary: (summary: ProductSummary) => void;
-  setConcept: (concept: Concept) => void;
+  setStyles: (styles: Styles) => void;
+  setMessageType: (messageType: string) => void;
+  setExpressionStyle: (expressionStyle: string) => void;
+  setToneMood: (toneMood: string) => void;
+  setModelComposition: (modelComposition: string) => void;
   setImageUrl: (imageUrl: string) => void;
   setImagePrompt: (imagePrompt: string | undefined) => void;
   setSuccessTexts: (texts: SuccessTexts | undefined) => void;
@@ -91,7 +85,7 @@ export const useFunnelStore = create<FunnelState>()(
     (set) => ({
       url: '',
       summary: undefined,
-      concept: undefined,
+      styles: undefined,
       imageUrl: undefined,
       imagePrompt: undefined,
       successTexts: undefined,
@@ -99,7 +93,23 @@ export const useFunnelStore = create<FunnelState>()(
 
       setUrl: (url) => set({ url }),
       setSummary: (summary) => set({ summary }),
-      setConcept: (concept) => set({ concept }),
+      setStyles: (styles) => set({ styles }),
+      setMessageType: (messageType) =>
+        set((state) => ({
+          styles: { ...state.styles, messageType },
+        })),
+      setExpressionStyle: (expressionStyle) =>
+        set((state) => ({
+          styles: { ...state.styles, expressionStyle },
+        })),
+      setToneMood: (toneMood) =>
+        set((state) => ({
+          styles: { ...state.styles, toneMood },
+        })),
+      setModelComposition: (modelComposition) =>
+        set((state) => ({
+          styles: { ...state.styles, modelComposition },
+        })),
       setImageUrl: (imageUrl) => set({ imageUrl }),
       setImagePrompt: (imagePrompt) => set({ imagePrompt }),
       setSuccessTexts: (successTexts) => set({ successTexts }),
@@ -108,7 +118,7 @@ export const useFunnelStore = create<FunnelState>()(
         set({
           url: '',
           summary: undefined,
-          concept: undefined,
+          styles: undefined,
           imageUrl: undefined,
           imagePrompt: undefined,
           successTexts: undefined,
@@ -121,7 +131,7 @@ export const useFunnelStore = create<FunnelState>()(
         // 저장할 상태만 선택 (finalImageUrl은 용량 문제로 제외)
         url: state.url,
         summary: state.summary,
-        concept: state.concept,
+        styles: state.styles,
         imageUrl: state.imageUrl,
         imagePrompt: state.imagePrompt,
         successTexts: state.successTexts,

@@ -1,4 +1,5 @@
-import { Concept } from './store';
+import { Styles } from './store';
+import { getStyleLabel, getStyleOptionById } from './styles';
 import { ProductCategory } from './categories/types';
 import { getCategoryModules } from './categories/utils';
 import {
@@ -64,7 +65,8 @@ export const getImagePrompt = (
     feature_summary?: string;
     usage_scenario?: string;
   },
-  category?: ProductCategory
+  category?: ProductCategory,
+  styles?: Styles
 ): string => {
   // Main Prompt (베이스)
   const mainPrompt = `
@@ -135,15 +137,67 @@ export const getImagePrompt = (
   
   Begin the final description now.`;
 
-  // 카테고리 모듈 조합
-  if (category) {
-    const categoryModules = getCategoryModules(category);
-    if (categoryModules.trim() !== '') {
-      return `${mainPrompt}\n\n${categoryModules}`;
+  // 스타일 정보 추가
+  let stylePrompt = '';
+  if (styles) {
+    const styleParts: string[] = [];
+
+    if (styles.messageType) {
+      const option = getStyleOptionById('messages', styles.messageType);
+      if (option) {
+        styleParts.push(
+          `Message Type: ${option.label} - ${option.description}`
+        );
+      }
+    }
+
+    if (styles.expressionStyle) {
+      const option = getStyleOptionById('expressions', styles.expressionStyle);
+      if (option) {
+        styleParts.push(
+          `Expression Style: ${option.label} - ${option.description}`
+        );
+      }
+    }
+
+    if (styles.toneMood) {
+      const option = getStyleOptionById('tones-moods', styles.toneMood);
+      if (option) {
+        styleParts.push(`Tone & Mood: ${option.label} - ${option.description}`);
+      }
+    }
+
+    if (styles.modelComposition) {
+      const option = getStyleOptionById('models', styles.modelComposition);
+      if (option) {
+        styleParts.push(
+          `Model Composition: ${option.label} - ${option.description}`
+        );
+      }
+    }
+
+    if (styleParts.length > 0) {
+      stylePrompt = `\n\n3. **Style Preferences Block (USER SELECTED STYLES)**
+     - These are the user's explicit style choices that must be reflected in the image:
+     ${styleParts.map((part) => `     • ${part}`).join('\n')}
+     **These style preferences take the highest priority** and should guide the visual direction.`;
     }
   }
 
-  return mainPrompt;
+  // 카테고리 모듈 조합
+  let finalPrompt = mainPrompt;
+  if (stylePrompt) {
+    finalPrompt += stylePrompt;
+  }
+
+  if (category) {
+    const categoryModules = getCategoryModules(category);
+    if (categoryModules.trim() !== '') {
+      finalPrompt += `\n\n${categoryModules}`;
+    }
+  }
+
+  return finalPrompt;
 };
 
 /**
@@ -151,11 +205,39 @@ export const getImagePrompt = (
  */
 export const getSuccessTextSystemPrompt = (
   principle: string,
-  conceptData: Concept
+  styles?: Styles
 ): string => {
+  let styleDescription = '';
+  if (styles) {
+    const styleParts: string[] = [];
+
+    if (styles.messageType) {
+      const label = getStyleLabel('messages', styles.messageType);
+      styleParts.push(`Message Type: ${label}`);
+    }
+
+    if (styles.expressionStyle) {
+      const label = getStyleLabel('expressions', styles.expressionStyle);
+      styleParts.push(`Expression: ${label}`);
+    }
+
+    if (styles.toneMood) {
+      const label = getStyleLabel('tones-moods', styles.toneMood);
+      styleParts.push(`Tone & Mood: ${label}`);
+    }
+
+    if (styles.modelComposition) {
+      const label = getStyleLabel('models', styles.modelComposition);
+      styleParts.push(`Model: ${label}`);
+    }
+
+    if (styleParts.length > 0) {
+      styleDescription = `\n\nStyle Preferences:\n${styleParts.join('\n')}`;
+    }
+  }
+
   return `Generate a marketing copy based on SUCCESs principle "${principle}" in Korean.
-The copy should be 2-3 lines like this example:
-"${conceptData.example}"
+The copy should be 2-3 lines.
 
 Principle: ${principle}
 - Simple: Clear and concise message
@@ -163,9 +245,7 @@ Principle: ${principle}
 - Concrete: Specific and tangible
 - Credible: Trustworthy with proof
 - Emotional: Appeals to feelings
-- Story: Narrative-driven
-
-Style: ${conceptData.name} - ${conceptData.description}
+- Story: Narrative-driven${styleDescription}
 
 Return only the text content, no JSON format.`;
 };
@@ -181,19 +261,57 @@ export const getSuccessTextUserPrompt = (
     target_customer?: string;
     competitive_edge?: string;
   },
-  category?: ProductCategory
+  category?: ProductCategory,
+  styles?: Styles
 ): string => {
-  const basePrompt = `Product: ${summary.core_value || '제품'}
+  let basePrompt = `Product: ${summary.core_value || '제품'}
 Description: ${summary.customer_benefit || '제품 설명'}
 Features: ${summary.feature_summary || '주요 기능'}
 Target Users: ${summary.target_customer || '일반 사용자'}
 Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`;
 
+  // 스타일 정보 추가
+  if (styles) {
+    const styleParts: string[] = [];
+
+    if (styles.messageType) {
+      const option = getStyleOptionById('messages', styles.messageType);
+      if (option) {
+        styleParts.push(`${option.label}: ${option.description}`);
+      }
+    }
+
+    if (styles.expressionStyle) {
+      const option = getStyleOptionById('expressions', styles.expressionStyle);
+      if (option) {
+        styleParts.push(`${option.label}: ${option.description}`);
+      }
+    }
+
+    if (styles.toneMood) {
+      const option = getStyleOptionById('tones-moods', styles.toneMood);
+      if (option) {
+        styleParts.push(`${option.label}: ${option.description}`);
+      }
+    }
+
+    if (styles.modelComposition) {
+      const option = getStyleOptionById('models', styles.modelComposition);
+      if (option) {
+        styleParts.push(`${option.label}: ${option.description}`);
+      }
+    }
+
+    if (styleParts.length > 0) {
+      basePrompt += `\n\nStyle Context:\n${styleParts.join('\n')}`;
+    }
+  }
+
   // 카테고리 모듈 조합
   if (category) {
     const categoryModules = getCategoryModules(category);
     if (categoryModules.trim() !== '') {
-      return `${basePrompt}\n\nCategory Context:\n${categoryModules}`;
+      basePrompt += `\n\nCategory Context:\n${categoryModules}`;
     }
   }
 
