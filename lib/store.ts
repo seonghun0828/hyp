@@ -18,10 +18,10 @@ export interface ProductSummary {
 }
 
 export interface Styles {
-  messageType?: string;
-  expressionStyle?: string;
-  toneMood?: string;
-  modelComposition?: string;
+  messageType: string;
+  expressionStyle: string;
+  toneMood: string;
+  modelComposition: string;
 }
 
 export interface GeneratedContent {
@@ -96,19 +96,31 @@ export const useFunnelStore = create<FunnelState>()(
       setStyles: (styles) => set({ styles }),
       setMessageType: (messageType) =>
         set((state) => ({
-          styles: { ...state.styles, messageType },
+          styles: {
+            ...(state.styles || {}),
+            messageType,
+          } as Styles,
         })),
       setExpressionStyle: (expressionStyle) =>
         set((state) => ({
-          styles: { ...state.styles, expressionStyle },
+          styles: {
+            ...(state.styles || {}),
+            expressionStyle,
+          } as Styles,
         })),
       setToneMood: (toneMood) =>
         set((state) => ({
-          styles: { ...state.styles, toneMood },
+          styles: {
+            ...(state.styles || {}),
+            toneMood,
+          } as Styles,
         })),
       setModelComposition: (modelComposition) =>
         set((state) => ({
-          styles: { ...state.styles, modelComposition },
+          styles: {
+            ...(state.styles || {}),
+            modelComposition,
+          } as Styles,
         })),
       setImageUrl: (imageUrl) => set({ imageUrl }),
       setImagePrompt: (imagePrompt) => set({ imagePrompt }),

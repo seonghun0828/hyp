@@ -1,5 +1,12 @@
 import { Styles } from './store';
-import { getStyleLabel, getStyleOptionById } from './styles';
+import {
+  expressionStyles,
+  getStyleLabel,
+  getStyleOptionById,
+  messageTypes,
+  modelCompositions,
+  toneMoods,
+} from './styles';
 import { ProductCategory } from './categories/types';
 import { getCategoryModules } from './categories/utils';
 import {
@@ -12,7 +19,6 @@ import {
  * 제품 정보 요약을 위한 시스템 프롬프트
  */
 export const getSummarySystemPrompt = (): string => {
-  // templates.ts에서 정의된 카테고리 값들을 동적으로 가져오기
   const industryOptions = Object.values(INDUSTRY_LABELS).join(', ');
   const formOptions = Object.values(FORM_LABELS).join(', ');
   const purposeOptions = Object.values(PURPOSE_LABELS).join(', ');
@@ -25,7 +31,7 @@ Follow these rules:
 - Always output in JSON format (UTF-8).
 - Each field must contain a concise, natural-sounding Korean sentence (under 40 words).
 - If data is missing, leave the field empty (empty string "").
-- Fill them only if sufficient info exists.
+- Fill them only if sufficient information exists.
 - Focus on how customers perceive value, not just product specs.
 
 Required JSON structure:
@@ -50,12 +56,35 @@ Required JSON structure:
  * 제품 정보 요약을 위한 사용자 프롬프트
  */
 export const getSummaryUserPrompt = (html: string): string => {
-  return `Analyze this product information and extract the marketing summary elements:
+  // 1. HTML 길이 제한 보완: 긴 HTML은 핵심 텍스트 추출 후 앞뒤 균형 있게 전달
+  const maxChars = 8000; // AI 모델이 처리 가능한 안전 범위
+  let processedHtml = html;
 
-${html.substring(0, 4000)}`;
+  if (html.length > maxChars) {
+    const half = Math.floor(maxChars / 2);
+    processedHtml =
+      html.substring(0, half) + '\n...\n' + html.substring(html.length - half);
+  }
+
+  // 2. 사용자 프롬프트
+  return `
+Analyze the following product information and extract a structured marketing summary in JSON format.
+Focus on the most relevant details for promotional content generation.
+
+Important:
+- Extract the **7 key marketing summary elements**.
+- Each field must be a concise, natural-sounding Korean sentence (max 40 words per field).
+- If information is missing, leave the field as an empty string "".
+- Prioritize how customers perceive value over technical specifications.
+- Ensure no field is skipped if sufficient info exists in the HTML.
+
+Product Information:
+${processedHtml}
+`;
 };
 
 export const getImagePrompt = (
+  styles: Styles,
   summary: {
     core_value: string;
     target_customer: string;
@@ -65,139 +94,36 @@ export const getImagePrompt = (
     feature_summary?: string;
     usage_scenario?: string;
   },
-  category?: ProductCategory,
-  styles?: Styles
+  category?: ProductCategory
 ): string => {
-  // Main Prompt (베이스)
-  const mainPrompt = `
-  Create a highly tailored, cinematic marketing image description **based primarily on the product’s assigned category modules**.
-  
-  Your output must integrate and prioritize all information from the following blocks:
-  
-  1. **Product Information Block (WHAT the product is)**
-     - Core Value: ${summary.core_value}
-     - Customer Benefit: ${summary.customer_benefit}
-     - Target Customer: ${summary.target_customer}
-     - Competitive Edge: ${summary.competitive_edge}
-     ${
-       summary.emotional_keyword
-         ? `- Emotional Keyword: ${summary.emotional_keyword}`
-         : ''
-     }
-     ${
-       summary.feature_summary
-         ? `- Key Features: ${summary.feature_summary}`
-         : ''
-     }
-     ${
-       summary.usage_scenario
-         ? `- Usage Scenario: ${summary.usage_scenario}`
-         : ''
-     }
-  
-  2. **Category Modules Block (HOW it should visually appear)**
-     - This includes:
-       • Industry Category (대분류)
-       • Form / Product Type (중분류)
-       • Marketing Objective (소분류)
-       • Style Option (Hero / Lifestyle / Detail)
-     These modules determine the **visual tone, composition style, atmosphere, and marketing intention**.  
-     **Category modules must override any default assumptions.**  
-     If any instruction from the category modules conflicts with the Product Information Block, the **Category Modules take priority** in visual direction.
-  
-  ---
-  
-  ### OUTPUT REQUIREMENTS
-  
-  Generate a **single, vivid, highly specific visual description** suitable for AI image generation.
-  
-  Your description must contain:
-  1. **Scene Composition**  
-     - Environment, angle, layout, props, and context appropriate for the assigned category modules.
-  
-  2. **People or Objects**  
-     - Who or what appears, their pose, expression, styling, or product placement.
-  
-  3. **Lighting & Colors**  
-     - Use lighting and palette appropriate for the category modules (e.g., warm lifestyle, cool SaaS tech, high-contrast fitness, appetizing food tones).
-  
-  4. **Atmosphere & Emotion**  
-     - The emotional tone should connect the product’s core value with the marketing objective.
-  
-  5. **Marketing Appeal**  
-     - Make it look like a premium campaign asset, with mood, composition, and cues aligned to the INDUSTRY + FORM + GOAL module.
-  
-  ---
-  
-  ### STRICT RULES
-  - Do **not** include any text, letters, logos, symbols, UI text, or readable characters.
-  - Describe only the visuals — no meta commentary or explanation.
-  - Only one final, contiguous visual description should be produced.
-  - Always follow the Style Option (Hero / Lifestyle / Detail) as the final layer of direction.
-  
-  Begin the final description now.`;
+  return `[Core Concept Summary]
+${summary.core_value}
 
-  // 스타일 정보 추가
-  let stylePrompt = '';
-  if (styles) {
-    const styleParts: string[] = [];
+[Product Context]
+This product/service falls under the category of ${
+    category?.industry
+  }, with the product type of ${category?.form}.  
+The advertising purpose is: ${category?.purpose}.
 
-    if (styles.messageType) {
-      const option = getStyleOptionById('messages', styles.messageType);
-      if (option) {
-        styleParts.push(
-          `Message Type: ${option.label} - ${option.description}`
-        );
-      }
-    }
-
-    if (styles.expressionStyle) {
-      const option = getStyleOptionById('expressions', styles.expressionStyle);
-      if (option) {
-        styleParts.push(
-          `Expression Style: ${option.label} - ${option.description}`
-        );
-      }
-    }
-
-    if (styles.toneMood) {
-      const option = getStyleOptionById('tones-moods', styles.toneMood);
-      if (option) {
-        styleParts.push(`Tone & Mood: ${option.label} - ${option.description}`);
-      }
-    }
-
-    if (styles.modelComposition) {
-      const option = getStyleOptionById('models', styles.modelComposition);
-      if (option) {
-        styleParts.push(
-          `Model Composition: ${option.label} - ${option.description}`
-        );
-      }
-    }
-
-    if (styleParts.length > 0) {
-      stylePrompt = `\n\n3. **Style Preferences Block (USER SELECTED STYLES)**
-     - These are the user's explicit style choices that must be reflected in the image:
-     ${styleParts.map((part) => `     • ${part}`).join('\n')}
-     **These style preferences take the highest priority** and should guide the visual direction.`;
-    }
+[Style Package]
+Apply the following style package as a single unified direction:
+– Message Type: ${messageTypes.find((m) => m.id === styles.messageType)!.label}
+– Expression Style: ${
+    expressionStyles.find((e) => e.id === styles.expressionStyle)!.label
+  }
+– Tone & Mood: ${toneMoods.find((t) => t.id === styles.toneMood)!.label}
+– Model Composition: ${
+    modelCompositions.find((m) => m.id === styles.modelComposition)!.label
   }
 
-  // 카테고리 모듈 조합
-  let finalPrompt = mainPrompt;
-  if (stylePrompt) {
-    finalPrompt += stylePrompt;
-  }
-
-  if (category) {
-    const categoryModules = getCategoryModules(category);
-    if (categoryModules.trim() !== '') {
-      finalPrompt += `\n\n${categoryModules}`;
-    }
-  }
-
-  return finalPrompt;
+[Output Requirements]
+Generate one high-quality SNS advertisement image.  
+The image must contain **no text**, including on UI screens, devices, props, or backgrounds.  
+Use a realistic, clear, visually appealing composition that reflects the advertising purpose.  
+Avoid distortions, avoid artifacts, and maintain natural lighting.  
+Aspect ratio should remain consistent with previous outputs.  
+Focus solely on visually conveying the product’s core value and purpose through the selected style package.
+`;
 };
 
 /**
