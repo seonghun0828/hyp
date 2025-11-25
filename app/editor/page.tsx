@@ -6,6 +6,7 @@ import { useFunnelStore, SuccessTexts } from '@/lib/store';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
+import localFont from 'next/font/local';
 
 const stepNames = [
   '링크 입력',
@@ -19,6 +20,45 @@ const stepNames = [
   '결과',
 ];
 
+const font1 = localFont({
+  src: '../../public/fonts/JalnanGothicTTF.woff2',
+  // display: 'swap',
+  // variable: '--font-1', // CSS 변수명으로 참조할 수 있도록 설정
+});
+const font2 = localFont({
+  src: '../../public/fonts/BMHANNAAir_ttf.woff2',
+});
+const font3 = localFont({
+  src: '../../public/fonts/BMDOHYEON_ttf.woff2',
+});
+const font4 = localFont({
+  src: '../../public/fonts/나눔손글씨 다행체.woff2',
+});
+const font5 = localFont({
+  src: '../../public/fonts/NanumSquareRoundB.woff2',
+});
+const font6 = localFont({
+  src: '../../public/fonts/나눔손글씨 암스테르담.woff2',
+});
+const font7 = localFont({
+  src: '../../public/fonts/BMEULJIROTTF.woff2',
+});
+const font8 = localFont({
+  src: '../../public/fonts/BMYEONSUNG_ttf.woff2',
+});
+
+const fonts = [font1, font2, font3, font4, font5, font6, font7, font8];
+const fontNames = [
+  'Bold',
+  'Subtle',
+  'Retro',
+  'Hand',
+  'Vibe',
+  'Easy',
+  'Strong',
+  'Rhythm',
+];
+
 interface TextElement {
   id: string;
   text: string;
@@ -26,7 +66,6 @@ interface TextElement {
   y: number;
   fontSize: number;
   color: string;
-  fontFamily: string;
   backgroundColor: 'transparent' | 'black' | 'white';
   isSelected: boolean;
 }
@@ -49,6 +88,8 @@ export default function EditorPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
+  const [currentFontIndex, setCurrentFontIndex] = useState(0);
+  const currentFontClassName = fonts[currentFontIndex].className;
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
@@ -194,7 +235,6 @@ export default function EditorPage() {
         y: 100,
         fontSize: 12,
         color: '#000000',
-        fontFamily: 'Arial',
         backgroundColor: 'white',
         isSelected: true,
       };
@@ -436,7 +476,7 @@ export default function EditorPage() {
   // hydration이 완료되기 전에는 로딩 표시
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">로딩 중...</p>
@@ -458,7 +498,7 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar currentStep={8} totalSteps={9} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 py-8">
@@ -551,10 +591,32 @@ export default function EditorPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     텍스트 스타일
                   </h3>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      글꼴 설정
+                    </label>
+                    <div className="flex gap-2 flex-wrap">
+                      {fontNames.map((fontName, index) => (
+                        <button
+                          key={fontName}
+                          onClick={() => setCurrentFontIndex(index)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                            currentFontIndex === index
+                              ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-300'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          } ${fonts[index].className}`}
+                        >
+                          {fontName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        폰트 크기
+                        글자 크기
                       </label>
                       <input
                         type="range"
@@ -726,8 +788,11 @@ export default function EditorPage() {
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-center">
                   <div
-                    className="relative border border-gray-300 rounded-lg overflow-hidden editor-container"
-                    style={{ width: '800px', height: '600px' }}
+                    className={`relative border border-gray-300 rounded-lg overflow-hidden editor-container ${currentFontClassName}`}
+                    style={{
+                      width: '800px',
+                      height: '600px',
+                    }}
                     onMouseDown={(e) => {
                       // 빈 공간 클릭 시 선택 해제
                       if (e.target === e.currentTarget) {
@@ -749,12 +814,11 @@ export default function EditorPage() {
                         key={element.id}
                         className={`absolute cursor-move select-none z-10 ${
                           element.isSelected ? 'ring-2 ring-blue-500' : ''
-                        }`}
+                        } ${currentFontClassName}`}
                         style={{
                           left: `${element.x}px`,
                           top: `${element.y}px`,
                           fontSize: `${element.fontSize}px`,
-                          fontFamily: element.fontFamily,
                           color: element.color,
                           backgroundColor:
                             element.backgroundColor === 'transparent'
@@ -917,9 +981,6 @@ export default function EditorPage() {
                   borderRadius: '4px',
                   resize: 'none',
                   outline: 'none',
-                  fontFamily:
-                    textElements.find((el) => el.id === editingTextId)
-                      ?.fontFamily || 'Arial',
                   fontSize: `${
                     textElements.find((el) => el.id === editingTextId)
                       ?.fontSize || 12
