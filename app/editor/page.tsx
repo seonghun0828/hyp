@@ -60,6 +60,9 @@ const fontNames = [
   'Rhythm',
 ];
 
+const minFont = 4;
+const maxFont = 36;
+
 interface TextElement {
   id: string;
   text: string;
@@ -246,8 +249,8 @@ export default function EditorPage() {
     text: string,
     maxWidth: number,
     fontFamily: string,
-    minFontSize: number = 6,
-    maxFontSize: number = 48
+    minFontSize: number = minFont,
+    maxFontSize: number = maxFont
   ): number => {
     let fontSize = maxFontSize;
 
@@ -297,8 +300,8 @@ export default function EditorPage() {
         currentText,
         availableWidth,
         fontFamily,
-        6, // 최소 크기
-        48 // 최대 크기
+        minFont, // 최소 크기
+        maxFont // 최대 크기
       );
 
       const newElement: TextElement = {
@@ -884,8 +887,8 @@ export default function EditorPage() {
                         </label>
                         <input
                           type="range"
-                          min={6}
-                          max={48}
+                          min={minFont}
+                          max={maxFont}
                           value={
                             textElements.find((el) => el.id === selectedElement)
                               ?.fontSize || 12
