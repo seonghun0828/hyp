@@ -393,6 +393,81 @@ export default function EditorPage() {
     });
   };
 
+  // 공통 드래그 시작 함수 (마우스와 터치 모두 지원)
+  const handleDragStart = (
+    element: TextElement,
+    clientX: number,
+    clientY: number
+  ) => {
+    setSelectedElement(element.id);
+    setIsDragging(true);
+
+    // 선택 상태 업데이트
+    setTextElements((prev) =>
+      prev.map((el) => ({
+        ...el,
+        isSelected: el.id === element.id,
+      }))
+    );
+
+    const container = document.querySelector('.editor-container');
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const offsetX = clientX - containerRect.left - element.x;
+    const offsetY = clientY - containerRect.top - element.y;
+
+    // 마우스 이벤트 핸들러
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const newX = moveEvent.clientX - containerRect.left - offsetX;
+      const newY = moveEvent.clientY - containerRect.top - offsetY;
+
+      setTextElements((prev) =>
+        prev.map((el) =>
+          el.id === element.id ? { ...el, x: newX, y: newY } : el
+        )
+      );
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    // 터치 이벤트 핸들러
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length === 0) return;
+      moveEvent.preventDefault(); // 스크롤 방지
+      moveEvent.stopPropagation(); // 이벤트 전파 방지
+      const touch = moveEvent.touches[0];
+      const newX = touch.clientX - containerRect.left - offsetX;
+      const newY = touch.clientY - containerRect.top - offsetY;
+
+      setTextElements((prev) =>
+        prev.map((el) =>
+          el.id === element.id ? { ...el, x: newX, y: newY } : el
+        )
+      );
+    };
+
+    const handleTouchEnd = (e?: TouchEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      setIsDragging(false);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    // 이벤트 리스너 등록
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
   const deleteTextElement = (elementId: string) => {
     setTextElements((prev) => prev.filter((el) => el.id !== elementId));
     setSelectedElement(null);
@@ -809,8 +884,8 @@ export default function EditorPage() {
                         </label>
                         <input
                           type="range"
-                          min="6"
-                          max="48"
+                          min={6}
+                          max={48}
                           value={
                             textElements.find((el) => el.id === selectedElement)
                               ?.fontSize || 12
@@ -838,6 +913,7 @@ export default function EditorPage() {
                     style={{
                       width: '800px',
                       height: '600px',
+                      touchAction: 'none', // 모바일 스크롤 방지
                     }}
                     onMouseDown={(e) => {
                       // 빈 공간 클릭 시 선택 해제
@@ -846,6 +922,20 @@ export default function EditorPage() {
                         setTextElements((prev) =>
                           prev.map((el) => ({ ...el, isSelected: false }))
                         );
+                      }
+                    }}
+                    onTouchMove={(e) => {
+                      // 드래그 중일 때만 스크롤 방지
+                      if (isDragging) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    onTouchEnd={(e) => {
+                      // 드래그 중일 때만 이벤트 전파 방지
+                      if (isDragging) {
+                        e.preventDefault();
+                        e.stopPropagation();
                       }
                     }}
                   >
@@ -917,69 +1007,16 @@ export default function EditorPage() {
                         }}
                         onMouseDown={(e) => {
                           e.preventDefault();
-                          setSelectedElement(element.id);
-                          setIsDragging(true);
-
-                          // 선택 상태 업데이트
-                          setTextElements((prev) =>
-                            prev.map((el) => ({
-                              ...el,
-                              isSelected: el.id === element.id,
-                            }))
+                          handleDragStart(element, e.clientX, e.clientY);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          const touch = e.touches[0];
+                          handleDragStart(
+                            element,
+                            touch.clientX,
+                            touch.clientY
                           );
-
-                          // 드래그 시작 시 마우스와 텍스트의 오프셋 계산
-                          const container =
-                            document.querySelector('.editor-container');
-                          if (container) {
-                            const containerRect =
-                              container.getBoundingClientRect();
-                            const offsetX =
-                              e.clientX - containerRect.left - element.x;
-                            const offsetY =
-                              e.clientY - containerRect.top - element.y;
-
-                            // 전역 마우스 이벤트 핸들러
-                            const handleGlobalMouseMove = (
-                              moveEvent: MouseEvent
-                            ) => {
-                              const newX =
-                                moveEvent.clientX -
-                                containerRect.left -
-                                offsetX;
-                              const newY =
-                                moveEvent.clientY - containerRect.top - offsetY;
-
-                              setTextElements((prev) =>
-                                prev.map((el) =>
-                                  el.id === element.id
-                                    ? { ...el, x: newX, y: newY }
-                                    : el
-                                )
-                              );
-                            };
-
-                            const handleGlobalMouseUp = () => {
-                              setIsDragging(false);
-                              document.removeEventListener(
-                                'mousemove',
-                                handleGlobalMouseMove
-                              );
-                              document.removeEventListener(
-                                'mouseup',
-                                handleGlobalMouseUp
-                              );
-                            };
-
-                            document.addEventListener(
-                              'mousemove',
-                              handleGlobalMouseMove
-                            );
-                            document.addEventListener(
-                              'mouseup',
-                              handleGlobalMouseUp
-                            );
-                          }
                         }}
                       >
                         {element.text}
