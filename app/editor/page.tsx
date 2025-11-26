@@ -219,6 +219,58 @@ export default function EditorPage() {
     setIsHydrated(true);
   }, []);
 
+  // DOM을 사용한 정확한 텍스트 너비 측정
+  const measureTextWidthWithDOM = (
+    text: string,
+    fontSize: number,
+    fontFamily: string
+  ): number => {
+    // 임시 요소 생성
+    const measureElement = document.createElement('span');
+    measureElement.style.visibility = 'hidden';
+    measureElement.style.position = 'absolute';
+    measureElement.style.whiteSpace = 'pre';
+    measureElement.style.fontSize = `${fontSize}px`;
+    measureElement.style.fontFamily = fontFamily;
+    measureElement.textContent = text;
+
+    document.body.appendChild(measureElement);
+    const width = measureElement.offsetWidth;
+    document.body.removeChild(measureElement);
+
+    return width;
+  };
+
+  // 폰트 크기 자동 조절 (DOM 기반)
+  const calculateOptimalFontSize = (
+    text: string,
+    maxWidth: number,
+    fontFamily: string,
+    minFontSize: number = 6,
+    maxFontSize: number = 48
+  ): number => {
+    let fontSize = maxFontSize;
+
+    while (fontSize >= minFontSize) {
+      const width = measureTextWidthWithDOM(text, fontSize, fontFamily);
+      if (width <= maxWidth) {
+        return fontSize;
+      }
+      fontSize -= 1;
+    }
+
+    return minFontSize;
+  };
+
+  // 컨테이너 너비 가져오기
+  const getContainerWidth = (): number => {
+    const container = document.querySelector('.editor-container');
+    if (container) {
+      return container.clientWidth;
+    }
+    return 800; // 기본값
+  };
+
   // 선택된 원칙의 문구로 텍스트 요소 생성
   const createTextElement = () => {
     if (!successTexts || !currentPrinciple) return;
@@ -230,12 +282,31 @@ export default function EditorPage() {
     const existingElement = textElements.find((el) => el.text === currentText);
 
     if (!existingElement) {
+      // 현재 폰트 정보 가져오기
+      const currentFont = fonts[currentFontIndex];
+      const fontFamily = currentFont.style.fontFamily;
+
+      // 컨테이너 너비에서 패딩과 여백을 뺀 실제 사용 가능한 너비
+      const containerWidth = getContainerWidth();
+      const padding = 16; // 좌우 패딩 (4px * 2 + 8px * 2)
+      const margin = 100; // 좌우 여백 (x: 50px * 2)
+      const availableWidth = containerWidth - padding - margin;
+
+      // 최적의 폰트 크기 계산
+      const optimalFontSize = calculateOptimalFontSize(
+        currentText,
+        availableWidth,
+        fontFamily,
+        6, // 최소 크기
+        48 // 최대 크기
+      );
+
       const newElement: TextElement = {
         id: `text-${Date.now()}`,
         text: currentText,
         x: 50,
         y: 100,
-        fontSize: 12,
+        fontSize: optimalFontSize, // 자동 계산된 크기 사용
         color: '#000000',
         backgroundColor: 'white',
         isSelected: true,
