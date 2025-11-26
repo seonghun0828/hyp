@@ -289,11 +289,14 @@ export default function EditorPage() {
       const currentFont = fonts[currentFontIndex];
       const fontFamily = currentFont.style.fontFamily;
 
-      // 컨테이너 너비에서 패딩과 여백을 뺀 실제 사용 가능한 너비
+      // 컨테이너 너비 가져오기
       const containerWidth = getContainerWidth();
-      const padding = 16; // 좌우 패딩 (4px * 2 + 8px * 2)
-      const margin = 100; // 좌우 여백 (x: 50px * 2)
-      const availableWidth = containerWidth - padding - margin;
+      const textPaddingLeft = 8; // 텍스트 padding-left
+      const textPaddingRight = 8; // 텍스트 padding-right
+
+      // 실제 사용 가능한 너비 = 컨테이너 너비 - 좌우 패딩
+      const availableWidth =
+        containerWidth - textPaddingLeft - textPaddingRight;
 
       // 최적의 폰트 크기 계산
       const optimalFontSize = calculateOptimalFontSize(
@@ -304,10 +307,21 @@ export default function EditorPage() {
         maxFont // 최대 크기
       );
 
+      // 텍스트 너비 측정 (padding 포함하지 않음 - 이미 availableWidth에서 제외했으므로)
+      const textWidth = measureTextWidthWithDOM(
+        currentText,
+        optimalFontSize,
+        fontFamily
+      );
+
+      // 가운데 정렬 계산 (텍스트 너비 + 좌우 패딩 기준)
+      const totalTextWidth = textWidth + textPaddingLeft + textPaddingRight;
+      const centerX = (containerWidth - totalTextWidth) / 2;
+
       const newElement: TextElement = {
         id: `text-${Date.now()}`,
         text: currentText,
-        x: 50,
+        x: centerX,
         y: 100,
         fontSize: optimalFontSize, // 자동 계산된 크기 사용
         color: '#000000',
