@@ -7,6 +7,7 @@ import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import localFont from 'next/font/local';
+import ColorThief from 'colorthief';
 
 const stepNames = [
   '링크 입력',
@@ -90,6 +91,7 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(false);
   const [currentFontIndex, setCurrentFontIndex] = useState(0);
   const currentFontClassName = fonts[currentFontIndex].className;
+  const [colorPalette, setColorPalette] = useState<number[][]>([]);
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
@@ -616,167 +618,140 @@ export default function EditorPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        글자 크기
-                      </label>
-                      <input
-                        type="range"
-                        min="6"
-                        max="48"
-                        value={
-                          textElements.find((el) => el.id === selectedElement)
-                            ?.fontSize || 12
-                        }
-                        onChange={(e) =>
-                          updateElementStyle(selectedElement, {
-                            fontSize: parseInt(e.target.value),
-                          })
-                        }
-                        className="w-full"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         색상
                       </label>
-                      <input
-                        type="color"
-                        key={selectedElement} // key 추가로 강제 리렌더링
-                        value={
-                          textElements.find((el) => el.id === selectedElement)
-                            ?.color || '#000000'
-                        }
-                        onChange={(e) => {
-                          const newColor = e.target.value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        onInput={(e) => {
-                          const newColor = (e.target as HTMLInputElement).value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        onMouseMove={(e) => {
-                          if (e.buttons === 1) {
-                            const newColor = (e.target as HTMLInputElement)
-                              .value;
-                            updateElementStyle(selectedElement, {
-                              color: newColor,
-                            });
-                          }
-                        }}
-                        onMouseDown={(e) => {
-                          const newColor = (e.target as HTMLInputElement).value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        onMouseUp={(e) => {
-                          const newColor = (e.target as HTMLInputElement).value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        onFocus={(e) => {
-                          const newColor = (e.target as HTMLInputElement).value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        onBlur={(e) => {
-                          const newColor = (e.target as HTMLInputElement).value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        onClick={(e) => {
-                          const newColor = (e.target as HTMLInputElement).value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        onKeyDown={(e) => {
-                          const newColor = (e.target as HTMLInputElement).value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        onKeyUp={(e) => {
-                          const newColor = (e.target as HTMLInputElement).value;
-                          updateElementStyle(selectedElement, {
-                            color: newColor,
-                          });
-                        }}
-                        className="w-full h-10 rounded border"
-                      />
+                      {colorPalette.length > 0 ? (
+                        <div className="flex justify-between gap-1">
+                          {colorPalette.map(([r, g, b], index) => {
+                            const hexColor = `#${[r, g, b]
+                              .map((x) => {
+                                const hex = x.toString(16);
+                                return hex.length === 1 ? '0' + hex : hex;
+                              })
+                              .join('')}`;
+                            const currentColor =
+                              textElements.find(
+                                (el) => el.id === selectedElement
+                              )?.color || '#000000';
+                            const isSelected =
+                              currentColor.toLowerCase() ===
+                              hexColor.toLowerCase();
+
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => {
+                                  if (selectedElement) {
+                                    updateElementStyle(selectedElement, {
+                                      color: hexColor,
+                                    });
+                                  }
+                                }}
+                                className={`w-5 h-5 rounded border transition-all ${
+                                  isSelected
+                                    ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
+                                    : 'border-gray-300 hover:border-gray-400 hover:scale-105'
+                                }`}
+                                style={{ backgroundColor: hexColor }}
+                                title={`RGB(${r}, ${g}, ${b})`}
+                              />
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500 py-2">
+                          이미지에서 색상을 추출하는 중...
+                        </div>
+                      )}
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        배경색
-                      </label>
-                      <button
-                        className={`px-4 py-2 rounded text-sm transition-colors ${(() => {
-                          const current = textElements.find(
-                            (el) => el.id === selectedElement
-                          );
-                          if (!current)
-                            return 'bg-blue-500 text-white hover:bg-blue-600';
+                    <div className="flex">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          배경색
+                        </label>
+                        <button
+                          className={`px-4 py-2 rounded text-sm transition-colors ${(() => {
+                            const current = textElements.find(
+                              (el) => el.id === selectedElement
+                            );
+                            if (!current)
+                              return 'bg-blue-500 text-white hover:bg-blue-600';
 
-                          if (current.backgroundColor === 'white') {
-                            return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
-                          } else if (current.backgroundColor === 'black') {
-                            return 'bg-black text-white hover:bg-gray-800';
-                          } else {
-                            return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
+                            if (current.backgroundColor === 'white') {
+                              return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
+                            } else if (current.backgroundColor === 'black') {
+                              return 'bg-black text-white hover:bg-gray-800';
+                            } else {
+                              return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
+                            }
+                          })()}`}
+                          onClick={() => {
+                            const current = textElements.find(
+                              (el) => el.id === selectedElement
+                            );
+                            if (!current) return;
+
+                            // 순환 로직: 하얀색 → 검정색 → 없음 → 하얀색
+                            let nextBackgroundColor:
+                              | 'transparent'
+                              | 'black'
+                              | 'white';
+
+                            if (current.backgroundColor === 'white') {
+                              // 하얀색 → 검정색
+                              nextBackgroundColor = 'black';
+                            } else if (current.backgroundColor === 'black') {
+                              // 검정색 → 없음
+                              nextBackgroundColor = 'transparent';
+                            } else {
+                              // 없음 → 하얀색
+                              nextBackgroundColor = 'white';
+                            }
+
+                            updateElementStyle(selectedElement, {
+                              backgroundColor: nextBackgroundColor,
+                              // 텍스트 색상은 변경하지 않음
+                            });
+                          }}
+                        >
+                          {(() => {
+                            const current = textElements.find(
+                              (el) => el.id === selectedElement
+                            );
+                            if (!current) return '글자';
+
+                            if (current.backgroundColor === 'white') {
+                              return '하얀색';
+                            } else if (current.backgroundColor === 'black') {
+                              return '검정색';
+                            } else {
+                              return '없음';
+                            }
+                          })()}
+                        </button>
+                      </div>
+
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          글자 크기
+                        </label>
+                        <input
+                          type="range"
+                          min="6"
+                          max="48"
+                          value={
+                            textElements.find((el) => el.id === selectedElement)
+                              ?.fontSize || 12
                           }
-                        })()}`}
-                        onClick={() => {
-                          const current = textElements.find(
-                            (el) => el.id === selectedElement
-                          );
-                          if (!current) return;
-
-                          // 순환 로직: 하얀색 → 검정색 → 없음 → 하얀색
-                          let nextBackgroundColor:
-                            | 'transparent'
-                            | 'black'
-                            | 'white';
-
-                          if (current.backgroundColor === 'white') {
-                            // 하얀색 → 검정색
-                            nextBackgroundColor = 'black';
-                          } else if (current.backgroundColor === 'black') {
-                            // 검정색 → 없음
-                            nextBackgroundColor = 'transparent';
-                          } else {
-                            // 없음 → 하얀색
-                            nextBackgroundColor = 'white';
+                          onChange={(e) =>
+                            updateElementStyle(selectedElement, {
+                              fontSize: parseInt(e.target.value),
+                            })
                           }
-
-                          updateElementStyle(selectedElement, {
-                            backgroundColor: nextBackgroundColor,
-                            // 텍스트 색상은 변경하지 않음
-                          });
-                        }}
-                      >
-                        {(() => {
-                          const current = textElements.find(
-                            (el) => el.id === selectedElement
-                          );
-                          if (!current) return '글자';
-
-                          if (current.backgroundColor === 'white') {
-                            return '하얀색';
-                          } else if (current.backgroundColor === 'black') {
-                            return '검정색';
-                          } else {
-                            return '없음';
-                          }
-                        })()}
-                      </button>
+                          className="w-full"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -807,6 +782,38 @@ export default function EditorPage() {
                       src={imageUrl}
                       alt="Generated image"
                       className="w-full h-full object-contain bg-white"
+                      onLoad={(e) => {
+                        try {
+                          const img = e.currentTarget;
+                          const colorThief = new ColorThief();
+                          const palette = colorThief.getPalette(img, 10);
+
+                          // 검은색과 하얀색 정의
+                          const black = [0, 0, 0];
+                          const white = [255, 255, 255];
+
+                          // 검은색/하얀색과 유사한 색상 필터링 (약간의 오차 허용)
+                          const filteredPalette = palette.filter(
+                            ([r, g, b]) => {
+                              // 검은색 체크 (RGB 합이 30 이하)
+                              const isBlack = r + g + b <= 30;
+                              // 하얀색 체크 (RGB 합이 750 이상)
+                              const isWhite = r + g + b >= 750;
+                              return !isBlack && !isWhite;
+                            }
+                          );
+
+                          // 검은색, 하얀색을 처음에 추가하고 나머지 색상 추가
+                          const finalPalette = [
+                            black,
+                            white,
+                            ...filteredPalette,
+                          ];
+                          setColorPalette(finalPalette);
+                        } catch (error) {
+                          console.error('색상 추출 실패:', error);
+                        }
+                      }}
                     />
                     {/* 텍스트 오버레이 */}
                     {textElements.map((element) => (
@@ -824,8 +831,8 @@ export default function EditorPage() {
                             element.backgroundColor === 'transparent'
                               ? 'transparent'
                               : element.backgroundColor === 'black'
-                              ? 'rgba(0, 0, 0, 0.8)'
-                              : 'rgba(255, 255, 255, 0.8)',
+                              ? 'rgb(0, 0, 0)'
+                              : 'rgb(255, 255, 255)',
                           padding: '4px 8px',
                           borderRadius: '4px',
                           whiteSpace: 'pre', // 줄바꿈 표시
