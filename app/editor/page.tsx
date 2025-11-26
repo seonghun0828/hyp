@@ -997,24 +997,11 @@ export default function EditorPage() {
                     {textElements.map((element) => (
                       <div
                         key={element.id}
-                        className={`absolute cursor-move select-none z-10 ${
-                          element.isSelected ? 'ring-2 ring-blue-500' : ''
-                        } ${currentFontClassName}`}
+                        className={`absolute cursor-move flex flex-col select-none z-10  ${currentFontClassName}`}
                         style={{
                           left: `${element.x}px`,
                           top: `${element.y}px`,
                           fontSize: `${element.fontSize}px`,
-                          color: element.color,
-                          backgroundColor:
-                            element.backgroundColor === 'transparent'
-                              ? 'transparent'
-                              : element.backgroundColor === 'black'
-                              ? 'rgb(0, 0, 0)'
-                              : 'rgb(255, 255, 255)',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          whiteSpace: 'pre', // 줄바꿈 표시
-                          display: 'inline-block', // 인라인 블록으로 설정
                         }}
                         onDoubleClick={(e) => {
                           e.preventDefault();
@@ -1036,30 +1023,73 @@ export default function EditorPage() {
                           );
                         }}
                       >
-                        {element.text}
-                        {/* 수정 버튼 */}
-                        <button
-                          className="absolute -top-2 -right-4 w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // 커스텀 텍스트 편집 모달 열기
-                            openTextEditor(element.id, element.text);
+                        <div className="flex justify-end gap-1 md:gap-2 mb-1">
+                          {/* 수정 버튼 */}
+                          <button
+                            className="bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
+                            style={{
+                              width: `${element.fontSize * 1.6}px`,
+                              height: `${element.fontSize * 1.6}px`,
+                              fontSize: `${element.fontSize}px`,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // 커스텀 텍스트 편집 모달 열기
+                              openTextEditor(element.id, element.text);
+                            }}
+                            title="텍스트 수정"
+                          >
+                            ✏️
+                          </button>
+                          {/* 삭제 버튼 */}
+                          <button
+                            className="bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                            style={{
+                              width: `${element.fontSize * 1.6}px`,
+                              height: `${element.fontSize * 1.6}px`,
+                              fontSize: `${element.fontSize * 1.2}px`,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteTextElement(element.id);
+                            }}
+                            title="텍스트 삭제"
+                          >
+                            <svg
+                              width={`${element.fontSize}px`}
+                              height={`${element.fontSize}px`}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            >
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                              <line x1="6" y1="18" x2="18" y2="6" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div
+                          className={
+                            element.isSelected ? 'ring-2 ring-blue-500' : ''
+                          }
+                          style={{
+                            color: element.color,
+                            backgroundColor:
+                              element.backgroundColor === 'transparent'
+                                ? 'transparent'
+                                : element.backgroundColor === 'black'
+                                ? 'rgb(0, 0, 0)'
+                                : 'rgb(255, 255, 255)',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            whiteSpace: 'pre',
+                            display: 'inline-block',
                           }}
-                          title="텍스트 수정"
                         >
-                          ✏️
-                        </button>
-                        {/* 삭제 버튼 */}
-                        <button
-                          className="absolute -top-2 -right-10 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteTextElement(element.id);
-                          }}
-                          title="텍스트 삭제"
-                        >
-                          ×
-                        </button>
+                          {element.text}
+                        </div>
                       </div>
                     ))}
                   </div>
