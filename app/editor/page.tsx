@@ -930,7 +930,7 @@ export default function EditorPage() {
                     style={{
                       width: '800px',
                       height: '600px',
-                      touchAction: 'none', // 모바일 스크롤 방지
+                      touchAction: 'none',
                     }}
                     onMouseDown={(e) => {
                       // 빈 공간 클릭 시 선택 해제
@@ -939,20 +939,6 @@ export default function EditorPage() {
                         setTextElements((prev) =>
                           prev.map((el) => ({ ...el, isSelected: false }))
                         );
-                      }
-                    }}
-                    onTouchMove={(e) => {
-                      // 드래그 중일 때만 스크롤 방지
-                      if (isDragging) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                    onTouchEnd={(e) => {
-                      // 드래그 중일 때만 이벤트 전파 방지
-                      if (isDragging) {
-                        e.preventDefault();
-                        e.stopPropagation();
                       }
                     }}
                   >
@@ -1011,11 +997,28 @@ export default function EditorPage() {
                         }}
                         onMouseDown={(e) => {
                           e.preventDefault();
+
+                          const target = e.target as HTMLElement;
+                          if (
+                            target.tagName === 'BUTTON' ||
+                            target.closest('button')
+                          ) {
+                            return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
+                          }
+
                           handleDragStart(element, e.clientX, e.clientY);
                         }}
                         onTouchStart={(e) => {
-                          e.preventDefault();
                           const touch = e.touches[0];
+
+                          const target = e.target as HTMLElement;
+                          if (
+                            target.tagName === 'BUTTON' ||
+                            target.closest('button')
+                          ) {
+                            return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
+                          }
+
                           handleDragStart(
                             element,
                             touch.clientX,
@@ -1034,8 +1037,13 @@ export default function EditorPage() {
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              // 커스텀 텍스트 편집 모달 열기
                               openTextEditor(element.id, element.text);
+                            }}
+                            onMouseDown={(e) => {
+                              e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
+                            }}
+                            onTouchStart={(e) => {
+                              e.stopPropagation();
                             }}
                             title="텍스트 수정"
                           >
@@ -1052,6 +1060,12 @@ export default function EditorPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteTextElement(element.id);
+                            }}
+                            onMouseDown={(e) => {
+                              e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
+                            }}
+                            onTouchStart={(e) => {
+                              e.stopPropagation();
                             }}
                             title="텍스트 삭제"
                           >
