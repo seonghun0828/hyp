@@ -65,11 +65,11 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: getSuccessTextSystemPrompt(principle, styles),
+            content: getSuccessTextSystemPrompt(principle),
           },
           {
             role: 'user',
-            content: getSuccessTextUserPrompt(summary, category, styles),
+            content: getSuccessTextUserPrompt(summary, category),
           },
         ],
       });

@@ -213,5 +213,5 @@ export const getStyleOptionById = (
 // 스타일 ID로 라벨 찾기
 export const getStyleLabel = (categoryId: string, optionId: string): string => {
   const option = getStyleOptionById(categoryId, optionId);
-  return option?.label || optionId;
+  return option?.id || optionId;
 };

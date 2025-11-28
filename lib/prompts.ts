@@ -129,51 +129,38 @@ Focus solely on visually conveying the product’s core value and purpose throug
 /**
  * SUCCESs 원칙 기반 홍보문구 생성을 위한 시스템 프롬프트
  */
-export const getSuccessTextSystemPrompt = (
-  principle: string,
-  styles?: Styles
-): string => {
-  let styleDescription = '';
-  if (styles) {
-    const styleParts: string[] = [];
+export const getSuccessTextSystemPrompt = (principle: string): string => {
+  return `
+You are a senior marketing copywriter at HYP. 
+Your job is to create extremely concise, high-conversion Korean promotional copy (2–3 lines) for solo founders and side-project makers.
 
-    if (styles.messageType) {
-      const label = getStyleLabel('messages', styles.messageType);
-      styleParts.push(`Message Type: ${label}`);
-    }
+Your writing must strictly follow the SUCCESs framework.  
+Focus on applying the selected SUCCESs principle as the dominant structure of the copy.
 
-    if (styles.expressionStyle) {
-      const label = getStyleLabel('expressions', styles.expressionStyle);
-      styleParts.push(`Expression: ${label}`);
-    }
+Target SUCCESs Principle: "${principle}"
 
-    if (styles.toneMood) {
-      const label = getStyleLabel('tones-moods', styles.toneMood);
-      styleParts.push(`Tone & Mood: ${label}`);
-    }
+SUCCESs Structure Templates (use the template matching the selected principle):
+- Simple: Line1 = core benefit. Line2 = clarifying hook.
+- Unexpected: Line1 = surprise/pattern-break. Line2 = value proposition.
+- Concrete: Line1 = concrete scene. Line2 = precise action or number.
+- Credible: Line1 = claim. Line2 = proof/narrow detail.
+- Emotional: Line1 = emotion trigger. Line2 = comforting/aspirational payoff.
+- Story: Line1 = situation. Line2 = turning action. Line3 = result.
 
-    if (styles.modelComposition) {
-      const label = getStyleLabel('models', styles.modelComposition);
-      styleParts.push(`Model: ${label}`);
-    }
-
-    if (styleParts.length > 0) {
-      styleDescription = `\n\nStyle Preferences:\n${styleParts.join('\n')}`;
-    }
-  }
-
-  return `Generate a marketing copy based on SUCCESs principle "${principle}" in Korean.
-The copy should be 2-3 lines.
-
-Principle: ${principle}
-- Simple: Clear and concise message
-- Unexpected: Surprising or counterintuitive
-- Concrete: Specific and tangible
-- Credible: Trustworthy with proof
-- Emotional: Appeals to feelings
-- Story: Narrative-driven${styleDescription}
-
-Return only the text content, no JSON format.`;
+STRICT Output Rules:
+1. Length:  
+   - 2–3 lines total  
+   - Each line must be short, punchy, scannable  
+2. Language:  
+   - Korean only 
+   - Ensure every line reads naturally in conversational Korean.  
+3. Punctuation:  
+   - Use only necessary Korean punctuation (. , ? !)  
+   - DO NOT use long dashes, special separators, or Western-style symbols  
+4. Output Format:  
+   - ONLY the final 2–3 line marketing copy  
+   - No explanations, no lists, no markdown, no JSON
+`.trim();
 };
 
 /**
@@ -187,59 +174,27 @@ export const getSuccessTextUserPrompt = (
     target_customer?: string;
     competitive_edge?: string;
   },
-  category?: ProductCategory,
-  styles?: Styles
+  category?: ProductCategory
 ): string => {
-  let basePrompt = `Product: ${summary.core_value || '제품'}
-Description: ${summary.customer_benefit || '제품 설명'}
-Features: ${summary.feature_summary || '주요 기능'}
-Target Users: ${summary.target_customer || '일반 사용자'}
-Competitive Edge: ${summary.competitive_edge || '경쟁 우위'}`;
+  let prompt = `
+--- ESSENTIAL CORE MESSAGE ---
+[PAIN POINT SOLVED]: ${summary.customer_benefit || '고객 문제와 해결 혜택'}
+[CORE VALUE]: ${summary.core_value || '제품의 핵심 가치'}
+[DIFFERENTIATOR]: ${summary.competitive_edge || '경쟁 제품 대비 차별점'}
+`;
 
-  // 스타일 정보 추가
-  if (styles) {
-    const styleParts: string[] = [];
+  prompt += `\n--- REFERENCE DATA ---\n`;
+  prompt += `Target Audience: ${summary.target_customer || '일반 사용자'}\n`;
 
-    if (styles.messageType) {
-      const option = getStyleOptionById('messages', styles.messageType);
-      if (option) {
-        styleParts.push(`${option.label}: ${option.description}`);
-      }
-    }
-
-    if (styles.expressionStyle) {
-      const option = getStyleOptionById('expressions', styles.expressionStyle);
-      if (option) {
-        styleParts.push(`${option.label}: ${option.description}`);
-      }
-    }
-
-    if (styles.toneMood) {
-      const option = getStyleOptionById('tones-moods', styles.toneMood);
-      if (option) {
-        styleParts.push(`${option.label}: ${option.description}`);
-      }
-    }
-
-    if (styles.modelComposition) {
-      const option = getStyleOptionById('models', styles.modelComposition);
-      if (option) {
-        styleParts.push(`${option.label}: ${option.description}`);
-      }
-    }
-
-    if (styleParts.length > 0) {
-      basePrompt += `\n\nStyle Context:\n${styleParts.join('\n')}`;
-    }
+  if (summary.feature_summary) {
+    prompt += `Key Features (optional): ${summary.feature_summary}\n`;
   }
 
-  // 카테고리 모듈 조합
   if (category) {
-    const categoryModules = getCategoryModules(category);
-    if (categoryModules.trim() !== '') {
-      basePrompt += `\n\nCategory Context:\n${categoryModules}`;
-    }
+    prompt += `Industry: ${category.industry}\n`;
+    prompt += `Product Form: ${category.form}\n`;
+    prompt += `Purpose: ${category.purpose}\n`;
   }
 
-  return basePrompt;
+  return prompt.trim();
 };
