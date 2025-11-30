@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     // URL에서 제품 정보 가져오기 및 전처리
     const preprocessedContent = await extractAndPreprocessUrl(url);
 
+    console.time('OPENAI');
     // OpenAI로 제품 정보 요약
     const completion = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
         ? {}
         : { temperature: 0.3 }),
     });
+    console.timeEnd('OPENAI');
 
     const aiResponse = completion.choices[0]?.message?.content;
 
