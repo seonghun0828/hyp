@@ -24,7 +24,7 @@ export const getSummarySystemPrompt = (): string => {
   const purposeOptions = Object.values(PURPOSE_LABELS).join(', ');
 
   return `You are a marketing copywriting assistant specialized in extracting structured product summaries.
-You will receive product information (URL text).
+You will receive extracted and preprocessed product information (text content from web pages).
 Your task is to extract **7 key marketing summary elements** in Korean for generating promotional content later.
 
 Follow these rules:
@@ -55,20 +55,9 @@ Required JSON structure:
 /**
  * 제품 정보 요약을 위한 사용자 프롬프트
  */
-export const getSummaryUserPrompt = (html: string): string => {
-  // 1. HTML 길이 제한 보완: 긴 HTML은 핵심 텍스트 추출 후 앞뒤 균형 있게 전달
-  const maxChars = 8000; // AI 모델이 처리 가능한 안전 범위
-  let processedHtml = html;
-
-  if (html.length > maxChars) {
-    const half = Math.floor(maxChars / 2);
-    processedHtml =
-      html.substring(0, half) + '\n...\n' + html.substring(html.length - half);
-  }
-
-  // 2. 사용자 프롬프트
+export const getSummaryUserPrompt = (preprocessedText: string): string => {
   return `
-Analyze the following product information and extract a structured marketing summary in JSON format.
+Analyze the following extracted product information and extract a structured marketing summary in JSON format.
 Focus on the most relevant details for promotional content generation.
 
 Important:
@@ -76,10 +65,10 @@ Important:
 - Each field must be a concise, natural-sounding Korean sentence (max 40 words per field).
 - If information is missing, leave the field as an empty string "".
 - Prioritize how customers perceive value over technical specifications.
-- Ensure no field is skipped if sufficient info exists in the HTML.
+- Ensure no field is skipped if sufficient info exists in the provided text.
 
-Product Information:
-${processedHtml}
+Extracted Product Information:
+${preprocessedText}
 `;
 };
 

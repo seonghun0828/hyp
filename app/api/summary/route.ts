@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { supabase } from '@/lib/supabase';
 import { getSummarySystemPrompt, getSummaryUserPrompt } from '@/lib/prompts';
+import { extractAndPreprocessUrl } from '@/lib/summary';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -59,19 +60,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // URL에서 제품 정보 가져오기
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const html = await response.text();
+    // URL에서 제품 정보 가져오기 및 전처리
+    const preprocessedContent = await extractAndPreprocessUrl(url);
 
     // OpenAI로 제품 정보 요약
     const completion = await openai.chat.completions.create({
@@ -83,7 +73,7 @@ export async function POST(request: NextRequest) {
         },
         {
           role: 'user',
-          content: getSummaryUserPrompt(html),
+          content: getSummaryUserPrompt(preprocessedContent),
         },
       ],
       // GPT-5-mini는 temperature 파라미터를 지원하지 않음
