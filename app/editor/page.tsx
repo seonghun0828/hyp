@@ -761,9 +761,9 @@ export default function EditorPage() {
                 )}
               </div>
 
-              {/* 텍스트 스타일 조정 */}
+              {/* 텍스트 스타일 조정 - 데스크톱에서만 표시 */}
               {selectedElement && (
-                <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+                <div className="bg-white rounded-lg shadow-md p-6 mt-6 hidden lg:block">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     텍스트 스타일
                   </h3>
@@ -932,7 +932,7 @@ export default function EditorPage() {
               )}
             </div>
 
-            {/* 캔버스 영역 */}
+            {/* 캔버스 영역 - 홍보 문구 스타일 바로 아래 */}
             <div className="lg:col-span-3">
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-center">
@@ -1162,7 +1162,7 @@ export default function EditorPage() {
                 className="relative w-full"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="w-full flex justify-center items-start py-6">
+                <div className="w-full flex flex-col items-center py-6">
                   {/* 스타일이 적용된 텍스트 편집 박스 */}
                   <div
                     className={`inline-block ${editingFontClassName}`}
@@ -1236,6 +1236,160 @@ export default function EditorPage() {
                         )}px`;
                       }}
                     />
+                  </div>
+
+                  {/* 텍스트 스타일 블록 - 모바일에서만 표시 (편집 모드일 때만) */}
+                  <div className="bg-white rounded-lg shadow-md p-3 mt-3 max-w-2xl w-full lg:hidden">
+                    <div className="mb-2">
+                      <label className="block text-xs font-medium text-gray-700 mb-2">
+                        글꼴 설정
+                      </label>
+                      <div className="flex gap-1 flex-wrap">
+                        {fontNames.map((fontName, index) => (
+                          <button
+                            key={fontName}
+                            onClick={() => setCurrentFontIndex(index)}
+                            className={`px-2 py-1 rounded-lg text-sm font-medium transition-all ${
+                              currentFontIndex === index
+                                ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-300'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            } ${fonts[index].className}`}
+                          >
+                            {fontName}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          색상
+                        </label>
+                        {colorPalette.length > 0 ? (
+                          <div className="flex justify-between gap-1">
+                            {colorPalette.map(([r, g, b], index) => {
+                              const hexColor = `#${[r, g, b]
+                                .map((x) => {
+                                  const hex = x.toString(16);
+                                  return hex.length === 1 ? '0' + hex : hex;
+                                })
+                                .join('')}`;
+                              const currentColor =
+                                editingElement?.color || '#000000';
+                              const isSelected =
+                                currentColor.toLowerCase() ===
+                                hexColor.toLowerCase();
+
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => {
+                                    if (editingTextId) {
+                                      updateElementStyle(editingTextId, {
+                                        color: hexColor,
+                                      });
+                                    }
+                                  }}
+                                  className={`w-4 h-4 rounded border transition-all ${
+                                    isSelected
+                                      ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
+                                      : 'border-gray-300 hover:border-gray-400 hover:scale-105'
+                                  }`}
+                                  style={{ backgroundColor: hexColor }}
+                                  title={`RGB(${r}, ${g}, ${b})`}
+                                />
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500 py-2">
+                            이미지에서 색상을 추출하는 중...
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-2">
+                            배경색
+                          </label>
+                          <button
+                            className={`px-2 py-1 rounded text-xs transition-colors ${(() => {
+                              if (!editingElement)
+                                return 'bg-blue-500 text-white hover:bg-blue-600';
+
+                              if (editingElement.backgroundColor === 'white') {
+                                return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
+                              } else if (
+                                editingElement.backgroundColor === 'black'
+                              ) {
+                                return 'bg-black text-white hover:bg-gray-800';
+                              } else {
+                                return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
+                              }
+                            })()}`}
+                            onClick={() => {
+                              if (!editingElement || !editingTextId) return;
+
+                              // 순환 로직: 하얀색 → 검정색 → 없음 → 하얀색
+                              let nextBackgroundColor:
+                                | 'transparent'
+                                | 'black'
+                                | 'white';
+
+                              if (editingElement.backgroundColor === 'white') {
+                                nextBackgroundColor = 'black';
+                              } else if (
+                                editingElement.backgroundColor === 'black'
+                              ) {
+                                nextBackgroundColor = 'transparent';
+                              } else {
+                                nextBackgroundColor = 'white';
+                              }
+
+                              updateElementStyle(editingTextId, {
+                                backgroundColor: nextBackgroundColor,
+                              });
+                            }}
+                          >
+                            {(() => {
+                              if (!editingElement) return '글자';
+
+                              if (editingElement.backgroundColor === 'white') {
+                                return '하얀색';
+                              } else if (
+                                editingElement.backgroundColor === 'black'
+                              ) {
+                                return '검정색';
+                              } else {
+                                return '없음';
+                              }
+                            })()}
+                          </button>
+                        </div>
+
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-2">
+                            글자 크기
+                          </label>
+                          <input
+                            type="range"
+                            min={minFont}
+                            max={maxFont}
+                            value={editingElement?.fontSize || 12}
+                            onChange={(e) => {
+                              if (editingTextId) {
+                                updateElementStyle(editingTextId, {
+                                  fontSize: parseInt(e.target.value),
+                                });
+                              }
+                            }}
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
