@@ -25,7 +25,7 @@
     "metascraper": "^5.49.5",
     "metascraper-description": "^5.49.5",
     "metascraper-title": "^5.49.5",
-    "next": "15.5.5",
+    "next": "15.5.7",
     "openai": "^6.5.0",
     "puppeteer": "^24.31.0",
     "react": "19.1.0",
