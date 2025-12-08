@@ -370,6 +370,17 @@ export default function EditorPage() {
     closeTextEditor();
   };
 
+  const handleTextChange = (newText: string) => {
+    setEditingText(newText);
+    if (editingTextId) {
+      setTextElements((prev) =>
+        prev.map((el) =>
+          el.id === editingTextId ? { ...el, text: newText } : el
+        )
+      );
+    }
+  };
+
   // 네비게이션 핸들러
   const handlePrevPrinciple = () => {
     if (canGoPrev) {
@@ -980,132 +991,137 @@ export default function EditorPage() {
                       }}
                     />
                     {/* 텍스트 오버레이 */}
-                    {textElements.map((element) => (
-                      <div
-                        key={element.id}
-                        className={`absolute cursor-move flex flex-col select-none z-10  ${currentFontClassName}`}
-                        style={{
-                          left: `${element.x}px`,
-                          top: `${element.y}px`,
-                          fontSize: `${element.fontSize}px`,
-                        }}
-                        onDoubleClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          // 더블클릭으로 커스텀 텍스트 편집 모달 열기
-                          openTextEditor(element.id, element.text);
-                        }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-
-                          const target = e.target as HTMLElement;
-                          if (
-                            target.tagName === 'BUTTON' ||
-                            target.closest('button')
-                          ) {
-                            return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
-                          }
-
-                          handleDragStart(element, e.clientX, e.clientY);
-                        }}
-                        onTouchStart={(e) => {
-                          const touch = e.touches[0];
-
-                          const target = e.target as HTMLElement;
-                          if (
-                            target.tagName === 'BUTTON' ||
-                            target.closest('button')
-                          ) {
-                            return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
-                          }
-
-                          handleDragStart(
-                            element,
-                            touch.clientX,
-                            touch.clientY
-                          );
-                        }}
-                      >
-                        <div className="flex justify-end gap-1 md:gap-2 mb-1">
-                          {/* 수정 버튼 */}
-                          <button
-                            className="bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
-                            style={{
-                              width: `${element.fontSize * 1.6}px`,
-                              height: `${element.fontSize * 1.6}px`,
-                              fontSize: `${element.fontSize}px`,
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openTextEditor(element.id, element.text);
-                            }}
-                            onMouseDown={(e) => {
-                              e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
-                            }}
-                            onTouchStart={(e) => {
-                              e.stopPropagation();
-                            }}
-                            title="텍스트 수정"
-                          >
-                            ✏️
-                          </button>
-                          {/* 삭제 버튼 */}
-                          <button
-                            className="bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                            style={{
-                              width: `${element.fontSize * 1.6}px`,
-                              height: `${element.fontSize * 1.6}px`,
-                              fontSize: `${element.fontSize * 1.2}px`,
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteTextElement(element.id);
-                            }}
-                            onMouseDown={(e) => {
-                              e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
-                            }}
-                            onTouchStart={(e) => {
-                              e.stopPropagation();
-                            }}
-                            title="텍스트 삭제"
-                          >
-                            <svg
-                              width={`${element.fontSize}px`}
-                              height={`${element.fontSize}px`}
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                            >
-                              <line x1="6" y1="6" x2="18" y2="18" />
-                              <line x1="6" y1="18" x2="18" y2="6" />
-                            </svg>
-                          </button>
-                        </div>
-
+                    {textElements.map((element) => {
+                      const isEditing = editingTextId === element.id;
+                      return (
                         <div
-                          className={
-                            element.isSelected ? 'ring-2 ring-blue-500' : ''
-                          }
+                          key={element.id}
+                          className={`absolute cursor-move flex flex-col select-none z-10  ${currentFontClassName}`}
                           style={{
-                            color: element.color,
-                            backgroundColor:
-                              element.backgroundColor === 'transparent'
-                                ? 'transparent'
-                                : element.backgroundColor === 'black'
-                                ? 'rgb(0, 0, 0)'
-                                : 'rgb(255, 255, 255)',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            whiteSpace: 'pre',
-                            display: 'inline-block',
+                            left: `${element.x}px`,
+                            top: `${element.y}px`,
+                            fontSize: `${element.fontSize}px`,
+                            opacity: isEditing ? 0 : 1,
+                            pointerEvents: isEditing ? 'none' : 'auto',
+                          }}
+                          onDoubleClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            // 더블클릭으로 커스텀 텍스트 편집 모달 열기
+                            openTextEditor(element.id, element.text);
+                          }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+
+                            const target = e.target as HTMLElement;
+                            if (
+                              target.tagName === 'BUTTON' ||
+                              target.closest('button')
+                            ) {
+                              return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
+                            }
+
+                            handleDragStart(element, e.clientX, e.clientY);
+                          }}
+                          onTouchStart={(e) => {
+                            const touch = e.touches[0];
+
+                            const target = e.target as HTMLElement;
+                            if (
+                              target.tagName === 'BUTTON' ||
+                              target.closest('button')
+                            ) {
+                              return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
+                            }
+
+                            handleDragStart(
+                              element,
+                              touch.clientX,
+                              touch.clientY
+                            );
                           }}
                         >
-                          {element.text}
+                          <div className="flex justify-end gap-1 md:gap-2 mb-1">
+                            {/* 수정 버튼 */}
+                            <button
+                              className="bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
+                              style={{
+                                width: `${element.fontSize * 1.6}px`,
+                                height: `${element.fontSize * 1.6}px`,
+                                fontSize: `${element.fontSize}px`,
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openTextEditor(element.id, element.text);
+                              }}
+                              onMouseDown={(e) => {
+                                e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
+                              }}
+                              onTouchStart={(e) => {
+                                e.stopPropagation();
+                              }}
+                              title="텍스트 수정"
+                            >
+                              ✏️
+                            </button>
+                            {/* 삭제 버튼 */}
+                            <button
+                              className="bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                              style={{
+                                width: `${element.fontSize * 1.6}px`,
+                                height: `${element.fontSize * 1.6}px`,
+                                fontSize: `${element.fontSize * 1.2}px`,
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTextElement(element.id);
+                              }}
+                              onMouseDown={(e) => {
+                                e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
+                              }}
+                              onTouchStart={(e) => {
+                                e.stopPropagation();
+                              }}
+                              title="텍스트 삭제"
+                            >
+                              <svg
+                                width={`${element.fontSize}px`}
+                                height={`${element.fontSize}px`}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                              >
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                                <line x1="6" y1="18" x2="18" y2="6" />
+                              </svg>
+                            </button>
+                          </div>
+
+                          <div
+                            className={
+                              element.isSelected ? 'ring-2 ring-blue-500' : ''
+                            }
+                            style={{
+                              color: element.color,
+                              backgroundColor:
+                                element.backgroundColor === 'transparent'
+                                  ? 'transparent'
+                                  : element.backgroundColor === 'black'
+                                  ? 'rgb(0, 0, 0)'
+                                  : 'rgb(255, 255, 255)',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              whiteSpace: 'pre',
+                              display: 'inline-block',
+                            }}
+                          >
+                            {element.text}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1123,75 +1139,109 @@ export default function EditorPage() {
         </div>
       </div>
 
-      {/* 커스텀 텍스트 편집 모달 */}
-      {editingTextId && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={closeTextEditor}
-        >
-          <div
-            className="bg-white rounded-lg p-6 shadow-xl"
-            style={{ width: '800px', height: '600px' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-4">텍스트 편집</h3>
+      {/* 텍스트 편집 영역 (화면 상단 고정) */}
+      {editingTextId &&
+        (() => {
+          const editingElement = textElements.find(
+            (el) => el.id === editingTextId
+          );
+          if (!editingElement) return null;
+
+          const editingFontClassName = fonts[currentFontIndex].className;
+
+          return (
             <div
-              className="relative"
-              style={{ width: '100%', height: '300px' }}
+              className="fixed inset-0 z-50 flex flex-col"
+              onClick={closeTextEditor}
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              }}
             >
-              <textarea
-                value={editingText}
-                onChange={(e) => setEditingText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    closeTextEditor();
-                  } else if (e.key === 'Enter' && e.ctrlKey) {
-                    saveTextEdit();
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  padding: '4px 8px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '4px',
-                  resize: 'none',
-                  outline: 'none',
-                  fontSize: `${
-                    textElements.find((el) => el.id === editingTextId)
-                      ?.fontSize || 12
-                  }px`,
-                  color:
-                    textElements.find((el) => el.id === editingTextId)?.color ||
-                    '#000000',
-                  backgroundColor: (() => {
-                    const element = textElements.find(
-                      (el) => el.id === editingTextId
-                    );
-                    if (!element) return 'rgba(255, 255, 255, 0.8)';
-                    return element.backgroundColor === 'transparent'
-                      ? 'transparent'
-                      : element.backgroundColor === 'black'
-                      ? 'rgba(0, 0, 0, 0.8)'
-                      : 'rgba(255, 255, 255, 0.8)';
-                  })(),
-                  whiteSpace: 'pre',
-                }}
-                placeholder="텍스트를 입력하세요... (Ctrl+Enter로 저장, Esc로 취소)"
-                autoFocus
-              />
+              {/* 상단 고정 텍스트 박스 */}
+              <div
+                className="relative w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="w-full flex justify-center items-start py-6">
+                  {/* 스타일이 적용된 텍스트 편집 박스 */}
+                  <div
+                    className={`inline-block ${editingFontClassName}`}
+                    style={{
+                      color: editingElement.color,
+                      backgroundColor:
+                        editingElement.backgroundColor === 'transparent'
+                          ? 'transparent'
+                          : editingElement.backgroundColor === 'black'
+                          ? 'rgb(0, 0, 0)'
+                          : 'rgb(255, 255, 255)',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      whiteSpace: 'pre',
+                      fontSize: `${editingElement.fontSize}px`,
+                      display: 'inline-block',
+                    }}
+                  >
+                    <textarea
+                      value={editingText}
+                      onChange={(e) => handleTextChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          closeTextEditor();
+                        }
+                      }}
+                      className={editingFontClassName}
+                      style={{
+                        padding: '0',
+                        margin: '0',
+                        border: 'none',
+                        borderRadius: '0',
+                        resize: 'none',
+                        outline: 'none',
+                        fontSize: `${editingElement.fontSize}px`,
+                        color: editingElement.color,
+                        backgroundColor: 'transparent',
+                        whiteSpace: 'pre',
+                        lineHeight: 'normal',
+                        overflow: 'hidden',
+                        fontFamily: 'inherit',
+                        fontWeight: 'inherit',
+                        letterSpacing: 'inherit',
+                        width: 'auto',
+                        minWidth: '1ch',
+                        height: 'auto',
+                      }}
+                      placeholder="텍스트를 입력하세요... (Esc로 종료)"
+                      autoFocus
+                      ref={(textarea) => {
+                        if (textarea) {
+                          // 초기 크기 설정
+                          textarea.style.height = 'auto';
+                          textarea.style.width = 'auto';
+                          textarea.style.height = `${textarea.scrollHeight}px`;
+                          textarea.style.width = `${Math.max(
+                            textarea.scrollWidth,
+                            1
+                          )}px`;
+                        }
+                      }}
+                      onInput={(e) => {
+                        // textarea 크기 자동 조절
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.width = 'auto';
+                        target.style.height = `${target.scrollHeight}px`;
+                        target.style.width = `${Math.max(
+                          target.scrollWidth,
+                          1
+                        )}px`;
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button onClick={closeTextEditor} variant="outline" size="sm">
-                취소
-              </Button>
-              <Button onClick={saveTextEdit} size="sm">
-                저장
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
     </div>
   );
 }
