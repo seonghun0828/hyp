@@ -22,9 +22,9 @@ export default function ProgressBar({
     >
       {/* Progress Bar */}
       <div className="relative">
-        {/* 텍스트 라벨 - 첫 단계에서는 숨김 */}
+        {/* 텍스트 라벨 - 첫 단계에서는 숨김, 모바일에서도 숨김 */}
         {!isFirstStep && (
-          <div className="flex justify-between items-center mb-2">
+          <div className="hidden md:flex justify-between items-center mb-2">
             {stepNames.map((name, index) => (
               <div
                 key={index}
