@@ -1,9 +1,6 @@
 import puppeteer, { HTTPRequest, Browser } from 'puppeteer';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
-import metascraper from 'metascraper';
-import metascraperTitle from 'metascraper-title';
-import metascraperDescription from 'metascraper-description';
 
 const MAX_CHARS = 4000;
 
@@ -144,12 +141,15 @@ function extractReadabilityText(html: string, url: string) {
 }
 
 async function extractMeta(html: string, url: string) {
-  try {
-    const scraper = metascraper([metascraperTitle(), metascraperDescription()]);
-    return await scraper({ html, url });
-  } catch {
-    return {};
-  }
+  const dom = new JSDOM(html);
+  const doc = dom.window.document;
+
+  return {
+    title: doc.querySelector('title')?.textContent || '',
+    description:
+      doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
+      '',
+  };
 }
 
 function extractDenseText(html: string) {
