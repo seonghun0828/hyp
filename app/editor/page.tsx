@@ -94,6 +94,63 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(false);
   const [currentFontIndex, setCurrentFontIndex] = useState(0);
   const currentFontClassName = fonts[currentFontIndex].className;
+
+  // 폰트 변경 시 위치 조정을 포함한 함수
+  const handleFontChange = (index: number) => {
+    setCurrentFontIndex(index);
+
+    // 선택된 요소가 있고 드래그 중이 아닐 때만 위치 조정
+    if (selectedElement && !isDragging) {
+      setTimeout(() => {
+        const element = textElements.find((el) => el.id === selectedElement);
+        if (element) {
+          const container = document.querySelector('.editor-container');
+          if (container) {
+            const containerRect = container.getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const containerHeight = containerRect.height;
+
+            // 새로운 폰트 정보 가져오기
+            const newFont = fonts[index];
+            const fontFamily = newFont.style.fontFamily;
+
+            // 텍스트의 실제 크기 측정
+            const textWidth = measureTextWidthWithDOM(
+              element.text,
+              element.fontSize,
+              fontFamily
+            );
+            const textHeight = element.fontSize * 1.5;
+            const padding = 16;
+            const totalWidth = textWidth + padding;
+            const totalHeight = textHeight + 8;
+
+            // 위치를 컨테이너 안으로 제한
+            let newX = element.x;
+            let newY = element.y;
+
+            if (newX + totalWidth > containerWidth) {
+              newX = Math.max(0, containerWidth - totalWidth);
+            }
+            if (newX < 0) {
+              newX = 0;
+            }
+            if (newY + totalHeight > containerHeight) {
+              newY = Math.max(0, containerHeight - totalHeight);
+            }
+            if (newY < 0) {
+              newY = 0;
+            }
+
+            // 위치가 변경된 경우에만 업데이트
+            if (newX !== element.x || newY !== element.y) {
+              updateElementStyle(selectedElement, { x: newX, y: newY });
+            }
+          }
+        }
+      }, 0);
+    }
+  };
   const [colorPalette, setColorPalette] = useState<number[][]>([]);
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
@@ -414,9 +471,64 @@ export default function EditorPage() {
     updates: Partial<TextElement>
   ) => {
     setTextElements((prev) => {
-      const updated = prev.map((el) =>
-        el.id === elementId ? { ...el, ...updates } : el
-      );
+      const updated = prev.map((el) => {
+        if (el.id !== elementId) return el;
+
+        const newElement = { ...el, ...updates };
+
+        // 드래그 중이 아니고, 스타일이 변경된 경우에만 위치를 컨테이너 안으로 조정
+        if (
+          !isDragging &&
+          (updates.fontSize || updates.color || updates.backgroundColor)
+        ) {
+          const container = document.querySelector('.editor-container');
+          if (container) {
+            const containerRect = container.getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const containerHeight = containerRect.height;
+
+            // 현재 폰트 정보 가져오기
+            const currentFont = fonts[currentFontIndex];
+            const fontFamily = currentFont.style.fontFamily;
+
+            // 텍스트의 실제 크기 측정
+            const textWidth = measureTextWidthWithDOM(
+              newElement.text,
+              newElement.fontSize,
+              fontFamily
+            );
+            const textHeight = newElement.fontSize * 1.5; // 대략적인 높이
+            const padding = 16; // 좌우 패딩 (4px + 8px) * 2
+            const totalWidth = textWidth + padding;
+            const totalHeight = textHeight + 8; // 상하 패딩
+
+            // 위치를 컨테이너 안으로 제한
+            let newX = newElement.x;
+            let newY = newElement.y;
+
+            // 오른쪽 경계 체크
+            if (newX + totalWidth > containerWidth) {
+              newX = Math.max(0, containerWidth - totalWidth);
+            }
+            // 왼쪽 경계 체크
+            if (newX < 0) {
+              newX = 0;
+            }
+            // 아래쪽 경계 체크
+            if (newY + totalHeight > containerHeight) {
+              newY = Math.max(0, containerHeight - totalHeight);
+            }
+            // 위쪽 경계 체크
+            if (newY < 0) {
+              newY = 0;
+            }
+
+            return { ...newElement, x: newX, y: newY };
+          }
+        }
+
+        return newElement;
+      });
       return updated;
     });
   };
@@ -776,7 +888,7 @@ export default function EditorPage() {
                       {fontNames.map((fontName, index) => (
                         <button
                           key={fontName}
-                          onClick={() => setCurrentFontIndex(index)}
+                          onClick={() => handleFontChange(index)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                             currentFontIndex === index
                               ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-300'
@@ -1248,7 +1360,7 @@ export default function EditorPage() {
                       {fontNames.map((fontName, index) => (
                         <button
                           key={fontName}
-                          onClick={() => setCurrentFontIndex(index)}
+                          onClick={() => handleFontChange(index)}
                           className={`px-2 py-1 rounded-lg text-sm font-medium transition-all ${
                             currentFontIndex === index
                               ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-300'
