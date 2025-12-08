@@ -117,7 +117,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar currentStep={1} totalSteps={6} stepNames={stepNames} />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 pb-12 md:py-12">
         <div className="max-w-2xl mx-auto text-center">
           {/* 헤더 */}
           <div className="mb-12">

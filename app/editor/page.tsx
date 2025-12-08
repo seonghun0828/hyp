@@ -823,15 +823,12 @@ export default function EditorPage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar currentStep={8} totalSteps={9} stepNames={stepNames} />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pb-8 md:py-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               콘텐츠 에디터
             </h1>
-            <p className="text-gray-600">
-              텍스트를 드래그하여 위치를 조정하고 스타일을 변경해보세요
-            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

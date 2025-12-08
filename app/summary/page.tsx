@@ -123,7 +123,7 @@ export default function SummaryPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <ProgressBar currentStep={2} totalSteps={9} stepNames={stepNames} />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 pb-12 md:py-12">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
