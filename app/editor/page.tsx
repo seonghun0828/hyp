@@ -342,6 +342,9 @@ export default function EditorPage() {
     const existingElement = textElements.find((el) => el.text === currentText);
 
     if (!existingElement) {
+      // 기존 텍스트 요소가 있는지 확인 (다른 텍스트라도 스타일을 유지하기 위해)
+      const previousElement = textElements.length > 0 ? textElements[0] : null;
+
       // 현재 폰트 정보 가져오기
       const currentFont = fonts[currentFontIndex];
       const fontFamily = currentFont.style.fontFamily;
@@ -364,25 +367,56 @@ export default function EditorPage() {
         maxFont // 최대 크기
       );
 
-      // 텍스트 너비 측정 (padding 포함하지 않음 - 이미 availableWidth에서 제외했으므로)
+      // 실제로 사용할 글자 크기 (기존 크기 유지 또는 자동 계산)
+      const actualFontSize = previousElement?.fontSize ?? optimalFontSize;
+
+      // 실제 사용할 글자 크기로 텍스트 너비 측정
       const textWidth = measureTextWidthWithDOM(
         currentText,
-        optimalFontSize,
+        actualFontSize,
         fontFamily
       );
 
       // 가운데 정렬 계산 (텍스트 너비 + 좌우 패딩 기준)
       const totalTextWidth = textWidth + textPaddingLeft + textPaddingRight;
-      const centerX = (containerWidth - totalTextWidth) / 2;
+      let centerX = (containerWidth - totalTextWidth) / 2;
+
+      // 컨테이너 높이 가져오기
+      const containerHeight = 600; // 기본값
+
+      // 위치를 컨테이너 안으로 제한
+      const textHeight = actualFontSize * 1.5; // 대략적인 높이
+      const padding = 16; // 좌우 패딩 (4px + 8px) * 2
+      const totalHeight = textHeight + 8; // 상하 패딩
+
+      let finalX = centerX;
+      let finalY = previousElement?.y ?? 100;
+
+      // 오른쪽 경계 체크
+      if (finalX + totalTextWidth > containerWidth) {
+        finalX = Math.max(0, containerWidth - totalTextWidth);
+      }
+      // 왼쪽 경계 체크
+      if (finalX < 0) {
+        finalX = 0;
+      }
+      // 아래쪽 경계 체크
+      if (finalY + totalHeight > containerHeight) {
+        finalY = Math.max(0, containerHeight - totalHeight);
+      }
+      // 위쪽 경계 체크
+      if (finalY < 0) {
+        finalY = 0;
+      }
 
       const newElement: TextElement = {
         id: `text-${Date.now()}`,
         text: currentText,
-        x: centerX,
-        y: 100,
-        fontSize: optimalFontSize, // 자동 계산된 크기 사용
-        color: '#000000',
-        backgroundColor: 'white',
+        x: finalX,
+        y: finalY,
+        fontSize: actualFontSize, // 기존 글자 크기 유지 또는 자동 계산된 크기
+        color: previousElement?.color ?? '#000000', // 기존 색상 유지 또는 기본값
+        backgroundColor: previousElement?.backgroundColor ?? 'white', // 기존 배경색 유지 또는 기본값
         isSelected: true,
       };
 
