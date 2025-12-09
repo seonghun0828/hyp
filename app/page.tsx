@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { motion, useInView, useAnimation } from 'framer-motion';
 import { useFunnelStore, ProductSummary } from '@/lib/store';
 import { isValidUrl } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
@@ -161,6 +163,9 @@ export default function HomePage() {
             </Button>
           </form>
 
+          {/* HYP 핵심 과정 섹션 */}
+          <ProcessSection />
+
           {/* 예시 */}
           <div className="mt-12 p-6 bg-white rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
@@ -190,5 +195,131 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// HYP 핵심 과정 섹션 컴포넌트
+function ProcessSection() {
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+
+  // 데스크톱 애니메이션: 순서대로 강조 (반복)
+  // 순서: 0(1) 밝음 → 1(2) 밝음 → 2(3) 밝음 → 반복
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHighlightedIndex((prev) => {
+        return (prev + 1) % 3;
+      });
+    }, 1600); // 각 단계당 0.8초 * 2 = 1.6초
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const processImages = [
+    '/images/process-examples/process-1.png',
+    '/images/process-examples/process-2.png',
+    '/images/process-examples/process-3.png',
+  ];
+
+  return (
+    <div className="pt-12 pb-6">
+      <h3 className="text-lg font-semibold text-gray-900 pb-4 text-center">
+        1분 이내에 홍보 콘텐츠 생성하는 방법 👀
+      </h3>
+      {/* 데스크톱: 가로 1열 */}
+      <div className="hidden md:flex justify-center items-center gap-6">
+        {processImages.map((src, index) => {
+          const isHighlighted = highlightedIndex === index;
+          // 강조 로직:
+          // - highlightedIndex === 0: index 0 밝음, 1,2 흐림
+          // - highlightedIndex === 1: index 1 밝음, 0,2 흐림 (2는 낮게)
+          // - highlightedIndex === 2: index 2 밝음, 0,1 흐림
+          const isDimmed = !isHighlighted;
+          const isLowBrightness = highlightedIndex === 1 && index === 2; // 2 밝음일 때 3은 낮게
+
+          return (
+            <div key={index}>
+              <p className="text-sm font-medium text-gray-700">
+                {['1. 링크 입력', '2. 스타일 선택', '3. 콘텐츠 생성'][index]}
+              </p>
+              <motion.div
+                key={index}
+                className="relative rounded-lg overflow-hidden"
+                animate={{
+                  scale: isHighlighted ? 1.03 : 1,
+                  opacity: isLowBrightness ? 0.7 : isDimmed ? 0.5 : 1,
+                  filter: isLowBrightness
+                    ? 'brightness(0.8)'
+                    : isDimmed
+                    ? 'brightness(0.6)'
+                    : 'brightness(1.1)',
+                }}
+                transition={{
+                  duration: 0.8,
+                  ease: 'easeInOut',
+                }}
+                style={{
+                  boxShadow: isHighlighted
+                    ? '0 10px 40px rgba(0, 0, 0, 0.15)'
+                    : '0 2px 8px rgba(0, 0, 0, 0.05)',
+                }}
+              >
+                <Image
+                  src={src}
+                  alt={`HYP 과정 ${index + 1}`}
+                  priority={index === 0}
+                  width={200}
+                  height={200}
+                  className="w-full h-auto p-2"
+                />
+              </motion.div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 모바일: 세로 */}
+      <div className="md:hidden space-y-6">
+        {processImages.map((src, index) => (
+          <div key={index}>
+            <p className="text-sm font-medium text-gray-700">
+              {['1. 링크 입력', '2. 스타일 선택', '3. 콘텐츠 생성'][index]}
+            </p>
+            <ProcessImageMobile src={src} index={index} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// 모바일용 이미지 컴포넌트
+function ProcessImageMobile({ src, index }: { src: string; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.4 });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 1 }}
+      animate={
+        isInView
+          ? {
+              opacity: 1,
+              scale: 1.03,
+            }
+          : { opacity: 0, scale: 1 }
+      }
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+      className="relative rounded-lg overflow-hidden"
+    >
+      <Image
+        src={src}
+        alt={`HYP 과정 ${index + 1}`}
+        width={200}
+        height={200}
+        className="w-full h-auto p-4"
+        priority={index === 0}
+      />
+    </motion.div>
   );
 }
