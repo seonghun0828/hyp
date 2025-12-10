@@ -110,7 +110,7 @@ Generate one high-quality SNS advertisement image.
 The image must contain **no text**, including on UI screens, devices, props, or backgrounds.  
 Use a realistic, clear, visually appealing composition that reflects the advertising purpose.  
 Avoid distortions, avoid artifacts, and maintain natural lighting.  
-Aspect ratio should remain consistent with previous outputs.  
+The image must have a 3:4 aspect ratio (portrait orientation, height:width = 4:3).
 Focus solely on visually conveying the product’s core value and purpose through the selected style package.
 `;
 };

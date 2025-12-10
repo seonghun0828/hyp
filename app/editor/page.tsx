@@ -607,6 +607,8 @@ export default function EditorPage() {
       setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
 
     // 터치 이벤트 핸들러
@@ -631,6 +633,8 @@ export default function EditorPage() {
         e.stopPropagation();
       }
       setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
@@ -1084,6 +1088,7 @@ export default function EditorPage() {
                     style={{
                       width: '800px',
                       height: '600px',
+                      maxHeight: '60vh',
                       touchAction: 'none',
                     }}
                     onMouseDown={(e) => {
