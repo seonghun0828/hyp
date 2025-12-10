@@ -667,7 +667,6 @@ export default function EditorPage() {
 
     setLoading(true);
 
-    // html2canvas-pro를 사용하여 div를 이미지로 변환 (lab() 색상 함수 지원)
     const { default: html2canvas } = await import('html2canvas-pro');
     const element = document.querySelector('.editor-container') as HTMLElement;
 
@@ -679,40 +678,35 @@ export default function EditorPage() {
     try {
       const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
-        // width, height 제거 - 실제 DOM 크기 사용
         useCORS: true,
         allowTaint: true,
         logging: false,
         foreignObjectRendering: false,
         removeContainer: true,
+        scrollX: 0,
+        scrollY: 0,
         ignoreElements: (element) => {
-          // 에디터 UI 요소들만 제외
           if (element.classList) {
-            // 텍스트 툴바 제외
+            // 텍스트 툴바만 제외 (버튼은 onclone에서 처리)
             if (element.classList.contains('text-toolbar')) {
-              return true;
-            }
-            // 삭제 버튼 제외
-            if (
-              element.classList.contains('bg-red-500') ||
-              element.classList.contains('bg-red-600') ||
-              (element.tagName === 'BUTTON' && element.textContent === '×')
-            ) {
-              return true;
-            }
-            // 편집 버튼 제외
-            if (
-              element.classList.contains('bg-blue-500') ||
-              element.classList.contains('bg-blue-600') ||
-              (element.tagName === 'BUTTON' && element.textContent === '✏️')
-            ) {
               return true;
             }
           }
           return false;
         },
         onclone: (clonedDoc) => {
-          // 선택된 요소의 스타일 정리
+          // 1. 버튼들을 감싸고 있는 컨테이너 찾기
+          // "수정/삭제 버튼이 들어있는 div" = div.flex.justify-end
+          const buttonContainers = clonedDoc.querySelectorAll(
+            'div.flex.justify-end'
+          );
+
+          buttonContainers.forEach((container) => {
+            // 해당 컨테이너를 투명하게 만듦 (공간은 차지함)
+            (container as HTMLElement).style.visibility = 'hidden';
+          });
+
+          // 2. 선택된 요소의 외곽선/그림자 등 스타일 정리
           const allElements = clonedDoc.querySelectorAll('*');
           allElements.forEach((el) => {
             const htmlEl = el as HTMLElement;
