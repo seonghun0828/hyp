@@ -316,16 +316,15 @@ export default function ResultPage() {
       </div>
 
       {/* 홍보 팝업 */}
-      {showPromotion && (
+      {showPromotion && resultId && (
         <PromotionPrompt
+          resultId={resultId}
           onClose={() => {
             setShowPromotion(false);
-            // 홍보 팝업 닫으면 피드백 모달 표시
-            setShowFeedback(true);
-          }}
-          onAgree={() => {
-            // 동의하기 처리 (나중에 API 호출 등 추가 가능)
-            console.log('Promotion agreed');
+            // 홍보 팝업 닫으면 피드백 모달 표시 (피드백 아직 안한 경우만)
+            if (!hasQuickFeedback && !lastQuickFeedback) {
+              setShowFeedback(true);
+            }
           }}
         />
       )}

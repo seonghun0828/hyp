@@ -3,12 +3,17 @@
 import { trackEvent } from '@/lib/analytics';
 
 interface PromotionPromptProps {
+  resultId: string; // resultId 추가
   onClose?: () => void;
   onAgree?: () => void;
 }
 
-export const PromotionPrompt = ({ onClose, onAgree }: PromotionPromptProps) => {
-  const handleAgree = () => {
+export const PromotionPrompt = ({
+  resultId,
+  onClose,
+  onAgree,
+}: PromotionPromptProps) => {
+  const handleAgree = async () => {
     // 이벤트 추적
     trackEvent('promotion_agree', {
       step: 6,
@@ -16,7 +21,23 @@ export const PromotionPrompt = ({ onClose, onAgree }: PromotionPromptProps) => {
       action: 'promotion_agree',
     });
 
-    // 동의하기 처리 (나중에 API 호출 등 추가 가능)
+    try {
+      // API 호출하여 동의 여부 저장
+      fetch('/api/promotion-consent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resultId,
+          consent: true,
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to save promotion consent:', error);
+    }
+
+    // 동의하기 처리
     if (onAgree) {
       onAgree();
     }

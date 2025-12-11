@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS generated_contents (
   texts TEXT[] NOT NULL DEFAULT '{}',
   selected_principle TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  is_promotional BOOLEAN DEFAULT FALSE,
 );
 
 -- SUCCESs 원칙 홍보문구 캐시 테이블
