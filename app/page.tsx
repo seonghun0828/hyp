@@ -166,7 +166,10 @@ export default function HomePage() {
           {/* HYP 핵심 과정 섹션 */}
           <ProcessSection />
 
-          {/* 예시 */}
+          {/* 사용 예시 섹션 */}
+          <ExampleSection />
+
+          {/* 추천 링크 유형 */}
           <div className="mt-12 p-6 bg-white rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
               추천하는 링크 유형
@@ -321,5 +324,89 @@ function ProcessImageMobile({ src, index }: { src: string; index: number }) {
         priority={index === 0}
       />
     </motion.div>
+  );
+}
+
+// 사용 예시 섹션 컴포넌트
+function ExampleSection() {
+  const examples = [
+    {
+      src: '/images/result-examples/result1-youtube.png',
+      title: '유튜브',
+      description1: 'AI로 사람 모델 이미지 생성',
+      description2: '추천받은 문구 배치',
+      align: 'left',
+      device: 'desktop',
+    },
+    {
+      src: '/images/result-examples/result2-macbook.png',
+      title: '맥북',
+      description1: '이미지 직접 업로드',
+      description2: '추천받은 문구 배치',
+      align: 'right',
+      device: 'desktop',
+    },
+    {
+      src: '/images/result-examples/result3-musinsa.png',
+      title: '무신사',
+      description1: 'AI로 캐릭터 모델 이미지 생성',
+      description2: '추천받은 문구 배치',
+      align: 'left',
+      device: 'mobile',
+    },
+  ];
+
+  return (
+    <div className="py-6 md:pt-12 md:pb-6 border-t border-gray-100">
+      <h3 className="text-lg font-semibold text-gray-900 pb-8 text-center">
+        이렇게 만들 수 있어요 🎨
+      </h3>
+
+      <div className="flex flex-col gap-16 max-w-4xl mx-auto px-4">
+        {examples.map((example, index) => (
+          <div
+            key={index}
+            className={`flex flex-col md:flex-row items-center gap-4 md:gap-8 ${
+              example.align === 'right' ? 'md:flex-row-reverse' : ''
+            }`}
+          >
+            {/* 이미지 영역 */}
+            <div
+              className={`w-full ${
+                example.device === 'mobile' ? 'md:w-1/2' : 'md:w-full'
+              }`}
+            >
+              <div className="relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white border border-gray-100">
+                <Image
+                  src={example.src}
+                  alt={`사용 예시 ${index + 1}`}
+                  width={400}
+                  height={500}
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            </div>
+
+            {/* 텍스트 영역 */}
+            <div
+              className={`w-full md:w-1/2 flex flex-col ${
+                example.align === 'right'
+                  ? 'md:items-end md:text-right'
+                  : 'md:items-start md:text-left'
+              } items-center text-center`}
+            >
+              <span className="text-blue-600 font-bold text-lg tracking-wider mb-2">
+                CASE {index + 1}. {example.title}
+              </span>
+              <p className="text-gray-800 font-bold text-md md:text-lg leading-tight">
+                {example.description1},
+                <br />
+                {example.description2}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
