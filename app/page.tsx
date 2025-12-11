@@ -169,34 +169,32 @@ export default function HomePage() {
           {/* 사용 예시 섹션 */}
           <ExampleSection />
 
-          {/* 추천 링크 유형 */}
-          <div className="mt-12 p-6 bg-white rounded-lg shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              추천하는 링크 유형
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>
-                • 웹서비스{' '}
-                <span className="text-gray-400">
-                  ex) https://www.figma.com/ko-kr/
-                </span>
-              </p>
-              <p>
-                • 제품 설명 및 기능 페이지{' '}
-                <span className="text-gray-400">
-                  ex) https://www.apple.com/kr/macbook-air/
-                </span>
-              </p>
-            </div>
-            <div className="mt-4 p-3   rounded-md">
-              <p className="text-xs text-yellow-800">
-                ⚠️ 사이트의 보안 정책에 따라 일부 웹페이지는 분석이 제한될 수
-                있습니다.
-              </p>
-            </div>
-          </div>
+          {/* 하단 CTA 버튼 */}
+          <ScrollToTopButton />
         </div>
       </div>
+    </div>
+  );
+}
+
+// 스크롤 탑 버튼 컴포넌트
+function ScrollToTopButton() {
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <div className="text-center pb-12 pt-6">
+      <Button
+        onClick={scrollToTop}
+        size="lg"
+        className="px-8 py-4 text-lg font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
+      >
+        홍보 콘텐츠 만들러가기 🚀
+      </Button>
     </div>
   );
 }
