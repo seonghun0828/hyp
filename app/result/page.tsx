@@ -8,6 +8,7 @@ import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import { FeedbackPrompt } from '@/components/FeedbackPrompt';
+import { PromotionPrompt } from '@/components/PromotionPrompt';
 
 const stepNames = [
   '링크 입력',
@@ -27,8 +28,12 @@ export default function ResultPage() {
   const [downloading, setDownloading] = useState(false);
   const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showPromotion, setShowPromotion] = useState(false);
   const [hasQuickFeedback, setHasQuickFeedback] = useState(false);
   const [resultId, setResultId] = useState<string | null>(null);
+  const [lastQuickFeedback, setLastQuickFeedback] = useState<
+    'good' | 'neutral' | 'bad' | null
+  >(null);
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
@@ -92,7 +97,7 @@ export default function ResultPage() {
     // 1. 즉시 UI 반영 (optimistic update)
     sessionStorage.setItem('quickFeedbackDone', 'true');
     setHasQuickFeedback(true);
-    setShowFeedback(true); // 모달도 즉시 표시
+    setLastQuickFeedback(feedback);
 
     // 2. 이벤트 추적
     trackEvent('quick_feedback', {
@@ -123,6 +128,15 @@ export default function ResultPage() {
     } catch (err) {
       console.error('Failed to save quick feedback:', err);
     }
+
+    // 4. 피드백에 따라 다른 모달 표시
+    if (feedback === 'good') {
+      // good이면 홍보 팝업 표시
+      setShowPromotion(true);
+    } else {
+      // neutral 또는 bad면 바로 피드백 모달 표시
+      setShowFeedback(true);
+    }
   };
 
   const handleDownload = async () => {
@@ -152,12 +166,10 @@ export default function ResultPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      // 간단 설문 미참여 유저만 1초 후 모달 표시
-      if (!hasQuickFeedback) {
-        setTimeout(() => {
-          setShowFeedback(true);
-        }, 1000);
-      }
+      // 다운로드 후 1초 뒤 홍보 팝업 표시 (피드백 선택 여부와 관계없이)
+      setTimeout(() => {
+        setShowPromotion(true);
+      }, 1000);
     } catch (err) {
     } finally {
       setDownloading(false);
@@ -302,6 +314,21 @@ export default function ResultPage() {
           </div>
         </div>
       </div>
+
+      {/* 홍보 팝업 */}
+      {showPromotion && (
+        <PromotionPrompt
+          onClose={() => {
+            setShowPromotion(false);
+            // 홍보 팝업 닫으면 피드백 모달 표시
+            setShowFeedback(true);
+          }}
+          onAgree={() => {
+            // 동의하기 처리 (나중에 API 호출 등 추가 가능)
+            console.log('Promotion agreed');
+          }}
+        />
+      )}
 
       {/* 피드백 팝업 */}
       {showFeedback && (
