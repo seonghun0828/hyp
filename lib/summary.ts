@@ -4,28 +4,54 @@ import { Readability } from '@mozilla/readability';
 
 const MAX_CHARS = 4000;
 
+// 고유 라벨 생성 함수
+const uniqueLabel = (prefix: string) =>
+  `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+
 /* ---------------------------------------
     0. Puppeteer Browser Singleton
 ---------------------------------------- */
 let _browser: Browser | null = null;
 
 async function getBrowser() {
+  // 1. 기존 브라우저가 있고 연결이 끊겼다면 초기화
+  if (_browser && !_browser.isConnected()) {
+    console.log('Browser disconnected, resetting...');
+    _browser = null;
+  }
+
+  // 2. 이미 살아있는 브라우저가 있으면 재사용
   if (_browser) return _browser;
 
-  console.time('LAUNCH');
+  const label = uniqueLabel('LAUNCH');
+  console.time(label);
 
-  _browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-    ],
-  });
+  try {
+    _browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--window-size=1920,1080', // 해상도 설정 추가
+      ],
+    });
 
-  console.timeEnd('LAUNCH');
+    // 3. 브라우저가 갑자기 죽었을 때 변수 초기화하는 리스너 등록
+    _browser.on('disconnected', () => {
+      console.log('Browser disconnected event');
+      _browser = null;
+    });
+  } catch (error) {
+    console.error('Failed to launch browser:', error);
+    _browser = null;
+    throw error;
+  }
 
+  console.timeEnd(label);
   return _browser;
 }
 
@@ -33,16 +59,17 @@ async function getBrowser() {
     1. HTML Fetch
 ---------------------------------------- */
 async function tryFetchHTML(url: string) {
-  console.time('fetchHTML');
+  const label = uniqueLabel('fetchHTML');
+  console.time(label);
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error('Fetch failed');
     const text = await res.text();
-    console.timeEnd('fetchHTML');
+    console.timeEnd(label);
     return text;
   } catch (err) {
     console.warn('Fetch error:', err);
-    console.timeEnd('fetchHTML');
+    console.timeEnd(label);
     return null;
   }
 }
@@ -68,7 +95,8 @@ function looksLikeSPA(html: string) {
 /* ---------------------------------------
     3. Puppeteer Optimized Renderer
 ---------------------------------------- */
-const BLOCK_RESOURCE_TYPES = new Set(['image', 'media', 'font', 'stylesheet']);
+// stylesheet와 font는 차단 목록에서 제거 (렌더링 문제 방지)
+const BLOCK_RESOURCE_TYPES = new Set(['image', 'media']);
 const BLOCKED_HOSTS = [
   'googlesyndication.com',
   'doubleclick.net',
@@ -79,55 +107,72 @@ const BLOCKED_HOSTS = [
 ];
 
 async function getRenderedHTML(url: string) {
-  console.time('puppeteer');
+  const suffix = Math.random().toString(36).slice(2, 9);
+  const labelPuppeteer = `puppeteer-${suffix}`;
+  const labelGoto = `GOTO-${suffix}`;
+  const labelContent = `CONTENT-${suffix}`;
 
-  const browser = await getBrowser();
-  const page = await browser.newPage();
+  console.time(labelPuppeteer);
 
-  await page.setRequestInterception(true);
-  page.on('request', (req: HTTPRequest) => {
-    try {
-      const urlObj = new URL(req.url());
-      const host = urlObj.hostname;
+  let browser;
+  let page;
 
-      if (BLOCK_RESOURCE_TYPES.has(req.resourceType())) {
-        req.abort();
-        return;
-      }
-      if (BLOCKED_HOSTS.some((h) => host.includes(h))) {
-        req.abort();
-        return;
-      }
-      req.continue();
-    } catch {
-      req.continue();
-    }
-  });
-
-  page.setDefaultNavigationTimeout(8000);
-
-  console.time('GOTO');
-
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
-
-  console.timeEnd('GOTO');
-
-  // 빠른 렌더링 보조: main/article가 있으면 기다리고, 없으면 0.5s만 기다림
   try {
-    await Promise.race([
-      page.waitForSelector('main, article, [role="main"]', { timeout: 2000 }),
-      new Promise((res) => setTimeout(res, 500)),
-    ]);
-  } catch {}
+    browser = await getBrowser();
+    page = await browser.newPage();
 
-  console.time('CONTENT');
-  const html = await page.content();
-  console.timeEnd('CONTENT');
+    // User-Agent 설정 (봇 탐지 우회)
+    await page.setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    );
 
-  await page.close();
+    await page.setRequestInterception(true);
+    page.on('request', (req: HTTPRequest) => {
+      try {
+        const urlObj = new URL(req.url());
+        const host = urlObj.hostname;
 
-  console.timeEnd('puppeteer');
-  return html;
+        if (BLOCK_RESOURCE_TYPES.has(req.resourceType())) {
+          req.abort();
+          return;
+        }
+        if (BLOCKED_HOSTS.some((h) => host.includes(h))) {
+          req.abort();
+          return;
+        }
+        req.continue();
+      } catch {
+        req.continue();
+      }
+    });
+
+    page.setDefaultNavigationTimeout(15000); // 15초로 증가
+
+    console.time(labelGoto);
+    // networkidle2: 네트워크 연결이 2개 이하로 떨어질 때까지 대기 (SPA 로딩 대기)
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 15000 });
+    console.timeEnd(labelGoto);
+
+    // 빠른 렌더링 보조
+    try {
+      await Promise.race([
+        page.waitForSelector('main, article, [role="main"]', { timeout: 3000 }),
+        new Promise((res) => setTimeout(res, 1000)),
+      ]);
+    } catch {}
+
+    console.time(labelContent);
+    const html = await page.content();
+    console.timeEnd(labelContent);
+
+    return html;
+  } catch (error) {
+    console.error(`Puppeteer error (${url}):`, error);
+    throw error;
+  } finally {
+    if (page) await page.close().catch(() => {});
+    console.timeEnd(labelPuppeteer);
+  }
 }
 
 /* ---------------------------------------
@@ -196,18 +241,24 @@ export async function extractAndPreprocessUrl(url: string): Promise<string> {
 
   if (!html || looksLikeSPA(html)) {
     console.log('SPA detected → Puppeteer fallback');
-    html = await getRenderedHTML(url);
+    try {
+      html = await getRenderedHTML(url);
+    } catch (error) {
+      console.error('Puppeteer fallback failed:', error);
+      if (!html) html = '';
+    }
   }
 
   const htmlString = html as string;
 
-  console.time('extractors');
+  const labelExtractors = uniqueLabel('extractors');
+  console.time(labelExtractors);
   const [meta, readabilityText, denseText] = await Promise.all([
     extractMeta(htmlString, url),
     Promise.resolve(extractReadabilityText(htmlString, url)),
     Promise.resolve(extractDenseText(htmlString)),
   ]);
-  console.timeEnd('extractors');
+  console.timeEnd(labelExtractors);
 
   const candidates: string[] = [];
 
