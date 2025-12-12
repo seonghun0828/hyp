@@ -184,6 +184,7 @@ export async function POST(request: NextRequest) {
       errorMessage.includes('403') ||
       errorMessage.includes('Forbidden') ||
       errorMessage.includes('bot detection') ||
+      errorMessage.includes('Bot detected by site') ||
       errorMessage.includes('웹사이트에 접근할 수 없습니다');
 
     // 서버 내부 에러 패턴들
@@ -196,7 +197,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'BOT_BLOCKED',
-          message: '이 사이트는 봇 접근을 차단합니다. 직접 입력해주세요.',
+          message:
+            '해당 사이트는 정보 수집을 차단하고 있습니다. 직접 입력해주세요.',
           requiresManualInput: true,
           originalError: errorMessage,
         },

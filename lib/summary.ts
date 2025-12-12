@@ -173,6 +173,13 @@ async function getRenderedHTML(url: string) {
     console.time(labelGoto);
     // networkidle2: 네트워크 연결이 2개 이하로 떨어질 때까지 대기 (SPA 로딩 대기)
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 15000 });
+
+    // 봇 탐지 페이지("Access Denied")인지 확인
+    const title = await page.title();
+    if (title.includes('Access Denied') || title.includes('사용자 인증')) {
+      throw new Error('Bot detected by site');
+    }
+
     console.timeEnd(labelGoto);
 
     // 빠른 렌더링 보조
