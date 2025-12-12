@@ -27,18 +27,40 @@ async function getBrowser() {
   console.time(label);
 
   try {
-    _browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--window-size=1920,1080', // 해상도 설정 추가
-      ],
-    });
+    if (process.env.NODE_ENV === 'production') {
+      // 배포 환경 (Vercel)
+      const chromium = (await import('@sparticuz/chromium')).default;
+      const puppeteerCore = (await import('puppeteer-core')).default;
+
+      // 추가 폰트 로딩 (옵션) - 한글 깨짐 방지 위해 필요할 수 있음
+      // await chromium.font('https://raw.githack.com/googlei18n/noto-cjk/master/NotoSansCJK-Regular.ttc');
+
+      _browser = (await puppeteerCore.launch({
+        args: [
+          ...chromium.args,
+          '--no-first-run',
+          '--no-zygote',
+          '--window-size=1920,1080',
+        ],
+        defaultViewport: { width: 1920, height: 1080 },
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      })) as unknown as Browser;
+    } else {
+      // 로컬 환경
+      _browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-first-run',
+          '--no-zygote',
+          '--window-size=1920,1080',
+        ],
+      });
+    }
 
     // 3. 브라우저가 갑자기 죽었을 때 변수 초기화하는 리스너 등록
     _browser.on('disconnected', () => {
