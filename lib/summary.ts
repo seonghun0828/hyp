@@ -272,8 +272,21 @@ export async function extractAndPreprocessUrl(url: string): Promise<string> {
     console.log('SPA detected → Puppeteer fallback');
     try {
       html = await getRenderedHTML(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Puppeteer fallback failed:', error);
+
+      const errorMessage = error.message || '';
+      // 차단 관련 에러 메시지 패턴들
+      if (
+        errorMessage.includes('ERR_HTTP2_PROTOCOL_ERROR') ||
+        errorMessage.includes('ERR_ABORTED') ||
+        errorMessage.includes('403') ||
+        errorMessage.includes('Access Denied') ||
+        errorMessage.includes('Bot detected by site')
+      ) {
+        throw new Error('Bot detected by site'); // 상위로 에러 전파 -> 클라이언트 Alert 띄움
+      }
+
       if (!html) html = '';
     }
   }
