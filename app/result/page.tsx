@@ -3,24 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore } from '@/lib/store';
+import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { generateFileName, getOrCreateSessionId } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import { FeedbackPrompt } from '@/components/FeedbackPrompt';
 import { PromotionPrompt } from '@/components/PromotionPrompt';
-
-const stepNames = [
-  '링크 입력',
-  '제품 요약',
-  '메시지 타입',
-  '표현 방식',
-  '톤 & 무드',
-  '모델 구성',
-  '이미지 업로드',
-  '에디터',
-  '결과',
-];
 
 export default function ResultPage() {
   const router = useRouter();
@@ -217,7 +206,11 @@ export default function ResultPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <ProgressBar currentStep={9} totalSteps={9} stepNames={stepNames} />
+      <ProgressBar
+        currentStep={9}
+        totalSteps={TOTAL_STEPS}
+        stepNames={STEP_NAMES}
+      />
 
       <div className="container mx-auto px-4 pb-12 md:py-12">
         <div className="max-w-4xl mx-auto">
