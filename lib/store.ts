@@ -22,6 +22,7 @@ export interface Styles {
   expressionStyle: string;
   toneMood: string;
   modelComposition: string;
+  aspectRatio: '1:1' | '4:5' | '16:9';
 }
 
 export interface GeneratedContent {
@@ -73,6 +74,7 @@ interface FunnelState {
   setExpressionStyle: (expressionStyle: string) => void;
   setToneMood: (toneMood: string) => void;
   setModelComposition: (modelComposition: string) => void;
+  setAspectRatio: (aspectRatio: string) => void;
   setImageUrl: (imageUrl: string) => void;
   setImagePrompt: (imagePrompt: string | undefined) => void;
   setSuccessTexts: (texts: SuccessTexts | undefined) => void;
@@ -120,6 +122,13 @@ export const useFunnelStore = create<FunnelState>()(
           styles: {
             ...(state.styles || {}),
             modelComposition,
+          } as Styles,
+        })),
+      setAspectRatio: (aspectRatio) =>
+        set((state) => ({
+          styles: {
+            ...(state.styles || {}),
+            aspectRatio,
           } as Styles,
         })),
       setImageUrl: (imageUrl) => set({ imageUrl }),

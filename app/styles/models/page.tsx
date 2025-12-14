@@ -41,7 +41,7 @@ export default function ModelsPage() {
       option_id: optionId,
     });
 
-    router.push('/upload');
+    router.push('/styles/aspect-ratio');
   };
 
   if (!isHydrated) {

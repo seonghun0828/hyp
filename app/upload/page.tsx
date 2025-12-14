@@ -341,7 +341,8 @@ export default function UploadPage() {
       !styles.messageType ||
       !styles.expressionStyle ||
       !styles.toneMood ||
-      !styles.modelComposition
+      !styles.modelComposition ||
+      !styles.aspectRatio
     ) {
       router.push('/styles/messages');
       return;
@@ -366,7 +367,8 @@ export default function UploadPage() {
     !styles.messageType ||
     !styles.expressionStyle ||
     !styles.toneMood ||
-    !styles.modelComposition
+    !styles.modelComposition ||
+    !styles.aspectRatio
   ) {
     return null;
   }
@@ -374,7 +376,7 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
-        currentStep={7}
+        currentStep={8}
         totalSteps={TOTAL_STEPS}
         stepNames={STEP_NAMES}
       />

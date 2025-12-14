@@ -23,6 +23,9 @@ export async function POST(request: NextRequest) {
     const response = await genAI.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: [prompt],
+      config: {
+        imageConfig: { aspectRatio: styles.aspectRatio },
+      },
     });
 
     // Gemini 응답 구조 로깅

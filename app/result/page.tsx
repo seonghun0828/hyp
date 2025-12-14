@@ -207,7 +207,7 @@ export default function ResultPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
-        currentStep={9}
+        currentStep={10}
         totalSteps={TOTAL_STEPS}
         stepNames={STEP_NAMES}
       />

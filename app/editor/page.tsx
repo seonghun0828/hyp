@@ -809,7 +809,7 @@ export default function EditorPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
-        currentStep={8}
+        currentStep={9}
         totalSteps={TOTAL_STEPS}
         stepNames={STEP_NAMES}
       />
