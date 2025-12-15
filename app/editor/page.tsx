@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore, SuccessTexts } from '@/lib/store';
 import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
@@ -74,6 +74,74 @@ export default function EditorPage() {
     setSuccessTexts,
     setFinalImageUrl,
   } = useFunnelStore();
+
+  // 비율에 따른 에디터 컨테이너 크기 계산
+  const getEditorContainerSize = useCallback(() => {
+    const aspectRatio = styles?.aspectRatio || '4:5';
+
+    // 화면 크기 기반 제약
+    const viewportWidth =
+      typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const viewportHeight =
+      typeof window !== 'undefined' ? window.innerHeight : 800;
+
+    // 컨테이너가 들어갈 수 있는 최대 크기 (패딩 고려)
+    const maxWidth = Math.min(1200, viewportWidth - 100); // 좌우 패딩 고려
+    const maxHeight = Math.min(viewportHeight * 0.7, viewportHeight - 300); // 상하 여백 고려 (60% -> 70%로 증가)
+
+    let width: number;
+    let height: number;
+
+    if (aspectRatio === '1:1') {
+      // 정사각형
+      const size = Math.min(maxWidth, maxHeight);
+      width = size;
+      height = size;
+    } else if (aspectRatio === '4:5') {
+      // 세로형 (width:height = 4:5)
+      // 높이를 기준으로 너비 계산
+      height = Math.min(maxHeight, (maxWidth * 5) / 4);
+      width = (height * 4) / 5;
+    } else if (aspectRatio === '16:9') {
+      // 가로형 (width:height = 16:9)
+      // 너비를 우선으로 계산 (가로형이므로 너비를 최대한 활용)
+      width = maxWidth;
+      height = (width * 9) / 16;
+
+      // 높이가 제한을 초과하면 높이 기준으로 재계산
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = (height * 16) / 9;
+      }
+    } else {
+      // 기본값 (4:5)
+      height = Math.min(maxHeight, (maxWidth * 5) / 4);
+      width = (height * 4) / 5;
+    }
+
+    return { width, height };
+  }, [styles?.aspectRatio]);
+
+  const [containerSize, setContainerSize] = useState(() => ({
+    width: 800,
+    height: 1000,
+  }));
+
+  // 비율 변경 및 화면 크기 변경 시 컨테이너 크기 재계산
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateSize = () => {
+      setContainerSize(getEditorContainerSize());
+    };
+
+    // 초기 크기 설정
+    updateSize();
+
+    // 리사이즈 이벤트 리스너 추가
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, [getEditorContainerSize]);
   // SUCCESs 원칙 관련 상태
   const [currentIndex, setCurrentIndex] = useState(0);
   const [textElements, setTextElements] = useState<TextElement[]>([]);
@@ -313,11 +381,12 @@ export default function EditorPage() {
 
   // 컨테이너 너비 가져오기
   const getContainerWidth = (): number => {
-    const container = document.querySelector('.editor-container');
-    if (container) {
-      return container.clientWidth;
-    }
-    return 800; // 기본값
+    return containerSize.width;
+  };
+
+  // 컨테이너 높이 가져오기
+  const getContainerHeight = (): number => {
+    return containerSize.height;
   };
 
   // 선택된 원칙의 문구로 텍스트 요소 생성
@@ -371,7 +440,7 @@ export default function EditorPage() {
       let centerX = (containerWidth - totalTextWidth) / 2;
 
       // 컨테이너 높이 가져오기
-      const containerHeight = 600; // 기본값
+      const containerHeight = getContainerHeight();
 
       // 위치를 컨테이너 안으로 제한
       const textHeight = actualFontSize * 1.5; // 대략적인 높이
@@ -1073,9 +1142,9 @@ export default function EditorPage() {
                   <div
                     className={`relative border border-gray-300 rounded-lg overflow-hidden editor-container ${currentFontClassName}`}
                     style={{
-                      width: '800px',
-                      height: '600px',
-                      maxHeight: '60vh',
+                      width: `${containerSize.width}px`,
+                      height: `${containerSize.height}px`,
+                      maxWidth: '100%',
                       touchAction: 'none',
                     }}
                     onMouseDown={(e) => {
@@ -1091,7 +1160,7 @@ export default function EditorPage() {
                     <img
                       src={imageUrl}
                       alt="Generated image"
-                      className="w-full h-full object-contain bg-white"
+                      className="w-full h-full object-cover bg-white"
                       onLoad={(e) => {
                         try {
                           const img = e.currentTarget;
