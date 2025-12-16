@@ -141,28 +141,76 @@ export default function ResultPage() {
     });
 
     try {
-      // Base64 이미지를 Blob으로 변환
       const response = await fetch(finalImageUrl);
+      if (!response.ok)
+        throw new Error(`이미지 다운로드 실패: ${response.status}`);
       const blob = await response.blob();
+      const fileName = generateFileName(summary.title || summary.core_value);
 
-      // 다운로드 링크 생성
+      const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.userAgent.includes('Mac') && navigator.maxTouchPoints > 1);
+
+      // 조건: iOS이면서 + 공유 API를 지원하는 경우
+      if (isIOS && navigator.share && navigator.canShare) {
+        const file = new File([blob], fileName, { type: 'image/png' });
+
+        // 파일 공유가 가능한지 한 번 더 체크
+        if (navigator.canShare({ files: [file] })) {
+          alert('이미지 저장 버튼을 눌러 이미지를 저장하세요.');
+          try {
+            await navigator.share({
+              files: [file],
+            });
+            // 공유 성공 시 여기서 종료
+            return;
+          } catch (shareError) {
+            // 사용자가 공유 창을 닫거나 취소한 경우 (AbortError)는 조용히 무시
+            if ((shareError as Error).name !== 'AbortError') {
+              alert(
+                '파일로 다운로드 합니다. 다운 받은 이미지는 파일 탐색기에서 확인할 수 있습니다.'
+              );
+              console.error('공유 실패, 다운로드로 전환합니다:', shareError);
+              // 공유 실패 시 아래의 다운로드 로직으로 진행
+            } else {
+              // 취소한 경우는 다운로드도 하지 않음
+              return;
+            }
+          }
+        }
+      }
+
+      // [기존 다운로드 로직] - 안드로이드, PC, 또는 공유 실패 시 실행
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = generateFileName(summary.title || summary.core_value);
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      // 다운로드 후 1초 뒤 홍보 팝업 표시 (피드백 선택 여부와 관계없이)
+      // 홍보 팝업 (공유나 다운로드 성공 후 1초 뒤)
       setTimeout(() => {
         setShowPromotion(true);
       }, 1000);
     } catch (err) {
+      console.error('Download failed:', err);
     } finally {
       setDownloading(false);
     }
+  };
+
+  // 기존 다운로드 로직을 분리한 헬퍼 함수
+  const downloadFile = (blob: Blob, fileName: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   const handleNewProject = () => {
