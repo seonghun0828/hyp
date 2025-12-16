@@ -13,7 +13,14 @@ import { PromotionPrompt } from '@/components/PromotionPrompt';
 
 export default function ResultPage() {
   const router = useRouter();
-  const { summary, reset } = useFunnelStore();
+  const {
+    summary,
+    reset,
+    setSummary,
+    setStyles,
+    setImagePrompt,
+    setFinalImageUrl: setStoreFinalImageUrl,
+  } = useFunnelStore();
   const [downloading, setDownloading] = useState(false);
   const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -23,6 +30,7 @@ export default function ResultPage() {
   const [lastQuickFeedback, setLastQuickFeedback] = useState<
     'good' | 'neutral' | 'bad' | null
   >(null);
+  const [isLoadingResult, setIsLoadingResult] = useState(false);
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
@@ -36,49 +44,98 @@ export default function ResultPage() {
     // hydration이 완료된 후에만 상태 확인
     if (!isHydrated) return;
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlResultId = searchParams.get('result-id');
+
+    // URL에 result-id가 있고, 아직 로드하지 않았다면 서버에서 데이터 가져오기
+    if (urlResultId && resultId !== urlResultId) {
+      const fetchResult = async () => {
+        try {
+          setIsLoadingResult(true);
+          const response = await fetch(`/api/result/${urlResultId}`);
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch result');
+          }
+
+          const data = await response.json();
+
+          // 받아온 데이터로 로컬 상태 업데이트
+          if (data.summary) {
+            setSummary(data.summary);
+          }
+
+          if (data.generatedContent) {
+            if (data.generatedContent.styles) {
+              setStyles(data.generatedContent.styles);
+            }
+            if (data.generatedContent.imagePrompt) {
+              setImagePrompt(data.generatedContent.imagePrompt);
+            }
+            if (data.generatedContent.finalImageUrl) {
+              setStoreFinalImageUrl(data.generatedContent.finalImageUrl);
+              setFinalImageUrl(data.generatedContent.finalImageUrl);
+              sessionStorage.setItem(
+                'finalImageUrl',
+                data.generatedContent.finalImageUrl
+              );
+            }
+          }
+
+          setResultId(urlResultId);
+          sessionStorage.setItem('resultId', urlResultId);
+        } catch (error) {
+          console.error('Error fetching result:', error);
+          // 데이터 로드 실패 시 에러 처리 (선택사항)
+        } finally {
+          setIsLoadingResult(false);
+        }
+      };
+
+      fetchResult();
+      return; // 비동기 작업 시작했으므로 일단 리턴
+    }
+
+    // 로딩 중이면 아래 로직 실행 안 함
+    if (isLoadingResult) return;
+
     // 상태 확인 및 적절한 페이지로 리다이렉트
-    if (!summary) {
+    // (URL ID가 없거나 로딩 실패해서 데이터가 없는 경우)
+    if (!summary && !urlResultId) {
       router.push('/');
       return;
     }
 
     // sessionStorage에서 finalImageUrl 가져오기
-    const storedImageUrl = sessionStorage.getItem('finalImageUrl');
-    if (storedImageUrl) {
-      setFinalImageUrl(storedImageUrl);
-    } else {
-      // finalImageUrl이 없으면 에디터로 리다이렉트
-      router.push('/editor');
-      return;
+    // (API로 로드된 경우는 위에서 이미 setFinalImageUrl 됨)
+    if (!finalImageUrl) {
+      const storedImageUrl = sessionStorage.getItem('finalImageUrl');
+      if (storedImageUrl) {
+        setFinalImageUrl(storedImageUrl);
+      } else if (!urlResultId) {
+        // finalImageUrl이 없고 URL ID도 없으면 에디터로 리다이렉트
+        router.push('/editor');
+        return;
+      }
     }
 
-    // resultId 가져오기 (우선순위: URL 쿼리 파라미터 > sessionStorage)
-    const searchParams = new URLSearchParams(window.location.search);
-    const urlResultId = searchParams.get('result-id');
-    const storedResultId = sessionStorage.getItem('resultId');
-
-    const finalResultId = urlResultId || storedResultId;
-
-    if (!finalResultId) {
-      // resultId가 없으면 에러 처리
-      console.error('resultId가 없습니다. 결과물을 불러올 수 없습니다.');
-      router.push('/editor');
-      return;
+    // resultId 처리 (URL에 없고 세션에만 있는 경우)
+    if (!resultId) {
+      const storedResultId = sessionStorage.getItem('resultId');
+      if (storedResultId) {
+        setResultId(storedResultId);
+      } else if (!urlResultId && finalImageUrl) {
+        // 이미지는 있는데 ID가 없는 경우 (예외적 상황)
+        console.error('resultId가 없습니다.');
+      }
     }
-
-    // URL에서 가져온 경우 sessionStorage에도 저장
-    if (urlResultId && !storedResultId) {
-      sessionStorage.setItem('resultId', urlResultId);
-    }
-
-    setResultId(finalResultId);
 
     // 간단 설문 참여 여부 확인
     const quickFeedbackDone = sessionStorage.getItem('quickFeedbackDone');
     if (quickFeedbackDone === 'true') {
       setHasQuickFeedback(true);
     }
-  }, [summary, router, isHydrated]);
+  }, [isHydrated, router, resultId, summary, finalImageUrl]);
 
   const handleQuickFeedback = async (feedback: 'good' | 'neutral' | 'bad') => {
     if (!resultId || hasQuickFeedback) return;
@@ -230,12 +287,14 @@ export default function ResultPage() {
   };
 
   // hydration이 완료되기 전에는 로딩 표시
-  if (!isHydrated) {
+  if (!isHydrated || isLoadingResult) {
     return (
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+          <p className="text-gray-600">
+            {isLoadingResult ? '결과를 불러오는 중...' : '로딩 중...'}
+          </p>
         </div>
       </div>
     );
