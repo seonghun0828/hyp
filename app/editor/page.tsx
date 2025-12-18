@@ -9,6 +9,7 @@ import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import localFont from 'next/font/local';
 import ColorThief from 'colorthief';
+import { inter } from '@/lib/fonts';
 
 const font1 = localFont({
   src: '../../public/fonts/JalnanGothicTTF.woff2',
@@ -37,8 +38,9 @@ const font8 = localFont({
   src: '../../public/fonts/BMYEONSUNG_ttf.woff2',
 });
 
-const fonts = [font1, font2, font3, font4, font5, font6, font7, font8];
+const fonts = [inter, font1, font2, font3, font4, font5, font6, font7, font8];
 const fontNames = [
+  'Modern',
   'Bold',
   'Subtle',
   'Retro',
