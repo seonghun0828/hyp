@@ -7,49 +7,8 @@ import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
-import localFont from 'next/font/local';
 import ColorThief from 'colorthief';
-import { inter } from '@/lib/fonts';
-
-const font1 = localFont({
-  src: '../../public/fonts/JalnanGothicTTF.woff2',
-  // display: 'swap',
-  // variable: '--font-1', // CSS 변수명으로 참조할 수 있도록 설정
-});
-const font2 = localFont({
-  src: '../../public/fonts/BMHANNAAir_ttf.woff2',
-});
-const font3 = localFont({
-  src: '../../public/fonts/BMDOHYEON_ttf.woff2',
-});
-const font4 = localFont({
-  src: '../../public/fonts/나눔손글씨 다행체.woff2',
-});
-const font5 = localFont({
-  src: '../../public/fonts/NanumSquareRoundB.woff2',
-});
-const font6 = localFont({
-  src: '../../public/fonts/나눔손글씨 암스테르담.woff2',
-});
-const font7 = localFont({
-  src: '../../public/fonts/BMEULJIROTTF.woff2',
-});
-const font8 = localFont({
-  src: '../../public/fonts/BMYEONSUNG_ttf.woff2',
-});
-
-const fonts = [inter, font1, font2, font3, font4, font5, font6, font7, font8];
-const fontNames = [
-  'Modern',
-  'Bold',
-  'Subtle',
-  'Retro',
-  'Hand',
-  'Vibe',
-  'Easy',
-  'Strong',
-  'Rhythm',
-];
+import { fonts, fontNames } from '@/lib/fonts';
 
 const minFont = 4;
 const maxFont = 36;
