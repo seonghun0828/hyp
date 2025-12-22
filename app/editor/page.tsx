@@ -1430,63 +1430,97 @@ export default function EditorPage() {
                               );
                             }}
                           >
-                            <div className="flex justify-end gap-1 md:gap-2 mb-1">
-                              {/* 수정 버튼 */}
-                              <button
-                                className="bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
-                                style={{
-                                  width: `${element.fontSize * 1.6}px`,
-                                  height: `${element.fontSize * 1.6}px`,
-                                  fontSize: `${element.fontSize}px`,
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openTextEditor(element.id, element.text);
-                                }}
-                                onMouseDown={(e) => {
-                                  e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
-                                }}
-                                onTouchStart={(e) => {
-                                  e.stopPropagation();
-                                }}
-                                title="텍스트 수정"
-                              >
-                                ✏️
-                              </button>
-                              {/* 삭제 버튼 */}
-                              <button
-                                className="bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                                style={{
-                                  width: `${element.fontSize * 1.6}px`,
-                                  height: `${element.fontSize * 1.6}px`,
-                                  fontSize: `${element.fontSize * 1.2}px`,
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteTextElement(element.id);
-                                }}
-                                onMouseDown={(e) => {
-                                  e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
-                                }}
-                                onTouchStart={(e) => {
-                                  e.stopPropagation();
-                                }}
-                                title="텍스트 삭제"
-                              >
-                                <svg
-                                  width={`${element.fontSize}px`}
-                                  height={`${element.fontSize}px`}
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                >
-                                  <line x1="6" y1="6" x2="18" y2="18" />
-                                  <line x1="6" y1="18" x2="18" y2="6" />
-                                </svg>
-                              </button>
-                            </div>
+                            {/* 편집/삭제 버튼 - absolute로 오버레이하여 레이아웃에 영향 없음 */}
+                            {element.isSelected &&
+                              (() => {
+                                // 버튼 크기를 화면 크기에 비례하여 계산
+                                const viewportWidth =
+                                  typeof window !== 'undefined'
+                                    ? window.innerWidth
+                                    : 1200;
+                                const viewportHeight =
+                                  typeof window !== 'undefined'
+                                    ? window.innerHeight
+                                    : 800;
+                                const baseSize = Math.min(
+                                  viewportWidth,
+                                  viewportHeight
+                                );
+                                // 화면 크기의 3-4% 정도로 버튼 크기 설정 (최소 24px, 최대 40px)
+                                const buttonSize = Math.max(
+                                  24,
+                                  Math.min(40, baseSize * 0.035)
+                                );
+                                const iconSize = buttonSize * 0.6;
+
+                                return (
+                                  <div
+                                    className="absolute flex gap-1.5 md:gap-2 z-20"
+                                    style={{
+                                      top: `-${buttonSize + 4}px`,
+                                      right: '0px',
+                                    }}
+                                  >
+                                    {/* 수정 버튼 */}
+                                    <button
+                                      className="bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors shadow-md"
+                                      style={{
+                                        width: `${buttonSize}px`,
+                                        height: `${buttonSize}px`,
+                                        fontSize: `${iconSize}px`,
+                                      }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openTextEditor(
+                                          element.id,
+                                          element.text
+                                        );
+                                      }}
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
+                                      }}
+                                      onTouchStart={(e) => {
+                                        e.stopPropagation();
+                                      }}
+                                      title="텍스트 수정"
+                                    >
+                                      ✏️
+                                    </button>
+                                    {/* 삭제 버튼 */}
+                                    <button
+                                      className="bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                                      style={{
+                                        width: `${buttonSize}px`,
+                                        height: `${buttonSize}px`,
+                                      }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteTextElement(element.id);
+                                      }}
+                                      onMouseDown={(e) => {
+                                        e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
+                                      }}
+                                      onTouchStart={(e) => {
+                                        e.stopPropagation();
+                                      }}
+                                      title="텍스트 삭제"
+                                    >
+                                      <svg
+                                        width={iconSize}
+                                        height={iconSize}
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                      >
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                        <line x1="6" y1="18" x2="18" y2="6" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                );
+                              })()}
 
                             <div className="relative inline-block">
                               <div
