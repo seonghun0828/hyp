@@ -22,6 +22,9 @@ interface TextElement {
   color: string;
   backgroundColor: 'transparent' | 'black' | 'white';
   isSelected: boolean;
+  type: 'recommended' | 'custom'; // 추천 텍스트인지 커스텀 텍스트인지
+  recommendedPrincipleKey?: string; // 추천 텍스트인 경우 어떤 원칙의 텍스트인지
+  fontIndex: number; // 각 텍스트가 사용하는 폰트 인덱스
 }
 
 export default function EditorPage() {
@@ -110,15 +113,24 @@ export default function EditorPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
-  const [currentFontIndex, setCurrentFontIndex] = useState(0);
-  const currentFontClassName = fonts[currentFontIndex].className;
+  const [isTextButtonMinimized, setIsTextButtonMinimized] = useState(false);
+
+  // 선택된 요소의 폰트 인덱스 가져오기
+  const getSelectedFontIndex = () => {
+    if (!selectedElement) return 0;
+    const element = textElements.find((el) => el.id === selectedElement);
+    return element?.fontIndex ?? 0;
+  };
 
   // 폰트 변경 시 위치 조정을 포함한 함수
   const handleFontChange = (index: number) => {
-    setCurrentFontIndex(index);
+    if (!selectedElement) return;
 
-    // 선택된 요소가 있고 드래그 중이 아닐 때만 위치 조정
-    if (selectedElement && !isDragging) {
+    // 선택된 요소의 폰트 인덱스만 변경
+    updateElementStyle(selectedElement, { fontIndex: index });
+
+    // 드래그 중이 아닐 때만 위치 조정
+    if (!isDragging) {
       setTimeout(() => {
         const element = textElements.find((el) => el.id === selectedElement);
         if (element) {
@@ -256,19 +268,28 @@ export default function EditorPage() {
     //   return;
     // }
 
-    // 선택된 원칙의 문구로 텍스트 요소 생성 (successTexts가 있을 때만)
-    if (successTexts && currentPrinciple) {
-      createTextElement();
+    // 선택된 원칙의 추천 텍스트 생성 (successTexts가 있을 때만, 첫 화면에서만)
+    if (successTexts && currentPrinciple && textElements.length === 0) {
+      createRecommendedText();
     }
-  }, [
-    summary,
-    styles,
-    imageUrl,
-    successTexts,
-    router,
-    isHydrated,
-    currentIndex,
-  ]);
+  }, [summary, styles, imageUrl, successTexts, router, isHydrated]);
+
+  // 홍보 문구 스타일 변경 시 추천 텍스트 재생성
+  useEffect(() => {
+    if (!isHydrated || !successTexts || !currentPrinciple) return;
+
+    // 같은 원칙의 추천 텍스트가 없으면 생성
+    const hasRecommendedForCurrent = textElements.some(
+      (el) =>
+        el.type === 'recommended' &&
+        el.recommendedPrincipleKey === currentPrinciple.key
+    );
+
+    if (!hasRecommendedForCurrent) {
+      createRecommendedText();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, isHydrated, successTexts, currentPrinciple?.key]);
 
   // summary가 변경될 때 successTexts 초기화
   const [lastSummaryUrl, setLastSummaryUrl] = useState<string | null>(null);
@@ -350,104 +371,204 @@ export default function EditorPage() {
     return containerSize.height;
   };
 
-  // 선택된 원칙의 문구로 텍스트 요소 생성
-  const createTextElement = () => {
+  // 추천 텍스트 생성 (홍보 문구 스타일 선택 시)
+  const createRecommendedText = () => {
     if (!successTexts || !currentPrinciple) return;
 
     const currentText = successTexts[currentPrinciple.key];
     if (!currentText) return;
 
-    // 기존 텍스트 요소가 있으면 업데이트, 없으면 새로 생성
-    const existingElement = textElements.find((el) => el.text === currentText);
+    // 모든 추천 텍스트 찾기 (최대 1개만 있어야 함)
+    const existingRecommended = textElements.find(
+      (el) => el.type === 'recommended'
+    );
 
-    if (!existingElement) {
-      // 기존 텍스트 요소가 있는지 확인 (다른 텍스트라도 스타일을 유지하기 위해)
-      const previousElement = textElements.length > 0 ? textElements[0] : null;
-
-      // 현재 폰트 정보 가져오기
-      const currentFont = fonts[currentFontIndex];
-      const fontFamily = currentFont.style.fontFamily;
-
-      // 컨테이너 너비 가져오기
-      const containerWidth = getContainerWidth();
-      const textPaddingLeft = 8; // 텍스트 padding-left
-      const textPaddingRight = 8; // 텍스트 padding-right
-
-      // 실제 사용 가능한 너비 = 컨테이너 너비 - 좌우 패딩
-      const availableWidth =
-        containerWidth - textPaddingLeft - textPaddingRight;
-
-      // 최적의 폰트 크기 계산
-      const optimalFontSize = calculateOptimalFontSize(
-        currentText,
-        availableWidth,
-        fontFamily,
-        minFont, // 최소 크기
-        maxFont // 최대 크기
-      );
-
-      // 실제로 사용할 글자 크기 (기존 크기 유지 또는 자동 계산)
-      const actualFontSize = previousElement?.fontSize ?? optimalFontSize;
-
-      // 실제 사용할 글자 크기로 텍스트 너비 측정
-      const textWidth = measureTextWidthWithDOM(
-        currentText,
-        actualFontSize,
-        fontFamily
-      );
-
-      // 가운데 정렬 계산 (텍스트 너비 + 좌우 패딩 기준)
-      const totalTextWidth = textWidth + textPaddingLeft + textPaddingRight;
-      let centerX = (containerWidth - totalTextWidth) / 2;
-
-      // 컨테이너 높이 가져오기
-      const containerHeight = getContainerHeight();
-
-      // 위치를 컨테이너 안으로 제한
-      const textHeight = actualFontSize * 1.5; // 대략적인 높이
-      const padding = 16; // 좌우 패딩 (4px + 8px) * 2
-      const totalHeight = textHeight + 8; // 상하 패딩
-
-      let finalX = centerX;
-      let finalY = previousElement?.y ?? 100;
-
-      // 오른쪽 경계 체크
-      if (finalX + totalTextWidth > containerWidth) {
-        finalX = Math.max(0, containerWidth - totalTextWidth);
-      }
-      // 왼쪽 경계 체크
-      if (finalX < 0) {
-        finalX = 0;
-      }
-      // 아래쪽 경계 체크
-      if (finalY + totalHeight > containerHeight) {
-        finalY = Math.max(0, containerHeight - totalHeight);
-      }
-      // 위쪽 경계 체크
-      if (finalY < 0) {
-        finalY = 0;
-      }
-
-      const newElement: TextElement = {
-        id: `text-${Date.now()}`,
-        text: currentText,
-        x: finalX,
-        y: finalY,
-        fontSize: actualFontSize, // 기존 글자 크기 유지 또는 자동 계산된 크기
-        color: previousElement?.color ?? '#000000', // 기존 색상 유지 또는 기본값
-        backgroundColor: previousElement?.backgroundColor ?? 'white', // 기존 배경색 유지 또는 기본값
-        isSelected: true,
-      };
-
-      setTextElements([newElement]);
-      setSelectedElement(newElement.id);
-    } else {
-      // 기존 요소 선택
+    // 같은 원칙의 추천 텍스트가 있고 텍스트가 같으면 선택만
+    if (
+      existingRecommended &&
+      existingRecommended.recommendedPrincipleKey === currentPrinciple.key &&
+      existingRecommended.text === currentText
+    ) {
       setTextElements((prev) =>
-        prev.map((el) => ({ ...el, isSelected: el.id === existingElement.id }))
+        prev.map((el) => ({
+          ...el,
+          isSelected: el.id === existingRecommended.id,
+        }))
       );
-      setSelectedElement(existingElement.id);
+      setSelectedElement(existingRecommended.id);
+      return;
     }
+
+    // 기존 추천 텍스트의 스타일을 유지 (있으면 그것을, 없으면 다른 텍스트 요소 사용)
+    const styleSource =
+      existingRecommended || (textElements.length > 0 ? textElements[0] : null);
+
+    // 폰트 인덱스 (기존 추천 텍스트의 폰트를 사용하거나 기본값 0)
+    const fontIndex = styleSource?.fontIndex ?? 0;
+
+    // 현재 폰트 정보 가져오기
+    const currentFont = fonts[fontIndex];
+    const fontFamily = currentFont.style.fontFamily;
+
+    // 컨테이너 너비 가져오기
+    const containerWidth = getContainerWidth();
+    const textPaddingLeft = 8;
+    const textPaddingRight = 8;
+
+    // 실제 사용 가능한 너비
+    const availableWidth = containerWidth - textPaddingLeft - textPaddingRight;
+
+    // 최적의 폰트 크기 계산
+    const optimalFontSize = calculateOptimalFontSize(
+      currentText,
+      availableWidth,
+      fontFamily,
+      minFont,
+      maxFont
+    );
+
+    // 실제로 사용할 글자 크기 (기존 추천 텍스트의 스타일 유지)
+    const actualFontSize = styleSource?.fontSize ?? optimalFontSize;
+
+    // 텍스트 너비 측정
+    const textWidth = measureTextWidthWithDOM(
+      currentText,
+      actualFontSize,
+      fontFamily
+    );
+
+    // 가운데 정렬 계산
+    const totalTextWidth = textWidth + textPaddingLeft + textPaddingRight;
+    let centerX = (containerWidth - totalTextWidth) / 2;
+
+    // 컨테이너 높이 가져오기
+    const containerHeight = getContainerHeight();
+
+    // 위치 계산
+    const textHeight = actualFontSize * 1.5;
+    const padding = 16;
+    const totalHeight = textHeight + 8;
+
+    // 위치는 기존 추천 텍스트의 위치를 유지 (있으면)
+    let finalX = styleSource?.x ?? centerX;
+    let finalY = styleSource?.y ?? 100;
+
+    // 경계 체크
+    if (finalX + totalTextWidth > containerWidth) {
+      finalX = Math.max(0, containerWidth - totalTextWidth);
+    }
+    if (finalX < 0) {
+      finalX = 0;
+    }
+    if (finalY + totalHeight > containerHeight) {
+      finalY = Math.max(0, containerHeight - totalHeight);
+    }
+    if (finalY < 0) {
+      finalY = 0;
+    }
+
+    const newElement: TextElement = {
+      id: `text-${Date.now()}`,
+      text: currentText,
+      x: finalX,
+      y: finalY,
+      fontSize: actualFontSize,
+      color: styleSource?.color ?? '#000000',
+      backgroundColor: styleSource?.backgroundColor ?? 'white',
+      isSelected: true,
+      type: 'recommended',
+      recommendedPrincipleKey: currentPrinciple.key,
+      fontIndex: styleSource?.fontIndex ?? 0,
+    };
+
+    // 모든 추천 텍스트를 제거하고 새로운 추천 텍스트 추가 (추천 텍스트는 최대 1개만)
+    setTextElements((prev) =>
+      prev
+        .filter((el) => el.type !== 'recommended') // 모든 추천 텍스트 제거
+        .map((el) => ({ ...el, isSelected: false }))
+        .concat([newElement])
+    );
+    setSelectedElement(newElement.id);
+  };
+
+  // 커스텀 텍스트 추가
+  const addCustomText = () => {
+    // 최소화된 상태에서 버튼을 누르면 원래 형태로 복원
+    if (isTextButtonMinimized) {
+      setIsTextButtonMinimized(false);
+    }
+    // 기존 텍스트 요소가 있는지 확인 (스타일 유지용)
+    const previousElement =
+      textElements.length > 0 ? textElements[textElements.length - 1] : null;
+
+    // 폰트 인덱스 (기존 텍스트의 폰트를 사용하거나 기본값 0)
+    const fontIndex = previousElement?.fontIndex ?? 0;
+
+    // 현재 폰트 정보 가져오기
+    const currentFont = fonts[fontIndex];
+    const fontFamily = currentFont.style.fontFamily;
+
+    // 컨테이너 너비 가져오기
+    const containerWidth = getContainerWidth();
+    const textPaddingLeft = 8;
+    const textPaddingRight = 8;
+
+    // 빈 텍스트로 생성
+    const defaultText = '';
+    const actualFontSize = previousElement?.fontSize ?? 16; // 기본 폰트 크기
+
+    // 빈 텍스트일 때는 기본 위치 사용
+    const defaultTextWidth = 100; // 빈 텍스트일 때 예상 너비
+    const totalTextWidth =
+      defaultTextWidth + textPaddingLeft + textPaddingRight;
+    let centerX = (containerWidth - totalTextWidth) / 2;
+
+    // 컨테이너 높이 가져오기
+    const containerHeight = getContainerHeight();
+
+    // 위치 계산 (기존 텍스트 아래에 배치)
+    const textHeight = actualFontSize * 1.5;
+    const totalHeight = textHeight + 8;
+
+    let finalX = centerX;
+    let finalY = previousElement
+      ? previousElement.y + previousElement.fontSize * 1.5 + 20
+      : 100;
+
+    // 경계 체크
+    if (finalX + totalTextWidth > containerWidth) {
+      finalX = Math.max(0, containerWidth - totalTextWidth);
+    }
+    if (finalX < 0) {
+      finalX = 0;
+    }
+    if (finalY + totalHeight > containerHeight) {
+      finalY = Math.max(0, containerHeight - totalHeight);
+    }
+    if (finalY < 0) {
+      finalY = 0;
+    }
+
+    const newElement: TextElement = {
+      id: `text-${Date.now()}`,
+      text: defaultText, // 빈 텍스트
+      x: finalX,
+      y: finalY,
+      fontSize: actualFontSize,
+      color: previousElement?.color ?? '#000000',
+      backgroundColor: previousElement?.backgroundColor ?? 'white',
+      isSelected: true,
+      type: 'custom',
+      fontIndex: fontIndex,
+    };
+
+    setTextElements((prev) =>
+      prev.map((el) => ({ ...el, isSelected: false })).concat([newElement])
+    );
+    setSelectedElement(newElement.id);
+
+    // 즉시 편집 모드로 열기 (빈 텍스트)
+    openTextEditor(newElement.id, defaultText);
   };
 
   // HTML/CSS 방식으로 변경 - drawCanvas 함수 제거
@@ -460,23 +581,65 @@ export default function EditorPage() {
 
   // 텍스트 편집 모달 함수들
   const openTextEditor = (elementId: string, currentText: string) => {
+    // 편집 버튼을 눌렀을 때 해당 텍스트 박스를 선택
+    setSelectedElement(elementId);
+    setTextElements((prev) =>
+      prev.map((el) => ({
+        ...el,
+        isSelected: el.id === elementId,
+      }))
+    );
     setEditingTextId(elementId);
     setEditingText(currentText);
   };
 
   const closeTextEditor = () => {
+    // 편집 모달을 닫을 때 빈 텍스트면 제거
+    if (editingTextId) {
+      const trimmedText = editingText.trim();
+      if (trimmedText === '') {
+        setTextElements((prev) => prev.filter((el) => el.id !== editingTextId));
+        setSelectedElement(null);
+      }
+    }
     setEditingTextId(null);
     setEditingText('');
   };
 
   const saveTextEdit = () => {
-    if (editingTextId && editingText.trim() !== '') {
-      setTextElements((prev) =>
-        prev.map((el) =>
-          el.id === editingTextId ? { ...el, text: editingText.trim() } : el
-        )
-      );
+    if (!editingTextId) {
+      closeTextEditor();
+      return;
     }
+
+    const trimmedText = editingText.trim();
+
+    // 빈 텍스트나 공백만 있으면 텍스트 요소 제거
+    if (trimmedText === '') {
+      setTextElements((prev) => prev.filter((el) => el.id !== editingTextId));
+      setSelectedElement(null);
+      closeTextEditor();
+      return;
+    }
+
+    // 텍스트가 있으면 업데이트
+    setTextElements((prev) =>
+      prev.map((el) => {
+        if (el.id === editingTextId) {
+          // 추천 텍스트를 수정하면 커스텀 텍스트로 변환
+          if (el.type === 'recommended') {
+            return {
+              ...el,
+              text: trimmedText,
+              type: 'custom' as const,
+              recommendedPrincipleKey: undefined,
+            };
+          }
+          return { ...el, text: trimmedText };
+        }
+        return el;
+      })
+    );
     closeTextEditor();
   };
 
@@ -484,9 +647,21 @@ export default function EditorPage() {
     setEditingText(newText);
     if (editingTextId) {
       setTextElements((prev) =>
-        prev.map((el) =>
-          el.id === editingTextId ? { ...el, text: newText } : el
-        )
+        prev.map((el) => {
+          if (el.id === editingTextId) {
+            // 추천 텍스트를 수정하면 커스텀 텍스트로 변환
+            if (el.type === 'recommended') {
+              return {
+                ...el,
+                text: newText,
+                type: 'custom' as const,
+                recommendedPrincipleKey: undefined,
+              };
+            }
+            return { ...el, text: newText };
+          }
+          return el;
+        })
       );
     }
   };
@@ -532,7 +707,10 @@ export default function EditorPage() {
         // 드래그 중이 아니고, 스타일이 변경된 경우에만 위치를 컨테이너 안으로 조정
         if (
           !isDragging &&
-          (updates.fontSize || updates.color || updates.backgroundColor)
+          (updates.fontSize ||
+            updates.color ||
+            updates.backgroundColor ||
+            updates.fontIndex)
         ) {
           const container = document.querySelector('.editor-container');
           if (container) {
@@ -540,8 +718,9 @@ export default function EditorPage() {
             const containerWidth = containerRect.width;
             const containerHeight = containerRect.height;
 
-            // 현재 폰트 정보 가져오기
-            const currentFont = fonts[currentFontIndex];
+            // 현재 폰트 정보 가져오기 (업데이트된 fontIndex 사용)
+            const fontIndex = newElement.fontIndex ?? el.fontIndex;
+            const currentFont = fonts[fontIndex];
             const fontFamily = currentFont.style.fontFamily;
 
             // 텍스트의 실제 크기 측정
@@ -942,7 +1121,7 @@ export default function EditorPage() {
                           key={fontName}
                           onClick={() => handleFontChange(index)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                            currentFontIndex === index
+                            getSelectedFontIndex() === index
                               ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-300'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           } ${fonts[index].className}`}
@@ -1101,192 +1280,256 @@ export default function EditorPage() {
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-center">
                   <div
-                    className={`relative border border-gray-300 rounded-lg overflow-hidden editor-container ${currentFontClassName}`}
-                    style={{
-                      width: `${containerSize.width}px`,
-                      height: `${containerSize.height}px`,
-                      maxWidth: '100%',
-                      touchAction: 'none',
-                    }}
-                    onMouseDown={(e) => {
-                      // 빈 공간 클릭 시 선택 해제
-                      if (e.target === e.currentTarget) {
-                        setSelectedElement(null);
-                        setTextElements((prev) =>
-                          prev.map((el) => ({ ...el, isSelected: false }))
-                        );
-                      }
-                    }}
+                    className="relative"
+                    style={{ width: `${containerSize.width}px` }}
                   >
-                    <img
-                      src={imageUrl}
-                      alt="Generated image"
-                      className="w-full h-full object-cover bg-white"
-                      onLoad={(e) => {
-                        try {
-                          const img = e.currentTarget;
-                          const colorThief = new ColorThief();
-                          const palette = colorThief.getPalette(img, 10);
+                    {/* 플로팅 버튼 - 우측 하단 */}
+                    <div
+                      className={`absolute bottom-4 z-20 flex items-start gap-0.5 transition-all ${
+                        isTextButtonMinimized ? 'right-0' : 'right-4'
+                      }`}
+                    >
+                      <button
+                        onClick={addCustomText}
+                        className={`bg-blue-500 text-white hover:bg-blue-600 transition-all text-sm font-medium flex items-center gap-1.5 shadow-lg ${
+                          isTextButtonMinimized
+                            ? 'px-2 py-1 rounded-full'
+                            : 'px-3 py-1.5 rounded-lg'
+                        }`}
+                        style={{
+                          boxShadow:
+                            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        }}
+                      >
+                        <span>+</span>
+                        {!isTextButtonMinimized && <span>텍스트</span>}
+                      </button>
+                      {!isTextButtonMinimized && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsTextButtonMinimized(true);
+                          }}
+                          className="bg-gray-400 hover:bg-gray-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs transition-colors shadow-md"
+                          style={{
+                            fontSize: '10px',
+                            lineHeight: '1',
+                          }}
+                          title="최소화"
+                        >
+                          −
+                        </button>
+                      )}
+                    </div>
 
-                          // 검은색과 하얀색 정의
-                          const black = [0, 0, 0];
-                          const white = [255, 255, 255];
-
-                          // 검은색/하얀색과 유사한 색상 필터링 (약간의 오차 허용)
-                          const filteredPalette = palette.filter(
-                            ([r, g, b]) => {
-                              // 검은색 체크 (RGB 합이 30 이하)
-                              const isBlack = r + g + b <= 30;
-                              // 하얀색 체크 (RGB 합이 750 이상)
-                              const isWhite = r + g + b >= 750;
-                              return !isBlack && !isWhite;
-                            }
+                    <div
+                      className="relative border border-gray-300 rounded-lg overflow-hidden editor-container"
+                      style={{
+                        width: `${containerSize.width}px`,
+                        height: `${containerSize.height}px`,
+                        maxWidth: '100%',
+                        touchAction: 'none',
+                      }}
+                      onMouseDown={(e) => {
+                        // 빈 공간 클릭 시 선택 해제
+                        if (e.target === e.currentTarget) {
+                          setSelectedElement(null);
+                          setTextElements((prev) =>
+                            prev.map((el) => ({ ...el, isSelected: false }))
                           );
-
-                          // 검은색, 하얀색을 처음에 추가하고 나머지 색상 추가
-                          const finalPalette = [
-                            black,
-                            white,
-                            ...filteredPalette,
-                          ];
-                          setColorPalette(finalPalette);
-                        } catch (error) {
-                          console.error('색상 추출 실패:', error);
                         }
                       }}
-                    />
-                    {/* 텍스트 오버레이 */}
-                    {textElements.map((element) => {
-                      const isEditing = editingTextId === element.id;
-                      return (
-                        <div
-                          key={element.id}
-                          className={`absolute cursor-move flex flex-col select-none z-10  ${currentFontClassName}`}
-                          style={{
-                            left: `${element.x}px`,
-                            top: `${element.y}px`,
-                            fontSize: `${element.fontSize}px`,
-                            opacity: isEditing ? 0 : 1,
-                            pointerEvents: isEditing ? 'none' : 'auto',
-                          }}
-                          onDoubleClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // 더블클릭으로 커스텀 텍스트 편집 모달 열기
-                            openTextEditor(element.id, element.text);
-                          }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
+                    >
+                      <img
+                        src={imageUrl}
+                        alt="Generated image"
+                        className="w-full h-full object-cover bg-white"
+                        onLoad={(e) => {
+                          try {
+                            const img = e.currentTarget;
+                            const colorThief = new ColorThief();
+                            const palette = colorThief.getPalette(img, 10);
 
-                            const target = e.target as HTMLElement;
-                            if (
-                              target.tagName === 'BUTTON' ||
-                              target.closest('button')
-                            ) {
-                              return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
-                            }
+                            // 검은색과 하얀색 정의
+                            const black = [0, 0, 0];
+                            const white = [255, 255, 255];
 
-                            handleDragStart(element, e.clientX, e.clientY);
-                          }}
-                          onTouchStart={(e) => {
-                            const touch = e.touches[0];
-
-                            const target = e.target as HTMLElement;
-                            if (
-                              target.tagName === 'BUTTON' ||
-                              target.closest('button')
-                            ) {
-                              return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
-                            }
-
-                            handleDragStart(
-                              element,
-                              touch.clientX,
-                              touch.clientY
+                            // 검은색/하얀색과 유사한 색상 필터링 (약간의 오차 허용)
+                            const filteredPalette = palette.filter(
+                              ([r, g, b]) => {
+                                // 검은색 체크 (RGB 합이 30 이하)
+                                const isBlack = r + g + b <= 30;
+                                // 하얀색 체크 (RGB 합이 750 이상)
+                                const isWhite = r + g + b >= 750;
+                                return !isBlack && !isWhite;
+                              }
                             );
-                          }}
-                        >
-                          <div className="flex justify-end gap-1 md:gap-2 mb-1">
-                            {/* 수정 버튼 */}
-                            <button
-                              className="bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
-                              style={{
-                                width: `${element.fontSize * 1.6}px`,
-                                height: `${element.fontSize * 1.6}px`,
-                                fontSize: `${element.fontSize}px`,
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openTextEditor(element.id, element.text);
-                              }}
-                              onMouseDown={(e) => {
-                                e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
-                              }}
-                              onTouchStart={(e) => {
-                                e.stopPropagation();
-                              }}
-                              title="텍스트 수정"
-                            >
-                              ✏️
-                            </button>
-                            {/* 삭제 버튼 */}
-                            <button
-                              className="bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                              style={{
-                                width: `${element.fontSize * 1.6}px`,
-                                height: `${element.fontSize * 1.6}px`,
-                                fontSize: `${element.fontSize * 1.2}px`,
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteTextElement(element.id);
-                              }}
-                              onMouseDown={(e) => {
-                                e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
-                              }}
-                              onTouchStart={(e) => {
-                                e.stopPropagation();
-                              }}
-                              title="텍스트 삭제"
-                            >
-                              <svg
-                                width={`${element.fontSize}px`}
-                                height={`${element.fontSize}px`}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                              >
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                                <line x1="6" y1="18" x2="18" y2="6" />
-                              </svg>
-                            </button>
-                          </div>
 
+                            // 검은색, 하얀색을 처음에 추가하고 나머지 색상 추가
+                            const finalPalette = [
+                              black,
+                              white,
+                              ...filteredPalette,
+                            ];
+                            setColorPalette(finalPalette);
+                          } catch (error) {
+                            console.error('색상 추출 실패:', error);
+                          }
+                        }}
+                      />
+                      {/* 텍스트 오버레이 */}
+                      {textElements.map((element) => {
+                        const isEditing = editingTextId === element.id;
+                        const elementFontClassName =
+                          fonts[element.fontIndex].className;
+                        return (
                           <div
-                            className={
-                              element.isSelected ? 'ring-2 ring-blue-500' : ''
-                            }
+                            key={element.id}
+                            className={`absolute cursor-move flex flex-col select-none z-10  ${elementFontClassName}`}
                             style={{
-                              color: element.color,
-                              backgroundColor:
-                                element.backgroundColor === 'transparent'
-                                  ? 'transparent'
-                                  : element.backgroundColor === 'black'
-                                  ? 'rgb(0, 0, 0)'
-                                  : 'rgb(255, 255, 255)',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              whiteSpace: 'pre',
-                              display: 'inline-block',
+                              left: `${element.x}px`,
+                              top: `${element.y}px`,
+                              fontSize: `${element.fontSize}px`,
+                              opacity: isEditing ? 0 : 1,
+                              pointerEvents: isEditing ? 'none' : 'auto',
+                            }}
+                            onDoubleClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // 더블클릭으로 커스텀 텍스트 편집 모달 열기
+                              openTextEditor(element.id, element.text);
+                            }}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+
+                              const target = e.target as HTMLElement;
+                              if (
+                                target.tagName === 'BUTTON' ||
+                                target.closest('button')
+                              ) {
+                                return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
+                              }
+
+                              handleDragStart(element, e.clientX, e.clientY);
+                            }}
+                            onTouchStart={(e) => {
+                              const touch = e.touches[0];
+
+                              const target = e.target as HTMLElement;
+                              if (
+                                target.tagName === 'BUTTON' ||
+                                target.closest('button')
+                              ) {
+                                return; // 버튼을 눌렀다면 드래그 로직 실행하지 않음
+                              }
+
+                              handleDragStart(
+                                element,
+                                touch.clientX,
+                                touch.clientY
+                              );
                             }}
                           >
-                            {element.text}
+                            <div className="flex justify-end gap-1 md:gap-2 mb-1">
+                              {/* 수정 버튼 */}
+                              <button
+                                className="bg-blue-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-blue-600 transition-colors"
+                                style={{
+                                  width: `${element.fontSize * 1.6}px`,
+                                  height: `${element.fontSize * 1.6}px`,
+                                  fontSize: `${element.fontSize}px`,
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openTextEditor(element.id, element.text);
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
+                                }}
+                                onTouchStart={(e) => {
+                                  e.stopPropagation();
+                                }}
+                                title="텍스트 수정"
+                              >
+                                ✏️
+                              </button>
+                              {/* 삭제 버튼 */}
+                              <button
+                                className="bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                                style={{
+                                  width: `${element.fontSize * 1.6}px`,
+                                  height: `${element.fontSize * 1.6}px`,
+                                  fontSize: `${element.fontSize * 1.2}px`,
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteTextElement(element.id);
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation(); // 부모의 onMouseDown/handleDragStart 실행 방지
+                                }}
+                                onTouchStart={(e) => {
+                                  e.stopPropagation();
+                                }}
+                                title="텍스트 삭제"
+                              >
+                                <svg
+                                  width={`${element.fontSize}px`}
+                                  height={`${element.fontSize}px`}
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                >
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                  <line x1="6" y1="18" x2="18" y2="6" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            <div className="relative inline-block">
+                              <div
+                                className={
+                                  element.isSelected
+                                    ? 'ring-2 ring-blue-500'
+                                    : ''
+                                }
+                                style={{
+                                  color: element.color,
+                                  backgroundColor:
+                                    element.backgroundColor === 'transparent'
+                                      ? 'transparent'
+                                      : element.backgroundColor === 'black'
+                                      ? 'rgb(0, 0, 0)'
+                                      : 'rgb(255, 255, 255)',
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  whiteSpace: 'pre',
+                                  display: 'inline-block',
+                                }}
+                              >
+                                {element.text}
+                              </div>
+                              {/* AI 추천 라벨 */}
+                              {element.type === 'recommended' && (
+                                <div
+                                  className="absolute -bottom-1 -right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap"
+                                  style={{
+                                    fontSize: `${Math.max(
+                                      element.fontSize * 0.4,
+                                      8
+                                    )}px`,
+                                  }}
+                                >
+                                  AI 추천
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
@@ -1312,7 +1555,8 @@ export default function EditorPage() {
           );
           if (!editingElement) return null;
 
-          const editingFontClassName = fonts[currentFontIndex].className;
+          const editingFontClassName =
+            fonts[editingElement.fontIndex].className;
 
           return (
             <div
@@ -1372,7 +1616,7 @@ export default function EditorPage() {
                       minWidth: '1ch',
                       height: 'auto',
                     }}
-                    placeholder="텍스트를 입력하세요... (Esc로 종료)"
+                    placeholder="텍스트를 입력하세요"
                     autoFocus
                     ref={(textarea) => {
                       if (textarea) {
@@ -1415,7 +1659,7 @@ export default function EditorPage() {
                           key={fontName}
                           onClick={() => handleFontChange(index)}
                           className={`px-2 py-1 rounded-lg text-sm font-medium transition-all ${
-                            currentFontIndex === index
+                            editingElement.fontIndex === index
                               ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-300'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           } ${fonts[index].className}`}
