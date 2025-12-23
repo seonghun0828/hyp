@@ -1,14 +1,6 @@
 import { Styles } from './store';
-import {
-  expressionStyles,
-  getStyleLabel,
-  getStyleOptionById,
-  messageTypes,
-  modelCompositions,
-  toneMoods,
-} from './styles';
+import { visualStyles, messageTypes, models, toneMoods } from './styles';
 import { ProductCategory } from './categories/types';
-import { getCategoryModules } from './categories/utils';
 import {
   INDUSTRY_LABELS,
   FORM_LABELS,
@@ -96,13 +88,15 @@ The advertising purpose is: ${category?.purpose}.
 
 [Style Package]
 Apply the following style package as a single unified direction:
-– Message Type: ${messageTypes.find((m) => m.id === styles.messageType)!.label}
-– Expression Style: ${
-    expressionStyles.find((e) => e.id === styles.expressionStyle)!.label
+– Message Type: ${
+    messageTypes.find((m) => m.id === styles.messageType)!.aiPrompt
   }
-– Tone & Mood: ${toneMoods.find((t) => t.id === styles.toneMood)!.label}
+– Visual Style: ${
+    visualStyles.find((e) => e.id === styles.expressionStyle)!.aiPrompt
+  }
+– Tone & Mood: ${toneMoods.find((t) => t.id === styles.toneMood)!.aiPrompt}
 – Model Composition: ${
-    modelCompositions.find((m) => m.id === styles.modelComposition)!.label
+    models.find((m) => m.id === styles.modelComposition)!.aiPrompt
   }
 
 [Output Requirements]
@@ -110,7 +104,6 @@ Generate one high-quality SNS advertisement image.
 The image must contain **no text**, including on UI screens, devices, props, or backgrounds.  
 Use a realistic, clear, visually appealing composition that reflects the advertising purpose.  
 Avoid distortions, avoid artifacts, and maintain natural lighting.  
-The image must have a 3:4 aspect ratio (portrait orientation, height:width = 4:3).
 Focus solely on visually conveying the product’s core value and purpose through the selected style package.
 `;
 };

@@ -61,38 +61,74 @@ export const messageTypes: StyleOption[] = [
   },
 ];
 
-// 표현 방식
-export const expressionStyles: StyleOption[] = [
+export const visualStyles: StyleOption[] = [
   {
-    id: 'product-focused',
-    label: '제품 중심',
-    description: '제품(또는 UI 화면)이 중심 포인트인 이미지',
-    aiPrompt: 'Center the image on the product or its UI as the focal point.',
-    src: '/images/style-options/표현 방식 - 제품 중심.png',
+    id: 'photo-realistic',
+    label: '사진 같은',
+    description: '실제 사진처럼 보이는 현실적인 이미지',
+    aiPrompt:
+      'Photo-realistic style, shot on 35mm lens, hyper-realistic textures, natural cinematic lighting, deep focus with sharp details, 8k resolution, authentic photography aesthetic.',
+    src: '/images/style-options/visual styles - photo realistic.png',
+  },
+
+  {
+    id: 'line-drawing',
+    label: '라인 드로잉',
+    description: '선 위주의 심플하고 미니멀한 표현',
+    aiPrompt:
+      'Minimalist professional line art, solid black outlines on a pure white background, consistent medium stroke weight, clean vector style, no shading, no colors, all lines connected and closed.',
+    src: '/images/style-options/visual styles - line drawing.png',
   },
   {
-    id: 'usage-scene',
-    label: '사용 장면',
-    description: '실제 사용하는 상황을 보여주는 이미지',
-    aiPrompt: 'Show the product being used in a realistic context.',
-    src: '/images/style-options/표현 방식 - 사용 장면.png',
-  },
-  {
-    id: 'screen-demo',
-    label: '화면 시연',
-    description: '앱·웹 화면이 어떻게 쓰이는지 보여주는 시연 이미지',
-    aiPrompt: 'Demonstrate the app or website screen in use.',
-    src: '/images/style-options/표현 방식 - 화면 시연.png',
+    id: 'cartoon',
+    label: '만화 스타일',
+    description: '만화처럼 단순화되고 개성 있는 표현',
+    aiPrompt:
+      'Vibrant 2D cartoon style, bold thick outlines, flat cel-shading, playful proportions, 2D animation background aesthetic, bright and cheerful colors, high-quality character and environment design.',
+    src: '/images/style-options/visual styles - cartoon.png',
   },
   {
     id: 'illustration',
-    label: '그림 스타일',
-    description: '그림/일러스트 기반의 부드럽고 창의적인 시각 표현',
+    label: '일러스트',
+    description: '사람이 그린 듯한 부드러운 일러스트 스타일',
     aiPrompt:
-      'Use illustration or artistic style for soft and creative visuals.',
-    src: '/images/style-options/표현 방식 - 그림 스타일.png',
+      'Artistic painterly illustration style, visible organic brushstrokes, rich oil paint textures, natural color blending, emotive and hand-drawn feel, impressionistic fine art aesthetic.',
+    src: '/images/style-options/visual styles - illustration.png',
   },
 ];
+
+// 표현 방식
+// export const expressionStyles: StyleOption[] = [
+//   {
+//     id: 'product-focused',
+//     label: '제품 중심',
+//     description: '제품(또는 UI 화면)이 중심 포인트인 이미지',
+//     aiPrompt: 'Center the image on the product or its UI as the focal point.',
+//     src: '/images/style-options/표현 방식 - 제품 중심.png',
+//   },
+//   {
+//     id: 'usage-scene',
+//     label: '사용 장면',
+//     description: '실제 사용하는 상황을 보여주는 이미지',
+//     aiPrompt: 'Show the product being used in a realistic context.',
+//     src: '/images/style-options/표현 방식 - 사용 장면.png',
+//   },
+//   {
+//     id: 'screen-demo',
+//     label: '화면 시연',
+//     description: '앱·웹 화면이 어떻게 쓰이는지 보여주는 시연 이미지',
+//     aiPrompt: 'Demonstrate the app or website screen in use.',
+//     src: '/images/style-options/표현 방식 - 화면 시연.png',
+//   },
+//   {
+//     id: 'illustration',
+//     label: '그림 스타일',
+//     description: '그림/일러스트 기반의 부드럽고 창의적인 시각 표현',
+//     aiPrompt:
+//       'Use illustration or artistic style for soft and creative visuals.',
+//     src: '/images/style-options/표현 방식 - 그림 스타일.png',
+//   },
+// ];
 
 // 톤 & 무드
 export const toneMoods: StyleOption[] = [
@@ -133,45 +169,78 @@ export const toneMoods: StyleOption[] = [
   },
 ];
 
-// 모델 구성
-export const modelCompositions: StyleOption[] = [
+export const models: StyleOption[] = [
   {
-    id: 'product-only',
-    label: '제품만(UI 포함)',
-    description: '사람 없이 제품 또는 화면 UI만 보여주는 구성',
+    id: 'product-ui-only',
+    label: '제품 / UI만',
+    description: '사람 없이 제품 또는 서비스 화면만 보여주는 구성',
     aiPrompt:
-      'Show only the product or interface. Do not include any people, hands, or human parts. Focus solely on the product itself and its interface.',
+      'Show only the product or service interface. No people, no characters, no hands.',
     src: '/images/style-options/모델 구성 - 제품만.png',
   },
   {
     id: 'hands-only',
     label: '손만',
-    description: '사람 전체 대신 손만 등장하는 사용 장면',
-    aiPrompt: 'Depict only hands interacting with the product.',
+    description: '사람의 손만 등장해 제품을 사용하는 장면',
+    aiPrompt:
+      'Show hands interacting with the product. Do not show faces or full bodies.',
     src: '/images/style-options/모델 구성 - 손만.png',
   },
   {
-    id: 'general-model',
-    label: '일반 모델',
-    description: '자연스러운 일반인 사용자가 등장하는 이미지',
-    aiPrompt: 'Include natural, everyday users interacting with the product.',
+    id: 'person',
+    label: '사람',
+    description: '일반 사용자 또는 모델이 등장하는 장면',
+    aiPrompt: 'Include a human person interacting with the product or service.',
     src: '/images/style-options/모델 구성 - 일반인.png',
   },
   {
-    id: 'professional-model',
-    label: '전문 모델',
-    description: '전문직 혹은 특정 역할을 가진 모델이 등장하는 이미지',
-    aiPrompt: 'Show professionals or role-specific users using the product.',
-    src: '/images/style-options/모델 구성 - 전문 모델.png',
-  },
-  {
-    id: 'character',
-    label: '캐릭터',
-    description: '일러스트 또는 캐릭터가 등장하는 이미지',
-    aiPrompt: 'Feature illustrated characters or stylized figures.',
+    id: 'character-mascot',
+    label: '캐릭터 / 마스코트',
+    description: '사람 대신 캐릭터나 마스코트가 등장하는 구성',
+    aiPrompt: 'Include a character or mascot instead of a real human.',
     src: '/images/style-options/모델 구성 - 캐릭터.png',
   },
 ];
+
+// 모델 구성
+// export const modelCompositions: StyleOption[] = [
+//   {
+//     id: 'product-only',
+//     label: '제품만(UI 포함)',
+//     description: '사람 없이 제품 또는 화면 UI만 보여주는 구성',
+//     aiPrompt:
+//       'Show only the product or interface. Do not include any people, hands, or human parts. Focus solely on the product itself and its interface.',
+//     src: '/images/style-options/모델 구성 - 제품만.png',
+//   },
+//   {
+//     id: 'hands-only',
+//     label: '손만',
+//     description: '사람 전체 대신 손만 등장하는 사용 장면',
+//     aiPrompt: 'Depict only hands interacting with the product.',
+//     src: '/images/style-options/모델 구성 - 손만.png',
+//   },
+//   {
+//     id: 'general-model',
+//     label: '일반 모델',
+//     description: '자연스러운 일반인 사용자가 등장하는 이미지',
+//     aiPrompt: 'Include natural, everyday users interacting with the product.',
+//     src: '/images/style-options/모델 구성 - 일반인.png',
+//   },
+//   {
+//     id: 'professional-model',
+//     label: '전문 모델',
+//     description: '전문직 혹은 특정 역할을 가진 모델이 등장하는 이미지',
+//     aiPrompt: 'Show professionals or role-specific users using the product.',
+//     src: '/images/style-options/모델 구성 - 전문 모델.png',
+//   },
+//   {
+//     id: 'character',
+//     label: '캐릭터',
+//     description: '일러스트 또는 캐릭터가 등장하는 이미지',
+//     aiPrompt: 'Feature illustrated characters or stylized figures.',
+//     src: '/images/style-options/모델 구성 - 캐릭터.png',
+//   },
+// ];
 
 // 스타일 카테고리 목록
 export const styleCategories: StyleCategory[] = [
@@ -181,9 +250,9 @@ export const styleCategories: StyleCategory[] = [
     options: messageTypes,
   },
   {
-    id: 'expressions',
-    name: '표현 방식',
-    options: expressionStyles,
+    id: 'visuals',
+    name: '비주얼 표현 방식',
+    options: visualStyles,
   },
   {
     id: 'tones-moods',
@@ -193,7 +262,7 @@ export const styleCategories: StyleCategory[] = [
   {
     id: 'models',
     name: '모델 구성',
-    options: modelCompositions,
+    options: models,
   },
 ];
 

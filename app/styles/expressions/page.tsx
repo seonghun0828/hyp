@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useFunnelStore } from '@/lib/store';
-import { expressionStyles, getStyleCategoryById } from '@/lib/styles';
+import { visualStyles, getStyleCategoryById } from '@/lib/styles';
 import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
@@ -59,7 +59,7 @@ export default function ExpressionsPage() {
     return null;
   }
 
-  const category = getStyleCategoryById('expressions');
+  const category = getStyleCategoryById('visuals');
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
@@ -81,7 +81,7 @@ export default function ExpressionsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {expressionStyles.map((option) => (
+            {visualStyles.map((option) => (
               <div
                 key={option.id}
                 onClick={() => handleSelect(option.id)}

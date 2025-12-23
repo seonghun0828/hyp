@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore } from '@/lib/store';
-import { modelCompositions, getStyleCategoryById } from '@/lib/styles';
+import { models, getStyleCategoryById } from '@/lib/styles';
 import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
@@ -86,7 +86,7 @@ export default function ModelsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {modelCompositions.map((option) => (
+            {models.map((option) => (
               <div
                 key={option.id}
                 onClick={() => handleSelect(option.id)}
