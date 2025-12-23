@@ -92,12 +92,10 @@ Apply the following style package as a single unified direction:
     messageTypes.find((m) => m.id === styles.messageType)!.aiPrompt
   }
 – Visual Style: ${
-    visualStyles.find((e) => e.id === styles.expressionStyle)!.aiPrompt
+    visualStyles.find((e) => e.id === styles.visualStyle)!.aiPrompt
   }
 – Tone & Mood: ${toneMoods.find((t) => t.id === styles.toneMood)!.aiPrompt}
-– Model Composition: ${
-    models.find((m) => m.id === styles.modelComposition)!.aiPrompt
-  }
+– Model Composition: ${models.find((m) => m.id === styles.model)!.aiPrompt}
 
 [Output Requirements]
 Generate one high-quality SNS advertisement image.  

@@ -25,7 +25,8 @@ export const messageTypes: StyleOption[] = [
     id: 'problem-solving',
     label: '문제 해결',
     description: '사용자가 겪는 불편함을 강조해 해결책 이미지',
-    aiPrompt: 'Highlight the user’s pain points and present a visual solution.',
+    aiPrompt:
+      'Show a positive, improved outcome enabled by the product, with subtle visual cues that imply the original problem without explicitly showing it.',
     src: '/images/style-options/메시지 타입 - 문제 해결.png',
   },
   {
@@ -33,7 +34,7 @@ export const messageTypes: StyleOption[] = [
     label: '혜택',
     description: '이 제품을 쓰면 얻는 이점이 한눈에 보이는 이미지',
     aiPrompt:
-      'Show at a glance the advantages or benefits the user gains from the product.',
+      'Clearly highlight the key benefits the user gains from using the product.',
     src: '/images/style-options/메시지 타입 - 이점과 혜택.png',
   },
   {
@@ -41,14 +42,15 @@ export const messageTypes: StyleOption[] = [
     label: '증거',
     description: '신뢰를 주는 결과나 데이터가 뒷받침 되는 이미지',
     aiPrompt:
-      'Illustrate credibility through results, data, or evidence supporting the product.',
+      'Show visual evidence such as metrics, results, or indicators that build trust.',
     src: '/images/style-options/메시지 타입 - 증거.png',
   },
   {
     id: 'comparison',
     label: '비교',
     description: '기존 vs 지금, 또는 A vs B 차이가 명확한 이미지',
-    aiPrompt: 'Clearly contrast before vs after, or Product A vs Product B.',
+    aiPrompt:
+      'Present a clear visual comparison highlighting the difference between two states or options.',
     src: '/images/style-options/메시지 타입 - 비교.png',
   },
   {
@@ -56,7 +58,7 @@ export const messageTypes: StyleOption[] = [
     label: '스토리',
     description: '상황 변화가 흐름처럼 느껴지는 이미지',
     aiPrompt:
-      'Depict a sequence or scenario showing how the product impacts the situation.',
+      'Illustrate a simple sequence showing how the situation changes through product usage.',
     src: '/images/style-options/메시지 타입 - 스토리텔링.png',
   },
 ];
