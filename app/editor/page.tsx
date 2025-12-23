@@ -893,15 +893,12 @@ export default function EditorPage() {
           return false;
         },
         onclone: (clonedDoc) => {
-          // 1. 버튼들을 감싸고 있는 컨테이너 찾기
-          // "수정/삭제 버튼이 들어있는 div" = div.flex.justify-end
-          const buttonContainers = clonedDoc.querySelectorAll(
-            'div.flex.justify-end'
+          // 1. exclude-from-result 클래스를 가진 요소를 찾아서 제거
+          const excludeElements = clonedDoc.querySelectorAll(
+            '.exclude-from-result'
           );
-
-          buttonContainers.forEach((container) => {
-            // 해당 컨테이너를 투명하게 만듦 (공간은 차지함)
-            (container as HTMLElement).style.visibility = 'hidden';
+          excludeElements.forEach((el) => {
+            el.remove();
           });
 
           // 2. 선택된 요소의 외곽선/그림자 등 스타일 정리
@@ -1455,7 +1452,7 @@ export default function EditorPage() {
 
                                 return (
                                   <div
-                                    className="absolute flex gap-1.5 md:gap-2 z-20"
+                                    className="absolute flex gap-1.5 md:gap-2 z-20 exclude-from-result"
                                     style={{
                                       top: `-${buttonSize + 4}px`,
                                       right: '0px',
@@ -1548,7 +1545,7 @@ export default function EditorPage() {
                               {/* AI 추천 라벨 */}
                               {element.type === 'recommended' && (
                                 <div
-                                  className="absolute -bottom-1 -right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap"
+                                  className="absolute -bottom-1 -right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap exclude-from-result"
                                   style={{
                                     fontSize: `${Math.max(
                                       element.fontSize * 0.4,
