@@ -25,7 +25,7 @@ export default function TonesMoodsPage() {
       router.push('/');
       return;
     }
-    if (!styles?.messageType || !styles?.expressionStyle) {
+    if (!styles?.messageType || !styles?.visualStyle) {
       router.push('/styles/messages');
       return;
     }
@@ -55,7 +55,7 @@ export default function TonesMoodsPage() {
     );
   }
 
-  if (!summary || !styles?.messageType || !styles?.expressionStyle) {
+  if (!summary || !styles?.messageType || !styles?.visualStyle) {
     return null;
   }
 

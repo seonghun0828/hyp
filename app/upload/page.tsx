@@ -290,7 +290,7 @@ export default function UploadPage() {
   const checkCacheAndInitialize = async () => {
     if (!summary || !styles) return;
 
-    const cacheKey = `${summary.url}_${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}`;
+    const cacheKey = `${summary.url}_${styles.messageType}_${styles.visualStyle}_${styles.toneMood}_${styles.model}`;
 
     try {
       const response = await fetch('/api/check-cache', {
@@ -339,9 +339,9 @@ export default function UploadPage() {
     if (
       !styles ||
       !styles.messageType ||
-      !styles.expressionStyle ||
+      !styles.visualStyle ||
       !styles.toneMood ||
-      !styles.modelComposition ||
+      !styles.model ||
       !styles.aspectRatio
     ) {
       router.push('/styles/messages');
@@ -365,9 +365,9 @@ export default function UploadPage() {
     !summary ||
     !styles ||
     !styles.messageType ||
-    !styles.expressionStyle ||
+    !styles.visualStyle ||
     !styles.toneMood ||
-    !styles.modelComposition ||
+    !styles.model ||
     !styles.aspectRatio
   ) {
     return null;

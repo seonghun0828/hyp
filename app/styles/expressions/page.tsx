@@ -12,7 +12,7 @@ import ProgressBar from '@/components/ProgressBar';
 
 export default function ExpressionsPage() {
   const router = useRouter();
-  const { summary, styles, setExpressionStyle } = useFunnelStore();
+  const { summary, styles, setVisualStyle } = useFunnelStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function ExpressionsPage() {
   }, [summary, styles, router, isHydrated]);
 
   const handleSelect = (optionId: string) => {
-    setExpressionStyle(optionId);
+    setVisualStyle(optionId);
 
     trackEvent('style_select', {
       step: 4,

@@ -46,9 +46,9 @@ export default function AspectRatioPage() {
     }
     if (
       !styles?.messageType ||
-      !styles?.expressionStyle ||
+      !styles?.visualStyle ||
       !styles?.toneMood ||
-      !styles?.modelComposition
+      !styles?.model
     ) {
       router.push('/styles/messages');
       return;
@@ -82,9 +82,9 @@ export default function AspectRatioPage() {
   if (
     !summary ||
     !styles?.messageType ||
-    !styles?.expressionStyle ||
+    !styles?.visualStyle ||
     !styles?.toneMood ||
-    !styles?.modelComposition
+    !styles?.model
   ) {
     return null;
   }

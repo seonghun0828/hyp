@@ -251,9 +251,9 @@ export default function EditorPage() {
     if (
       !styles ||
       !styles.messageType ||
-      !styles.expressionStyle ||
+      !styles.visualStyle ||
       !styles.toneMood ||
-      !styles.modelComposition
+      !styles.model
     ) {
       router.push('/styles/messages');
       return;
@@ -854,9 +854,9 @@ export default function EditorPage() {
       !summary ||
       !styles ||
       !styles.messageType ||
-      !styles.expressionStyle ||
+      !styles.visualStyle ||
       !styles.toneMood ||
-      !styles.modelComposition ||
+      !styles.model ||
       !currentPrinciple
     ) {
       alert('필수 정보가 없습니다. 다시 시도해주세요.');
@@ -1007,9 +1007,9 @@ export default function EditorPage() {
     !summary ||
     !styles ||
     !styles.messageType ||
-    !styles.expressionStyle ||
+    !styles.visualStyle ||
     !styles.toneMood ||
-    !styles.modelComposition ||
+    !styles.model ||
     !imageUrl
   ) {
     return null;

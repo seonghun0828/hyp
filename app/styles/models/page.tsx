@@ -12,7 +12,7 @@ import Image from 'next/image';
 
 export default function ModelsPage() {
   const router = useRouter();
-  const { summary, styles, setModelComposition } = useFunnelStore();
+  const { summary, styles, setModel } = useFunnelStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -25,14 +25,14 @@ export default function ModelsPage() {
       router.push('/');
       return;
     }
-    if (!styles?.messageType || !styles?.expressionStyle || !styles?.toneMood) {
+    if (!styles?.messageType || !styles?.visualStyle || !styles?.toneMood) {
       router.push('/styles/messages');
       return;
     }
   }, [summary, styles, router, isHydrated]);
 
   const handleSelect = (optionId: string) => {
-    setModelComposition(optionId);
+    setModel(optionId);
 
     trackEvent('style_select', {
       step: 6,
@@ -58,7 +58,7 @@ export default function ModelsPage() {
   if (
     !summary ||
     !styles?.messageType ||
-    !styles?.expressionStyle ||
+    !styles?.visualStyle ||
     !styles?.toneMood
   ) {
     return null;
