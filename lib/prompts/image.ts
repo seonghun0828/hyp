@@ -178,12 +178,13 @@ const getDynamicVisualPrompt = (
           categoryIndustry || ''
         )
       ) {
-        return 'Technical Blueprint Style. White lines on blueprint blue background, grid patterns, precise geometric lines, architectural feel.';
+        // 블루프린트는 파란색이라 제외하고, 기술적인 흑백 도면 스타일로 변경
+        return 'Technical Schematic Style. Precision black lines on white background, exploded view or wireframe aesthetics, no colors, clean and technical.';
       }
       const lineVariations = [
-        'Minimalist Continuous Line Art. Single fluid black line on white background, abstract and elegant.', // Continuous
-        'Hand-drawn Doodle Style. Playful, loose scribbles, sketchy feel, casual and friendly.', // Doodle
-        'Detailed Pen and Ink. Cross-hatching shading, intricate details, black ink on textured paper.', // Pen & Ink
+        'Minimalist Continuous Line Art. Single fluid black line on pure white background, abstract and elegant, no shading.',
+        'Simple Hand-drawn Doodle. Loose black ink sketch on white paper, playful and minimal, no fill colors.',
+        'Clean Vector Line Art. Uniform black stroke weight, white background, iconographic style, no gradients or colors.',
       ];
       return pickRandom(lineVariations);
 
@@ -212,10 +213,13 @@ const getDynamicTonePrompt = (toneId: string, visualId: string): string => {
 
   const defaultPrompt = basePrompts[toneId] || '';
 
+  // Line Drawing은 무조건 흑백으로 고정 (톤과 무관하게 선의 느낌만 살림)
+  if (visualId === 'line-drawing') {
+    return 'Black and White only. High contrast, clean lines on white background. No colors, no shading, no grey fills.';
+  }
+
   // Line Drawing이나 Flat Cartoon일 경우 복잡한 조명 효과를 제거/단순화
-  const isSimpleStyle =
-    ['line-drawing'].includes(visualId) ||
-    (visualId === 'cartoon' && Math.random() > 0.5); // Cartoon도 일부 Flat 스타일이 있음
+  const isSimpleStyle = visualId === 'cartoon' && Math.random() > 0.5; // Cartoon도 일부 Flat 스타일이 있음
 
   // 랜덤 선택 헬퍼 함수
   const pickRandom = (options: string[]) => {
