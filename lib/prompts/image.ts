@@ -182,6 +182,77 @@ const getDynamicVisualPrompt = (
   }
 };
 
+/**
+ * Randomness에 따라 Tone & Mood Prompt를 동적으로 생성하는 함수
+ */
+const getDynamicTonePrompt = (toneId: string): string => {
+  // 기본값 fallback
+  const basePrompts: Record<string, string> = {
+    'warm-comfortable':
+      toneMoods.find((t) => t.id === 'warm-comfortable')?.aiPrompt || '',
+    'trust-serious':
+      toneMoods.find((t) => t.id === 'trust-serious')?.aiPrompt || '',
+    'humor-light':
+      toneMoods.find((t) => t.id === 'humor-light')?.aiPrompt || '',
+    'premium-sophisticated':
+      toneMoods.find((t) => t.id === 'premium-sophisticated')?.aiPrompt || '',
+    'energetic-vibrant':
+      toneMoods.find((t) => t.id === 'energetic-vibrant')?.aiPrompt || '',
+  };
+
+  const defaultPrompt = basePrompts[toneId] || '';
+
+  // 랜덤 선택 헬퍼 함수
+  const pickRandom = (options: string[]) => {
+    return options[Math.floor(Math.random() * options.length)];
+  };
+
+  switch (toneId) {
+    case 'warm-comfortable':
+      const warmVariations = [
+        'Golden Hour Lighting. Soft, warm sunlight coming from the side, long shadows, inviting and cozy atmosphere. Color palette: Amber, Gold, Soft Beige.', // Golden Hour
+        'Cozy Indoor Lighting. Soft diffused light from a window or lamp, warm color temperature (3000K), comfortable and safe feeling. Color palette: Earth tones, Cream, Warm Brown.', // Hygge
+        'Soft Morning Light. Fresh and gentle morning sunlight, low contrast, peaceful and calm mood. Color palette: Pastel Yellow, Soft White, Light Green.', // Morning
+      ];
+      return pickRandom(warmVariations);
+
+    case 'trust-serious':
+      const trustVariations = [
+        'Professional Studio Lighting. Balanced and even lighting, cool color temperature (5000K), clean white or grey background, sharp details. Color palette: Navy Blue, White, Grey.', // Corporate
+        'Modern Minimalist Lighting. Soft shadows, clean lines, uncluttered composition, calm and reliable atmosphere. Color palette: Cool Grey, Muted Blue, Slate.', // Minimal
+        'Dramatic Professional. Slightly higher contrast, focused spotlight on the subject, deep shadows for weight and seriousness. Color palette: Deep Blue, Charcoal, Silver.', // Dramatic
+      ];
+      return pickRandom(trustVariations);
+
+    case 'humor-light':
+      const humorVariations = [
+        'Vibrant Pop Style. High key lighting, bright and saturated colors, playful atmosphere, almost no shadows. Color palette: Primary Red, Yellow, Blue.', // Pop
+        'Soft Pastel Lighting. Very soft and diffused light, low contrast, dreamy and cute atmosphere. Color palette: Mint, Baby Pink, Lemon Yellow.', // Pastel
+        'Quirky High-Contrast. Hard lighting with distinct colorful shadows, energetic and fun mood. Color palette: Hot Pink, Electric Blue, Lime Green.', // Funky
+      ];
+      return pickRandom(humorVariations);
+
+    case 'premium-sophisticated':
+      const premiumVariations = [
+        'Luxury Dark Mode. Low key lighting, rim lighting highlighting edges, dark background, mysterious and elegant. Color palette: Black, Gold, Deep Emerald.', // Dark Luxury
+        'High-End Editorial. Soft but directional lighting, refined textures, elegant composition, expensive feel. Color palette: Champagne, Silk White, Bronze.', // Editorial
+        'Modern Chic. Clean, bright, and airy, but with sharp contrast and high-quality materials. Color palette: Marble White, Matte Black, Metallic accents.', // Chic
+      ];
+      return pickRandom(premiumVariations);
+
+    case 'energetic-vibrant':
+      const energeticVariations = [
+        'Neon Cyberpunk Lighting. Colorful neon lights (magenta and cyan), dark background, glowing effects, futuristic and intense. Color palette: Neon Purple, Cyan, Black.', // Cyberpunk
+        'Active Sunlight. Bright, hard sunlight (high noon), strong cast shadows, saturated colors, dynamic and powerful. Color palette: Orange, Vivid Blue, White.', // Sports
+        'Dynamic Studio Flash. High contrast colorful gels, motion blur suggestions, exciting and bold. Color palette: Electric Blue, Hot Pink, Vivid Purple.', // Studio Color
+      ];
+      return pickRandom(energeticVariations);
+
+    default:
+      return defaultPrompt;
+  }
+};
+
 export const getImagePrompt = (
   styles: Styles,
   summary: {
@@ -208,6 +279,9 @@ export const getImagePrompt = (
     category?.industry
   );
 
+  // 동적 Tone Prompt 생성
+  const tonePrompt = getDynamicTonePrompt(styles.toneMood);
+
   return `[Core Concept Summary]
 ${summary.core_value}
 
@@ -223,7 +297,7 @@ Apply the following style package as a single unified direction:
     messageTypes.find((m) => m.id === styles.messageType)!.aiPrompt
   }
 – Visual Style: ${visualPrompt}
-– Tone & Mood: ${toneMoods.find((t) => t.id === styles.toneMood)!.aiPrompt}
+– Tone & Mood: ${tonePrompt}
 – Model Composition: ${modelPrompt}
 
 [Output Requirements]
