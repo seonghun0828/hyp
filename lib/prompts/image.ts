@@ -253,6 +253,73 @@ const getDynamicTonePrompt = (toneId: string): string => {
   }
 };
 
+/**
+ * Randomness에 따라 Message Type Prompt를 동적으로 생성하는 함수
+ */
+const getDynamicMessagePrompt = (messageId: string): string => {
+  // 기본값 fallback
+  const basePrompts: Record<string, string> = {
+    'problem-solving':
+      messageTypes.find((m) => m.id === 'problem-solving')?.aiPrompt || '',
+    benefit: messageTypes.find((m) => m.id === 'benefit')?.aiPrompt || '',
+    proof: messageTypes.find((m) => m.id === 'proof')?.aiPrompt || '',
+    comparison: messageTypes.find((m) => m.id === 'comparison')?.aiPrompt || '',
+    story: messageTypes.find((m) => m.id === 'story')?.aiPrompt || '',
+  };
+
+  const defaultPrompt = basePrompts[messageId] || '';
+
+  // 랜덤 선택 헬퍼 함수
+  const pickRandom = (options: string[]) => {
+    return options[Math.floor(Math.random() * options.length)];
+  };
+
+  switch (messageId) {
+    case 'comparison':
+      const comparisonVariations = [
+        'Split Screen Composition. The image is divided into two distinct sides. Left side shows a "before" or "problem" state (slightly desaturated), Right side shows "after" or "solution" state (bright and colorful). Clear visual contrast.', // Split
+        'Visual Metaphor of Order. Chaos organizing into structure. One side has scattered elements, the other side has them perfectly aligned. Symbolizing organization and clarity.', // Chaos to Order
+        'Side-by-Side Product Comparison. Two distinct options placed next to each other. One is clearly superior with better lighting or visual appeal. "A vs B" layout.', // A vs B
+      ];
+      return pickRandom(comparisonVariations);
+
+    case 'problem-solving':
+      const problemVariations = [
+        'Visual Transformation. A scene capturing the exact moment a problem is resolved. A feeling of relief and satisfaction. The product is the agent of change.', // Moment of fix
+        'Metaphor of Protection/Shielding. The product acting as a shield or umbrella against negative elements (rain, chaos, arrows). Symbolizing safety and solution.', // Shield
+        "Focus on Relief. Close-up on a person's expression changing from stress to relief. Or a chaotic desk becoming clean. Emphasizing the emotional result of the solution.", // Relief
+      ];
+      return pickRandom(problemVariations);
+
+    case 'benefit':
+      const benefitVariations = [
+        'Hero Shot Low Angle. The product is placed centrally, shot from a slightly low angle to make it look monumental and important. Rays of light or glow behind it.', // Hero
+        'Visualizing the Intangible. Use floating icons or 3D elements around the product to represent abstract benefits (speed, security, growth). Magical realism style.', // Icons
+        'Lifestyle Bliss. A wide shot showing the "ideal life" achieved through the product. Pure enjoyment, leisure, and lack of stress. The product is subtly integrated.', // Bliss
+      ];
+      return pickRandom(benefitVariations);
+
+    case 'story':
+      const storyVariations = [
+        'Three-Panel Layout. A subtle triptych (3 vertical sections) showing a sequence: 1. Start, 2. Action, 3. Result. Visual storytelling flow.', // Sequence
+        'Journey Path Composition. A winding road or path leading from a dark/uncertain foreground to a bright/successful background destination. The product is the vehicle or guide.', // Journey
+        'Slice of Life Drama. A single frame that implies a larger story. A "decisive moment" full of context and narrative details. Like a movie still.', // Cinematic
+      ];
+      return pickRandom(storyVariations);
+
+    case 'proof':
+      const proofVariations = [
+        'Abstract Data Visualization. 3D charts, upward trending graphs, or percentage signs integrated artistically into the environment. Symbolizing growth and success.', // Data Art
+        'Seal of Excellence. Visual cues of certification, trophies, or 5-star symbols arranged elegantly around the product. Gold and silver accents.', // Awards
+        'Social Proof Crowd. Suggestions of many people or avatars in the background, all facing or using the product. Implies popularity and community trust.', // Crowd
+      ];
+      return pickRandom(proofVariations);
+
+    default:
+      return defaultPrompt;
+  }
+};
+
 export const getImagePrompt = (
   styles: Styles,
   summary: {
@@ -282,20 +349,19 @@ export const getImagePrompt = (
   // 동적 Tone Prompt 생성
   const tonePrompt = getDynamicTonePrompt(styles.toneMood);
 
+  // 동적 Message Prompt 생성
+  const messagePrompt = getDynamicMessagePrompt(styles.messageType);
+
   return `[Core Concept Summary]
 ${summary.core_value}
 
 [Product Context]
-This product/service falls under the category of ${
-    category?.industry
-  }, with the product type of ${category?.form}.  
+This product/service falls under the category of ${category?.industry}, with the product type of ${category?.form}.  
 The advertising purpose is: ${category?.purpose}.
 
 [Style Package]
 Apply the following style package as a single unified direction:
-– Message Type: ${
-    messageTypes.find((m) => m.id === styles.messageType)!.aiPrompt
-  }
+– Message Type: ${messagePrompt}
 – Visual Style: ${visualPrompt}
 – Tone & Mood: ${tonePrompt}
 – Model Composition: ${modelPrompt}
