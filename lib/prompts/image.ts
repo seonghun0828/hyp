@@ -320,13 +320,13 @@ const getDynamicMessagePrompt = (
 
     case 'problem-solving':
       const problemVariations = [
-        'Visual Transformation. A scene capturing the exact moment a problem is resolved. A feeling of relief and satisfaction. The product is the agent of change.', // Moment of fix
-        'Metaphor of Protection/Shielding. The product acting as a shield or umbrella against negative elements (rain, chaos, arrows). Symbolizing safety and solution.', // Shield
+        'The Ideal Result. A scene showing the perfect state achieved after using the product. Everything is organized, efficient, and working smoothly. A sense of completion and perfection.', // Ideal State
+        'Stress-Free Environment. A calm, clean, and pleasant atmosphere where the "problem" is visibly absent. Focus on the positive outcome and the lack of friction or difficulty.', // Stress-free
       ];
       // 사람 표정 옵션은 사람이 있을 때만 추가
       if (!hasNoPerson) {
         problemVariations.push(
-          "Focus on Relief. Close-up on a person's expression changing from stress to relief. Or a chaotic desk becoming clean. Emphasizing the emotional result of the solution."
+          'Expression of Pure Satisfaction. Close-up on a person looking genuinely happy and relieved because their problem is gone. Relaxed posture, smiling face. The product is the cause of this joy.'
         );
       }
       return pickRandom(problemVariations);
