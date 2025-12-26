@@ -81,6 +81,107 @@ const getDynamicModelPrompt = (
   }
 };
 
+/**
+ * Context(Category)와 Randomness에 따라 Visual Style Prompt를 동적으로 생성하는 함수
+ */
+const getDynamicVisualPrompt = (
+  visualId: string,
+  categoryIndustry?: string
+): string => {
+  // 기본값 (styles.ts에 정의된 값 사용을 위한 fallback)
+  const basePrompts: Record<string, string> = {
+    'photo-realistic':
+      visualStyles.find((v) => v.id === 'photo-realistic')?.aiPrompt || '',
+    'line-drawing':
+      visualStyles.find((v) => v.id === 'line-drawing')?.aiPrompt || '',
+    cartoon: visualStyles.find((v) => v.id === 'cartoon')?.aiPrompt || '',
+    illustration:
+      visualStyles.find((v) => v.id === 'illustration')?.aiPrompt || '',
+  };
+
+  const defaultPrompt = basePrompts[visualId] || '';
+
+  // 랜덤 선택 헬퍼 함수
+  const pickRandom = (options: string[]) => {
+    return options[Math.floor(Math.random() * options.length)];
+  };
+
+  switch (visualId) {
+    case 'cartoon':
+      const cartoonVariations = [
+        // 3D Styles
+        '3D Pixar/Disney-style animation. Soft lighting, rounded shapes, expressive characters, subsurface scattering, warm and charming atmosphere.',
+        'Claymation Style (Aardman style). Stop-motion aesthetic, visible fingerprints, plasticine texture, quirky and handmade feel.',
+        'Low Poly 3D Art. Geometric shapes, faceted surfaces, vibrant flat colors, modern digital art style.',
+        'Stylized PBR 3D (Overwatch/Fortnite style). Hand-painted textures, bold silhouette, dynamic lighting, vibrant color palette.',
+
+        // 2D Styles
+        'Studio Ghibli Style. Hand-painted watercolor backgrounds, detailed nature, soft character lines, nostalgic and emotional atmosphere.',
+        'Classic Japanese Anime (90s style). Cel-shading, distinct highlights, dramatic angles, vibrant colors.',
+        'American Retro Cartoon (Rubber hose style). 1930s vintage animation, black and white or muted colors, rhythmic and bouncy character design.',
+        'Modern Webtoon Style. Clean digital lines, trendy fashion, bright and saturated colors, polished finish.',
+        'French Bandes Dessinées (Moebius style). Intricate ink lines, flat pastel colors, surreal and sci-fi atmosphere, detailed environments.',
+        'Modern Flat Cartoon. Vector-like clean shapes, bold solid colors, minimalist character design, corporate illustration style.',
+      ];
+      return pickRandom(cartoonVariations);
+
+    case 'illustration':
+      // IT/SaaS 산업군은 테크니컬한 일러스트 선호
+      if (
+        ['electronics_it', 'business_productivity', 'web_service'].includes(
+          categoryIndustry || ''
+        )
+      ) {
+        const techVariations = [
+          '3D Isometric Illustration. Clean geometric shapes, soft gradient lighting, floating elements, modern tech aesthetic.', // Isometric
+          'Minimalist Abstract Tech Art. Fluid shapes, glowing data lines, deep blue and purple palette, futuristic feel.', // Abstract Tech
+        ];
+        return pickRandom(techVariations);
+      }
+      // 그 외 일반적인 경우
+      const illustrationVariations = [
+        'Soft Watercolor Painting. Wet-on-wet textures, pastel colors, artistic brush strokes, dreamy atmosphere.', // Watercolor
+        'Oil Painting Impasto. Visible thick brush strokes, rich texture, vibrant color blending, fine art aesthetic.', // Oil
+        'Modern Vector Art. Clean curves, flat design, vibrant gradients, stylized composition.', // Vector
+        'Hand-drawn Pencil Sketch with Color. Rough pencil textures, colored pencil shading, organic and warm feel.', // Colored Pencil
+      ];
+      return pickRandom(illustrationVariations);
+
+    case 'photo-realistic':
+      if (
+        ['food_beverage', 'fashion_beauty'].includes(categoryIndustry || '')
+      ) {
+        return 'Macro Photography. Extreme close-up, shallow depth of field (bokeh), sharp focus on textures and details. High-end commercial look.';
+      }
+      if (
+        ['travel_leisure', 'automotive_mobility'].includes(
+          categoryIndustry || ''
+        )
+      ) {
+        return 'Cinematic Wide Angle. Dynamic composition, dramatic lighting, capturing the scale of the environment. High production value movie still.';
+      }
+      return 'High-End Commercial Photography. Perfect studio lighting, 8k resolution, ultra-realistic textures, balanced composition.';
+
+    case 'line-drawing':
+      if (
+        ['electronics_it', 'automotive_mobility', 'construction'].includes(
+          categoryIndustry || ''
+        )
+      ) {
+        return 'Technical Blueprint Style. White lines on blueprint blue background, grid patterns, precise geometric lines, architectural feel.';
+      }
+      const lineVariations = [
+        'Minimalist Continuous Line Art. Single fluid black line on white background, abstract and elegant.', // Continuous
+        'Hand-drawn Doodle Style. Playful, loose scribbles, sketchy feel, casual and friendly.', // Doodle
+        'Detailed Pen and Ink. Cross-hatching shading, intricate details, black ink on textured paper.', // Pen & Ink
+      ];
+      return pickRandom(lineVariations);
+
+    default:
+      return defaultPrompt;
+  }
+};
+
 export const getImagePrompt = (
   styles: Styles,
   summary: {
@@ -101,6 +202,12 @@ export const getImagePrompt = (
     category?.industry
   );
 
+  // 동적 Visual Style Prompt 생성
+  const visualPrompt = getDynamicVisualPrompt(
+    styles.visualStyle,
+    category?.industry
+  );
+
   return `[Core Concept Summary]
 ${summary.core_value}
 
@@ -115,9 +222,7 @@ Apply the following style package as a single unified direction:
 – Message Type: ${
     messageTypes.find((m) => m.id === styles.messageType)!.aiPrompt
   }
-– Visual Style: ${
-    visualStyles.find((e) => e.id === styles.visualStyle)!.aiPrompt
-  }
+– Visual Style: ${visualPrompt}
 – Tone & Mood: ${toneMoods.find((t) => t.id === styles.toneMood)!.aiPrompt}
 – Model Composition: ${modelPrompt}
 
