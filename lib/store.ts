@@ -1,6 +1,20 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
+import { get, set, del } from 'idb-keyval';
 import { ProductCategory } from './categories/types';
+
+// Custom storage object using IndexedDB
+const storage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    return (await get(name)) || null;
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    await set(name, value);
+  },
+  removeItem: async (name: string): Promise<void> => {
+    await del(name);
+  },
+};
 
 export interface ProductSummary {
   id?: string;
@@ -47,6 +61,9 @@ export interface SuccessTexts {
 }
 
 interface FunnelState {
+  // Hydration Status
+  hasHydrated: boolean;
+
   // Step 1: URL 입력
   url: string;
 
@@ -59,6 +76,7 @@ interface FunnelState {
   // Step 7: 이미지 업로드
   imageUrl?: string;
   imagePrompt?: string; // 이미지 생성에 사용된 프롬프트
+  generatedImages: Array<{ url: string; prompt: string }>; // 생성된 이미지 리스트
 
   // Step 8: SUCCESs 원칙 홍보문구
   successTexts?: SuccessTexts;
@@ -67,6 +85,7 @@ interface FunnelState {
   finalImageUrl?: string;
 
   // Actions
+  setHasHydrated: (state: boolean) => void;
   setUrl: (url: string) => void;
   setSummary: (summary: ProductSummary) => void;
   setStyles: (styles: Styles) => void;
@@ -77,6 +96,8 @@ interface FunnelState {
   setAspectRatio: (aspectRatio: string) => void;
   setImageUrl: (imageUrl: string) => void;
   setImagePrompt: (imagePrompt: string | undefined) => void;
+  addGeneratedImage: (image: { url: string; prompt: string }) => void;
+  setGeneratedImages: (images: Array<{ url: string; prompt: string }>) => void;
   setSuccessTexts: (texts: SuccessTexts | undefined) => void;
   setFinalImageUrl: (imageUrl: string) => void;
   reset: () => void;
@@ -85,14 +106,17 @@ interface FunnelState {
 export const useFunnelStore = create<FunnelState>()(
   persist(
     (set) => ({
+      hasHydrated: false,
       url: '',
       summary: undefined,
       styles: undefined,
       imageUrl: undefined,
       imagePrompt: undefined,
+      generatedImages: [],
       successTexts: undefined,
       finalImageUrl: undefined,
 
+      setHasHydrated: (state) => set({ hasHydrated: state }),
       setUrl: (url) => set({ url }),
       setSummary: (summary) => set({ summary }),
       setStyles: (styles) => set({ styles }),
@@ -133,6 +157,11 @@ export const useFunnelStore = create<FunnelState>()(
         })),
       setImageUrl: (imageUrl) => set({ imageUrl }),
       setImagePrompt: (imagePrompt) => set({ imagePrompt }),
+      addGeneratedImage: (image) =>
+        set((state) => ({
+          generatedImages: [...state.generatedImages, image],
+        })),
+      setGeneratedImages: (images) => set({ generatedImages: images }),
       setSuccessTexts: (successTexts) => set({ successTexts }),
       setFinalImageUrl: (finalImageUrl) => set({ finalImageUrl }),
       reset: () =>
@@ -142,21 +171,28 @@ export const useFunnelStore = create<FunnelState>()(
           styles: undefined,
           imageUrl: undefined,
           imagePrompt: undefined,
+          generatedImages: [],
           successTexts: undefined,
           finalImageUrl: undefined,
         }),
     }),
     {
-      name: 'hyp-funnel-storage', // localStorage 키 이름
+      name: 'hyp-funnel-storage', // DB name
+      storage: createJSONStorage(() => storage), // IndexedDB 사용
+      onRehydrateStorage: () => (state) => {
+        // Hydration 완료 시 호출됨
+        state?.setHasHydrated(true);
+      },
       partialize: (state) => ({
-        // 저장할 상태만 선택 (finalImageUrl은 용량 문제로 제외)
+        // 저장할 상태만 선택
         url: state.url,
         summary: state.summary,
         styles: state.styles,
         imageUrl: state.imageUrl,
         imagePrompt: state.imagePrompt,
+        generatedImages: state.generatedImages,
         successTexts: state.successTexts,
-        // finalImageUrl은 localStorage에서 제외 (용량 초과 방지)
+        // hasHydrated는 저장하지 않음 (항상 false로 시작)
       }),
     }
   )

@@ -17,6 +17,7 @@ export default function UploadPage() {
     setImagePrompt,
     setSuccessTexts,
     successTexts,
+    hasHydrated,
   } = useFunnelStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -149,12 +150,12 @@ export default function UploadPage() {
   };
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
-  const [isHydrated, setIsHydrated] = useState(false);
+  // const [isHydrated, setIsHydrated] = useState(false);
 
-  useEffect(() => {
-    // Zustand persist가 hydration을 완료할 때까지 기다림
-    setIsHydrated(true);
-  }, []);
+  // useEffect(() => {
+  //   // Zustand persist가 hydration을 완료할 때까지 기다림
+  //   setIsHydrated(true);
+  // }, []);
 
   // 캐시된 데이터를 한번에 가져오는 함수
   const generateSuccessTextsFromCache = async () => {
@@ -270,7 +271,7 @@ export default function UploadPage() {
   const [lastConceptId, setLastConceptId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isHydrated && summary) {
+    if (hasHydrated && summary) {
       const currentUrl = summary.url;
 
       // URL이 변경되었을 때 successTexts 초기화
@@ -282,7 +283,7 @@ export default function UploadPage() {
 
       setLastSummaryUrl(currentUrl);
     }
-  }, [summary, isHydrated, lastSummaryUrl, setSuccessTexts]);
+  }, [summary, hasHydrated, lastSummaryUrl, setSuccessTexts]);
 
   // 컨셉 변경 감지 로직 제거 - API가 캐시 키로 처리하므로 불필요
 
@@ -322,14 +323,14 @@ export default function UploadPage() {
 
   // 페이지 진입 시 캐시 확인 후 처리
   useEffect(() => {
-    if (isHydrated && summary && styles) {
+    if (hasHydrated && summary && styles) {
       checkCacheAndInitialize();
     }
-  }, [isHydrated, summary, styles]);
+  }, [hasHydrated, summary, styles]);
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
-    if (!isHydrated) return;
+    if (!hasHydrated) return;
 
     // 상태 확인 및 적절한 페이지로 리다이렉트
     if (!summary) {
@@ -347,10 +348,10 @@ export default function UploadPage() {
       router.push('/styles/messages');
       return;
     }
-  }, [summary, styles, router, isHydrated]);
+  }, [summary, styles, router, hasHydrated]);
 
   // hydration이 완료되기 전에는 로딩 표시
-  if (!isHydrated) {
+  if (!hasHydrated) {
     return (
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">

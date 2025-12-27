@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore, SuccessTexts } from '@/lib/store';
 import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
@@ -37,7 +37,75 @@ export default function EditorPage() {
     successTexts,
     setSuccessTexts,
     setFinalImageUrl,
+    generatedImages,
+    addGeneratedImage,
+    setImageUrl,
+    setImagePrompt,
+    hasHydrated,
   } = useFunnelStore();
+
+  // 1. 페이지 진입 시 첫 번째 이미지를 리스트에 추가 (중복 방지)
+  useEffect(() => {
+    if (imageUrl && imagePrompt) {
+      // 이미 리스트에 있는지 확인 (URL 기준)
+      const exists = generatedImages.some((img) => img.url === imageUrl);
+      if (!exists) {
+        addGeneratedImage({ url: imageUrl, prompt: imagePrompt });
+      }
+    }
+  }, [imageUrl, imagePrompt, generatedImages, addGeneratedImage]);
+
+  // 2. 추가 이미지 백그라운드 생성 (총 3개가 될 때까지)
+  // 생성 중 상태를 관리하기 위해 ref 사용 (재렌더링 방지 및 비동기 경쟁 상태 방지)
+  const isGeneratingRef = useRef(false);
+
+  useEffect(() => {
+    if (!summary || !styles) return;
+
+    // 이미 3개 이상이면 생성 중단
+    if (generatedImages.length >= 3) return;
+
+    // 이미 생성 중이면 중단
+    if (isGeneratingRef.current) return;
+
+    const generateMoreImages = async () => {
+      isGeneratingRef.current = true;
+
+      // 현재 리스트 길이를 기준으로 다음 인덱스 결정 (0은 이미 있음)
+      // 주의: generatedImages는 비동기 업데이트될 수 있으므로,
+      // 함수 시작 시점의 길이를 기준으로 하지 않고, 순차적으로 하나씩 생성.
+
+      try {
+        const nextIndex = generatedImages.length;
+        if (nextIndex >= 3) return; // double check
+
+        const response = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            summary,
+            styles,
+            variationIndex: nextIndex,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          addGeneratedImage({
+            url: data.imageUrl,
+            prompt: data.imagePrompt,
+          });
+        }
+      } catch (error) {
+        console.error('추가 이미지 생성 실패:', error);
+      } finally {
+        isGeneratingRef.current = false;
+      }
+    };
+
+    generateMoreImages();
+    // dependency에 generatedImages.length를 넣어 하나 생성될 때마다 다시 트리거되게 함
+  }, [summary, styles, generatedImages.length, addGeneratedImage]);
 
   // 비율에 따른 에디터 컨테이너 크기 계산
   const getEditorContainerSize = useCallback(() => {
@@ -184,7 +252,7 @@ export default function EditorPage() {
   const [colorPalette, setColorPalette] = useState<number[][]>([]);
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
-  const [isHydrated, setIsHydrated] = useState(false);
+  // const [isHydrated, setIsHydrated] = useState(false);
 
   // 텍스트 편집 모달 상태
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
@@ -241,7 +309,7 @@ export default function EditorPage() {
 
   useEffect(() => {
     // hydration이 완료된 후에만 상태 확인
-    if (!isHydrated) return;
+    if (!hasHydrated) return;
 
     // 상태 확인 및 적절한 페이지로 리다이렉트
     if (!summary) {
@@ -272,11 +340,11 @@ export default function EditorPage() {
     if (successTexts && currentPrinciple && textElements.length === 0) {
       createRecommendedText();
     }
-  }, [summary, styles, imageUrl, successTexts, router, isHydrated]);
+  }, [summary, styles, imageUrl, successTexts, router, hasHydrated]);
 
   // 홍보 문구 스타일 변경 시 추천 텍스트 재생성
   useEffect(() => {
-    if (!isHydrated || !successTexts || !currentPrinciple) return;
+    if (!hasHydrated || !successTexts || !currentPrinciple) return;
 
     // 같은 원칙의 추천 텍스트가 없으면 생성
     const hasRecommendedForCurrent = textElements.some(
@@ -289,14 +357,14 @@ export default function EditorPage() {
       createRecommendedText();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, isHydrated, successTexts, currentPrinciple?.key]);
+  }, [currentIndex, hasHydrated, successTexts, currentPrinciple?.key]);
 
   // summary가 변경될 때 successTexts 초기화
   const [lastSummaryUrl, setLastSummaryUrl] = useState<string | null>(null);
   const [lastConceptId, setLastConceptId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isHydrated && summary) {
+    if (hasHydrated && summary) {
       const currentUrl = summary.url;
 
       // URL이 변경되었을 때 successTexts 초기화
@@ -309,13 +377,13 @@ export default function EditorPage() {
 
       setLastSummaryUrl(currentUrl);
     }
-  }, [summary, isHydrated, lastSummaryUrl, setSuccessTexts, router]);
+  }, [summary, hasHydrated, lastSummaryUrl, setSuccessTexts, router]);
 
   // 컨셉 변경 감지 로직 제거 - API가 캐시 키로 처리하므로 불필요
 
   useEffect(() => {
     // Zustand persist가 hydration을 완료할 때까지 기다림
-    setIsHydrated(true);
+    // setIsHydrated(true);
   }, []);
 
   // DOM을 사용한 정확한 텍스트 너비 측정
@@ -989,7 +1057,7 @@ export default function EditorPage() {
   };
 
   // hydration이 완료되기 전에는 로딩 표시
-  if (!isHydrated) {
+  if (!hasHydrated) {
     return (
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -1561,6 +1629,52 @@ export default function EditorPage() {
                         );
                       })}
                     </div>
+                  </div>
+                </div>
+
+                {/* 하단 썸네일 리스트 (추가) */}
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    다른 스타일 보기
+                  </h3>
+                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                    {/* 현재 생성된 이미지들 */}
+                    {generatedImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setImageUrl(img.url);
+                          setImagePrompt(img.prompt);
+                        }}
+                        className={`relative w-24 h-32 rounded-lg overflow-hidden border-2 transition-all shrink-0 group ${
+                          imageUrl === img.url
+                            ? 'border-blue-500 ring-2 ring-blue-200'
+                            : 'border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        <img
+                          src={img.url}
+                          alt={`Variation ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {imageUrl === img.url && (
+                          <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                            <div className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                              선택됨
+                            </div>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                      </button>
+                    ))}
+
+                    {/* 로딩 스켈레톤 (3개가 안 찼으면 보여줌) */}
+                    {generatedImages.length < 3 && (
+                      <div className="w-24 h-32 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 shrink-0 animate-pulse">
+                        <div className="text-xl mb-1">✨</div>
+                        <span className="text-xs">생성 중...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
