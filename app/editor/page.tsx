@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFunnelStore, SuccessTexts } from '@/lib/store';
-import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
+import { STEP_NAMES, TOTAL_STEPS, MAX_IMAGES } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
@@ -63,21 +63,25 @@ export default function EditorPage() {
   const requestedIndicesRef = useRef<Set<number>>(new Set([0])); // 0번은 이미 생성됨
 
   useEffect(() => {
-    if (!summary || !styles) return;
+    // 1. Hydration이 안 됐거나 필수 정보가 없으면 중단
+    if (!hasHydrated || !summary || !styles) return;
 
-    // 유저가 직접 업로드한 경우 추가 이미지 생성하지 않음
+    // 2. 유저가 직접 업로드한 경우 중단
     if (imagePrompt === '[USER_UPLOADED]') return;
 
-    // 필요한 총 이미지 개수
-    const targetCount = 3;
+    // 3. 이미 최대 개수만큼 있으면 중단
+    if (generatedImages.length >= MAX_IMAGES) return;
+
+    // 4. 현재 존재하는 이미지들은 이미 요청된 것으로 간주하고 Set 업데이트 (새로고침 시 복구용)
+    // 인덱스 0부터 현재 개수만큼은 이미 확보된 상태
+    for (let i = 0; i < generatedImages.length; i++) {
+      requestedIndicesRef.current.add(i);
+    }
 
     // 생성해야 할 인덱스들을 파악하고 병렬 요청
     const generateImagesParallel = () => {
-      // 1부터 2까지 (총 3개)
-      for (let i = 1; i < targetCount; i++) {
-        // 이미 생성되었거나(generatedImages에 있거나) 요청 중이면 스킵
-        // 주의: generatedImages는 비동기 업데이트라 즉시 반영 안 될 수 있으므로
-        // requestedIndicesRef를 메인으로 신뢰
+      for (let i = 1; i < MAX_IMAGES; i++) {
+        // 이미 생성되었거나 요청 중이면 스킵
         if (requestedIndicesRef.current.has(i)) continue;
 
         // 요청 시작 표시
@@ -93,7 +97,7 @@ export default function EditorPage() {
                 summary,
                 styles,
                 variationIndex: index,
-                randomSeed, // 시드 전달
+                randomSeed,
               }),
             });
 
@@ -120,9 +124,10 @@ export default function EditorPage() {
 
     generateImagesParallel();
   }, [
+    hasHydrated, // Hydration 완료 감지
     summary,
     styles,
-    generatedImages.length, // 길이가 변하면 다시 체크 (이미 요청한 건 requestedIndicesRef가 막음)
+    generatedImages.length,
     addGeneratedImage,
     imagePrompt,
     randomSeed,
@@ -1701,7 +1706,7 @@ export default function EditorPage() {
                       ))}
 
                       {/* 로딩 스켈레톤 (3개가 안 찼으면 보여줌) */}
-                      {generatedImages.length < 3 && (
+                      {generatedImages.length < MAX_IMAGES && (
                         <div className="w-24 h-32 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 shrink-0 animate-pulse">
                           <div className="text-xl mb-1">✨</div>
                           <span className="text-xs">생성 중...</span>

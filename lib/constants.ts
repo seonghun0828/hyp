@@ -18,3 +18,8 @@ export const STEP_NAMES = [
  * 전체 단계 수
  */
 export const TOTAL_STEPS = STEP_NAMES.length;
+
+/**
+ * 생성할 최대 이미지 개수
+ */
+export const MAX_IMAGES = 3;
