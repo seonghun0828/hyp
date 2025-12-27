@@ -66,6 +66,9 @@ export default function EditorPage() {
   useEffect(() => {
     if (!summary || !styles) return;
 
+    // 유저가 직접 업로드한 경우 추가 이미지 생성하지 않음
+    if (imagePrompt === '[USER_UPLOADED]') return;
+
     // 이미 3개 이상이면 생성 중단
     if (generatedImages.length >= 3) return;
 
@@ -115,7 +118,7 @@ export default function EditorPage() {
 
     generateMoreImages();
     // dependency에 generatedImages.length를 넣어 하나 생성될 때마다 다시 트리거되게 함
-  }, [summary, styles, generatedImages.length, addGeneratedImage]);
+  }, [summary, styles, generatedImages.length, addGeneratedImage, imagePrompt]);
 
   // 비율에 따른 에디터 컨테이너 크기 계산
   const getEditorContainerSize = useCallback(() => {
@@ -1652,51 +1655,53 @@ export default function EditorPage() {
                   </div>
                 </div>
 
-                {/* 하단 썸네일 리스트 (추가) */}
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    다른 스타일 보기
-                  </h3>
-                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                    {/* 현재 생성된 이미지들 */}
-                    {generatedImages.map((img, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setImageUrl(img.url);
-                          setImagePrompt(img.prompt);
-                        }}
-                        className={`relative w-24 h-32 rounded-lg overflow-hidden border-2 transition-all shrink-0 group ${
-                          imageUrl === img.url
-                            ? 'border-blue-500 ring-2 ring-blue-200'
-                            : 'border-gray-200 hover:border-gray-400'
-                        }`}
-                      >
-                        <img
-                          src={img.url}
-                          alt={`Variation ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        {imageUrl === img.url && (
-                          <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                            <div className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                              선택됨
+                {/* 하단 썸네일 리스트 (추가) - AI 생성 시에만 노출 */}
+                {imagePrompt !== '[USER_UPLOADED]' && (
+                  <div className="mt-6">
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">
+                      다른 스타일 보기
+                    </h3>
+                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                      {/* 현재 생성된 이미지들 */}
+                      {generatedImages.map((img, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setImageUrl(img.url);
+                            setImagePrompt(img.prompt);
+                          }}
+                          className={`relative w-24 h-32 rounded-lg overflow-hidden border-2 transition-all shrink-0 group ${
+                            imageUrl === img.url
+                              ? 'border-blue-500 ring-2 ring-blue-200'
+                              : 'border-gray-200 hover:border-gray-400'
+                          }`}
+                        >
+                          <img
+                            src={img.url}
+                            alt={`Variation ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          {imageUrl === img.url && (
+                            <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                              <div className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                                선택됨
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      </button>
-                    ))}
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        </button>
+                      ))}
 
-                    {/* 로딩 스켈레톤 (3개가 안 찼으면 보여줌) */}
-                    {generatedImages.length < 3 && (
-                      <div className="w-24 h-32 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 shrink-0 animate-pulse">
-                        <div className="text-xl mb-1">✨</div>
-                        <span className="text-xs">생성 중...</span>
-                      </div>
-                    )}
+                      {/* 로딩 스켈레톤 (3개가 안 찼으면 보여줌) */}
+                      {generatedImages.length < 3 && (
+                        <div className="w-24 h-32 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 shrink-0 animate-pulse">
+                          <div className="text-xl mb-1">✨</div>
+                          <span className="text-xs">생성 중...</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="mt-6 flex justify-center gap-4">
                   <Button variant="outline" onClick={() => router.back()}>
