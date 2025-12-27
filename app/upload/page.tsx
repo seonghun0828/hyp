@@ -18,6 +18,8 @@ export default function UploadPage() {
     setSuccessTexts,
     successTexts,
     hasHydrated,
+    resetGeneratedImages,
+    addGeneratedImage,
   } = useFunnelStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -68,9 +70,17 @@ export default function UploadPage() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
+
+        // 새로운 이미지 업로드 시 기존 생성 목록 초기화
+        resetGeneratedImages();
+
         setImageUrl(result);
         // 직접 업로드임을 명시적으로 표시
-        setImagePrompt('[USER_UPLOADED]');
+        const prompt = '[USER_UPLOADED]';
+        setImagePrompt(prompt);
+
+        // 첫 번째 이미지로 등록
+        addGeneratedImage({ url: result, prompt });
 
         // 이벤트 추적
         trackEvent('image_ready', {
@@ -115,6 +125,7 @@ export default function UploadPage() {
         body: JSON.stringify({
           summary: summary,
           styles: styles,
+          variationIndex: 0, // 첫 번째 이미지 생성
         }),
       });
 
@@ -127,11 +138,17 @@ export default function UploadPage() {
       }
 
       const data = await response.json();
+
+      // 새로운 AI 생성 시작 시 기존 목록 초기화
+      resetGeneratedImages();
+
       setImageUrl(data.imageUrl);
 
       // 생성된 프롬프트를 store에 저장
       if (data.imagePrompt) {
         setImagePrompt(data.imagePrompt);
+        // 첫 번째 이미지로 등록
+        addGeneratedImage({ url: data.imageUrl, prompt: data.imagePrompt });
       }
 
       // 이벤트 추적

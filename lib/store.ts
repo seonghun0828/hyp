@@ -98,6 +98,7 @@ interface FunnelState {
   setImagePrompt: (imagePrompt: string | undefined) => void;
   addGeneratedImage: (image: { url: string; prompt: string }) => void;
   setGeneratedImages: (images: Array<{ url: string; prompt: string }>) => void;
+  resetGeneratedImages: () => void; // 추가
   setSuccessTexts: (texts: SuccessTexts | undefined) => void;
   setFinalImageUrl: (imageUrl: string) => void;
   reset: () => void;
@@ -158,10 +159,18 @@ export const useFunnelStore = create<FunnelState>()(
       setImageUrl: (imageUrl) => set({ imageUrl }),
       setImagePrompt: (imagePrompt) => set({ imagePrompt }),
       addGeneratedImage: (image) =>
-        set((state) => ({
-          generatedImages: [...state.generatedImages, image],
-        })),
+        set((state) => {
+          // 중복 URL 방지
+          const exists = state.generatedImages.some(
+            (img) => img.url === image.url
+          );
+          if (exists) return state;
+          return {
+            generatedImages: [...state.generatedImages, image],
+          };
+        }),
       setGeneratedImages: (images) => set({ generatedImages: images }),
+      resetGeneratedImages: () => set({ generatedImages: [] }), // 추가
       setSuccessTexts: (successTexts) => set({ successTexts }),
       setFinalImageUrl: (finalImageUrl) => set({ finalImageUrl }),
       reset: () =>

@@ -42,6 +42,7 @@ export default function EditorPage() {
     setImageUrl,
     setImagePrompt,
     hasHydrated,
+    resetGeneratedImages, // 추가
   } = useFunnelStore();
 
   // 1. 페이지 진입 시 첫 번째 이미지를 리스트에 추가 (중복 방지)
@@ -51,6 +52,8 @@ export default function EditorPage() {
       const exists = generatedImages.some((img) => img.url === imageUrl);
       if (!exists) {
         addGeneratedImage({ url: imageUrl, prompt: imagePrompt });
+        // 0번 인덱스는 이미 확보된 것으로 처리
+        requestedIndicesRef.current.add(0);
       }
     }
   }, [imageUrl, imagePrompt, generatedImages, addGeneratedImage]);
@@ -58,6 +61,7 @@ export default function EditorPage() {
   // 2. 추가 이미지 백그라운드 생성 (총 3개가 될 때까지)
   // 생성 중 상태를 관리하기 위해 ref 사용 (재렌더링 방지 및 비동기 경쟁 상태 방지)
   const isGeneratingRef = useRef(false);
+  const requestedIndicesRef = useRef<Set<number>>(new Set([0])); // 0번은 이미 생성됨
 
   useEffect(() => {
     if (!summary || !styles) return;
@@ -69,16 +73,17 @@ export default function EditorPage() {
     if (isGeneratingRef.current) return;
 
     const generateMoreImages = async () => {
-      isGeneratingRef.current = true;
+      // 현재 리스트 길이를 기준으로 다음 인덱스 결정
+      const nextIndex = generatedImages.length;
 
-      // 현재 리스트 길이를 기준으로 다음 인덱스 결정 (0은 이미 있음)
-      // 주의: generatedImages는 비동기 업데이트될 수 있으므로,
-      // 함수 시작 시점의 길이를 기준으로 하지 않고, 순차적으로 하나씩 생성.
+      // 이미 요청한 인덱스인지 확인 (중복 요청 방지)
+      if (requestedIndicesRef.current.has(nextIndex)) return;
+      if (nextIndex >= 3) return;
+
+      isGeneratingRef.current = true;
+      requestedIndicesRef.current.add(nextIndex);
 
       try {
-        const nextIndex = generatedImages.length;
-        if (nextIndex >= 3) return; // double check
-
         const response = await fetch('/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -91,13 +96,18 @@ export default function EditorPage() {
 
         if (response.ok) {
           const data = await response.json();
+          // 중복 체크 후 추가
           addGeneratedImage({
             url: data.imageUrl,
             prompt: data.imagePrompt,
           });
+        } else {
+          // 실패 시 요청 기록 삭제하여 재시도 가능하게 함
+          requestedIndicesRef.current.delete(nextIndex);
         }
       } catch (error) {
         console.error('추가 이미지 생성 실패:', error);
+        requestedIndicesRef.current.delete(nextIndex);
       } finally {
         isGeneratingRef.current = false;
       }
@@ -371,13 +381,23 @@ export default function EditorPage() {
       if (lastSummaryUrl && lastSummaryUrl !== currentUrl) {
         // successTexts 초기화
         setSuccessTexts(undefined);
+        // 생성된 이미지 목록도 초기화
+        resetGeneratedImages();
+
         // 이미지 업로드 페이지로 리다이렉트하여 새로 생성
         router.push('/upload');
       }
 
       setLastSummaryUrl(currentUrl);
     }
-  }, [summary, hasHydrated, lastSummaryUrl, setSuccessTexts, router]);
+  }, [
+    summary,
+    hasHydrated,
+    lastSummaryUrl,
+    setSuccessTexts,
+    router,
+    resetGeneratedImages,
+  ]);
 
   // 컨셉 변경 감지 로직 제거 - API가 캐시 키로 처리하므로 불필요
 
