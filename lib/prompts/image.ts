@@ -5,11 +5,22 @@ import { ProductCategory } from '../categories/types';
 /**
  * 배열에서 옵션을 선택하는 헬퍼 함수
  * index가 제공되면 해당 인덱스(modulo)의 아이템을 반환 (순차 선택)
- * index가 없으면 랜덤 선택
+ * randomSeed와 stride(7)를 적용하여 다양성 확보
  */
-const selectOption = (options: string[], index?: number) => {
+const selectOption = (
+  options: string[],
+  index?: number,
+  randomSeed?: number
+) => {
   if (typeof index === 'number') {
-    return options[index % options.length];
+    // seed가 없으면 0
+    const start = randomSeed || 0;
+    // stride는 적당히 큰 소수 (예: 7) 사용
+    // 배열 길이보다 크거나 서로소이면 좋음. 7 정도면 대부분의 짧은 배열에서 잘 섞임
+    const stride = 7;
+
+    const finalIndex = (start + index * stride) % options.length;
+    return options[finalIndex];
   }
   return options[Math.floor(Math.random() * options.length)];
 };
@@ -109,7 +120,8 @@ const getDynamicModelPrompt = (
 const getDynamicVisualPrompt = (
   visualId: string,
   categoryIndustry?: string,
-  variationIndex?: number
+  variationIndex?: number,
+  randomSeed?: number
 ): string => {
   // 기본값 (styles.ts에 정의된 값 사용을 위한 fallback)
   const basePrompts: Record<string, string> = {
@@ -141,7 +153,7 @@ const getDynamicVisualPrompt = (
         'French Bandes Dessinées (Moebius style). Intricate ink lines, flat pastel colors, surreal and sci-fi atmosphere, detailed environments.',
         'Modern Flat Cartoon. Vector-like clean shapes, bold solid colors, minimalist character design, corporate illustration style.',
       ];
-      return selectOption(cartoonVariations, variationIndex);
+      return selectOption(cartoonVariations, variationIndex, randomSeed);
 
     case 'illustration':
       // IT/SaaS 산업군은 테크니컬한 일러스트 선호
@@ -154,7 +166,7 @@ const getDynamicVisualPrompt = (
           '3D Isometric Illustration. Clean geometric shapes, soft gradient lighting, floating elements, modern tech aesthetic.', // Isometric
           'Minimalist Abstract Tech Art. Fluid shapes, glowing data lines, deep blue and purple palette, futuristic feel.', // Abstract Tech
         ];
-        return selectOption(techVariations, variationIndex);
+        return selectOption(techVariations, variationIndex, randomSeed);
       }
       // 그 외 일반적인 경우
       const illustrationVariations = [
@@ -163,7 +175,7 @@ const getDynamicVisualPrompt = (
         'Modern Vector Art. Clean curves, flat design, vibrant gradients, stylized composition.', // Vector
         'Hand-drawn Pencil Sketch with Color. Rough pencil textures, colored pencil shading, organic and warm feel.', // Colored Pencil
       ];
-      return selectOption(illustrationVariations, variationIndex);
+      return selectOption(illustrationVariations, variationIndex, randomSeed);
 
     case 'photo-realistic':
       if (
@@ -194,7 +206,7 @@ const getDynamicVisualPrompt = (
         'Simple Hand-drawn Doodle. Loose black ink sketch on white paper, playful and minimal, no fill colors.',
         'Clean Vector Line Art. Uniform black stroke weight, white background, iconographic style, no gradients or colors.',
       ];
-      return selectOption(lineVariations, variationIndex);
+      return selectOption(lineVariations, variationIndex, randomSeed);
 
     default:
       return defaultPrompt;
@@ -207,7 +219,8 @@ const getDynamicVisualPrompt = (
 const getDynamicTonePrompt = (
   toneId: string,
   visualId: string,
-  variationIndex?: number
+  variationIndex?: number,
+  randomSeed?: number
 ): string => {
   // 기본값 fallback
   const basePrompts: Record<string, string> = {
@@ -242,7 +255,7 @@ const getDynamicTonePrompt = (
         'Cozy Indoor Lighting. Soft diffused light from a window or lamp, warm color temperature (3000K), comfortable and safe feeling. Color palette: Earth tones, Cream, Warm Brown.', // Hygge
         'Soft Morning Light. Fresh and gentle morning sunlight, low contrast, peaceful and calm mood. Color palette: Pastel Yellow, Soft White, Light Green.', // Morning
       ];
-      return selectOption(warmVariations, variationIndex);
+      return selectOption(warmVariations, variationIndex, randomSeed);
 
     case 'trust-serious':
       if (isSimpleStyle)
@@ -252,7 +265,7 @@ const getDynamicTonePrompt = (
         'Modern Minimalist Lighting. Soft shadows, clean lines, uncluttered composition, calm and reliable atmosphere. Color palette: Cool Grey, Muted Blue, Slate.', // Minimal
         'Dramatic Professional. Slightly higher contrast, focused spotlight on the subject, deep shadows for weight and seriousness. Color palette: Deep Blue, Charcoal, Silver.', // Dramatic
       ];
-      return selectOption(trustVariations, variationIndex);
+      return selectOption(trustVariations, variationIndex, randomSeed);
 
     case 'humor-light':
       if (isSimpleStyle)
@@ -262,7 +275,7 @@ const getDynamicTonePrompt = (
         'Soft Pastel Lighting. Very soft and diffused light, low contrast, dreamy and cute atmosphere. Color palette: Mint, Baby Pink, Lemon Yellow.', // Pastel
         'Quirky High-Contrast. Hard lighting with distinct colorful shadows, energetic and fun mood. Color palette: Hot Pink, Electric Blue, Lime Green.', // Funky
       ];
-      return selectOption(humorVariations, variationIndex);
+      return selectOption(humorVariations, variationIndex, randomSeed);
 
     case 'premium-sophisticated':
       if (isSimpleStyle)
@@ -272,7 +285,7 @@ const getDynamicTonePrompt = (
         'High-End Editorial. Soft but directional lighting, refined textures, elegant composition, expensive feel. Color palette: Champagne, Silk White, Bronze.', // Editorial
         'Modern Chic. Clean, bright, and airy, but with sharp contrast and high-quality materials. Color palette: Marble White, Matte Black, Metallic accents.', // Chic
       ];
-      return selectOption(premiumVariations, variationIndex);
+      return selectOption(premiumVariations, variationIndex, randomSeed);
 
     case 'energetic-vibrant':
       if (isSimpleStyle)
@@ -282,7 +295,7 @@ const getDynamicTonePrompt = (
         'Active Sunlight. Bright, hard sunlight (high noon), strong cast shadows, saturated colors, dynamic and powerful. Color palette: Orange, Vivid Blue, White.', // Sports
         'Dynamic Studio Flash. High contrast colorful gels, motion blur suggestions, exciting and bold. Color palette: Electric Blue, Hot Pink, Vivid Purple.', // Studio Color
       ];
-      return selectOption(energeticVariations, variationIndex);
+      return selectOption(energeticVariations, variationIndex, randomSeed);
 
     default:
       return defaultPrompt;
@@ -295,7 +308,8 @@ const getDynamicTonePrompt = (
 const getDynamicMessagePrompt = (
   messageId: string,
   modelId: string,
-  variationIndex?: number
+  variationIndex?: number,
+  randomSeed?: number
 ): string => {
   // 기본값 fallback
   const basePrompts: Record<string, string> = {
@@ -319,7 +333,7 @@ const getDynamicMessagePrompt = (
         'Visual Metaphor of Order. Chaos organizing into structure. One side has scattered elements, the other side has them perfectly aligned. Symbolizing organization and clarity.', // Chaos to Order
         'Side-by-Side Product Comparison. Two distinct options placed next to each other. One is clearly superior with better lighting or visual appeal. "A vs B" layout.', // A vs B
       ];
-      return selectOption(comparisonVariations, variationIndex);
+      return selectOption(comparisonVariations, variationIndex, randomSeed);
 
     case 'problem-solving':
       const problemVariations = [
@@ -332,7 +346,7 @@ const getDynamicMessagePrompt = (
           'Expression of Pure Satisfaction. Close-up on a person looking genuinely happy and relieved because their problem is gone. Relaxed posture, smiling face. The product is the cause of this joy.'
         );
       }
-      return selectOption(problemVariations, variationIndex);
+      return selectOption(problemVariations, variationIndex, randomSeed);
 
     case 'benefit':
       const benefitVariations = [
@@ -349,7 +363,7 @@ const getDynamicMessagePrompt = (
           'Perfect Environment. The product is placed in an ideal, stress-free environment (e.g., a perfect desk setup, a sunny window). Symbolizing the result of using the product.'
         );
       }
-      return selectOption(benefitVariations, variationIndex);
+      return selectOption(benefitVariations, variationIndex, randomSeed);
 
     case 'story':
       const storyVariations = [
@@ -357,7 +371,7 @@ const getDynamicMessagePrompt = (
         'Journey Path Composition. A winding road or path leading from a dark/uncertain foreground to a bright/successful background destination. The product is the vehicle or guide.', // Journey
         'Slice of Life Drama. A single frame that implies a larger story. A "decisive moment" full of context and narrative details. Like a movie still.', // Cinematic
       ];
-      return selectOption(storyVariations, variationIndex);
+      return selectOption(storyVariations, variationIndex, randomSeed);
 
     case 'proof':
       const proofVariations = [
@@ -375,7 +389,7 @@ const getDynamicMessagePrompt = (
           'Digital Popularity. Symbols of likes, hearts, and high view counts floating around the product interface. Implies digital popularity.'
         );
       }
-      return selectOption(proofVariations, variationIndex);
+      return selectOption(proofVariations, variationIndex, randomSeed);
 
     default:
       return defaultPrompt;
@@ -394,7 +408,8 @@ export const getImagePrompt = (
     usage_scenario?: string;
   },
   category?: ProductCategory,
-  variationIndex?: number
+  variationIndex?: number,
+  randomSeed?: number
 ): string => {
   // 동적 Model Prompt 생성
   const modelPrompt = getDynamicModelPrompt(
@@ -408,21 +423,24 @@ export const getImagePrompt = (
   const visualPrompt = getDynamicVisualPrompt(
     styles.visualStyle,
     category?.industry,
-    variationIndex
+    variationIndex,
+    randomSeed
   );
 
   // 동적 Tone Prompt 생성 (Visual Style 고려)
   const tonePrompt = getDynamicTonePrompt(
     styles.toneMood,
     styles.visualStyle,
-    variationIndex
+    variationIndex,
+    randomSeed
   );
 
   // 동적 Message Prompt 생성 (Model 유무 고려)
   const messagePrompt = getDynamicMessagePrompt(
     styles.messageType,
     styles.model,
-    variationIndex
+    variationIndex,
+    randomSeed
   );
 
   return `[Core Concept Summary]

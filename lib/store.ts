@@ -77,6 +77,7 @@ interface FunnelState {
   imageUrl?: string;
   imagePrompt?: string; // 이미지 생성에 사용된 프롬프트
   generatedImages: Array<{ url: string; prompt: string }>; // 생성된 이미지 리스트
+  randomSeed?: number; // 다양성을 위한 랜덤 시드
 
   // Step 8: SUCCESs 원칙 홍보문구
   successTexts?: SuccessTexts;
@@ -98,7 +99,8 @@ interface FunnelState {
   setImagePrompt: (imagePrompt: string | undefined) => void;
   addGeneratedImage: (image: { url: string; prompt: string }) => void;
   setGeneratedImages: (images: Array<{ url: string; prompt: string }>) => void;
-  resetGeneratedImages: () => void; // 추가
+  resetGeneratedImages: () => void;
+  setRandomSeed: (seed: number) => void;
   setSuccessTexts: (texts: SuccessTexts | undefined) => void;
   setFinalImageUrl: (imageUrl: string) => void;
   reset: () => void;
@@ -114,6 +116,7 @@ export const useFunnelStore = create<FunnelState>()(
       imageUrl: undefined,
       imagePrompt: undefined,
       generatedImages: [],
+      randomSeed: undefined,
       successTexts: undefined,
       finalImageUrl: undefined,
 
@@ -170,7 +173,8 @@ export const useFunnelStore = create<FunnelState>()(
           };
         }),
       setGeneratedImages: (images) => set({ generatedImages: images }),
-      resetGeneratedImages: () => set({ generatedImages: [] }), // 추가
+      resetGeneratedImages: () => set({ generatedImages: [] }),
+      setRandomSeed: (seed) => set({ randomSeed: seed }),
       setSuccessTexts: (successTexts) => set({ successTexts }),
       setFinalImageUrl: (finalImageUrl) => set({ finalImageUrl }),
       reset: () =>
@@ -181,6 +185,7 @@ export const useFunnelStore = create<FunnelState>()(
           imageUrl: undefined,
           imagePrompt: undefined,
           generatedImages: [],
+          randomSeed: undefined,
           successTexts: undefined,
           finalImageUrl: undefined,
         }),
@@ -200,6 +205,7 @@ export const useFunnelStore = create<FunnelState>()(
         imageUrl: state.imageUrl,
         imagePrompt: state.imagePrompt,
         generatedImages: state.generatedImages,
+        randomSeed: state.randomSeed,
         successTexts: state.successTexts,
         // hasHydrated는 저장하지 않음 (항상 false로 시작)
       }),

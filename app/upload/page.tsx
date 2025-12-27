@@ -20,6 +20,7 @@ export default function UploadPage() {
     hasHydrated,
     resetGeneratedImages,
     addGeneratedImage,
+    setRandomSeed,
   } = useFunnelStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -73,6 +74,8 @@ export default function UploadPage() {
 
         // 새로운 이미지 업로드 시 기존 생성 목록 초기화
         resetGeneratedImages();
+        // 랜덤 시드 초기화 (0~99)
+        setRandomSeed(Math.floor(Math.random() * 100));
 
         setImageUrl(result);
         // 직접 업로드임을 명시적으로 표시
@@ -116,6 +119,9 @@ export default function UploadPage() {
     }
 
     try {
+      // 새로운 시드 생성
+      const seed = Math.floor(Math.random() * 100);
+
       // 이미지 생성 (API 내부에서 프롬프트 생성)
       const response = await fetch('/api/generate-image', {
         method: 'POST',
@@ -126,6 +132,7 @@ export default function UploadPage() {
           summary: summary,
           styles: styles,
           variationIndex: 0, // 첫 번째 이미지 생성
+          randomSeed: seed,
         }),
       });
 
@@ -141,6 +148,8 @@ export default function UploadPage() {
 
       // 새로운 AI 생성 시작 시 기존 목록 초기화
       resetGeneratedImages();
+      // 시드 저장
+      setRandomSeed(seed);
 
       setImageUrl(data.imageUrl);
 

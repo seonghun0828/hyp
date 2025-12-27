@@ -42,7 +42,8 @@ export default function EditorPage() {
     setImageUrl,
     setImagePrompt,
     hasHydrated,
-    resetGeneratedImages, // 추가
+    resetGeneratedImages,
+    randomSeed, // 추가
   } = useFunnelStore();
 
   // 1. 페이지 진입 시 첫 번째 이미지를 리스트에 추가 (중복 방지)
@@ -59,8 +60,6 @@ export default function EditorPage() {
   }, [imageUrl, imagePrompt, generatedImages, addGeneratedImage]);
 
   // 2. 추가 이미지 백그라운드 생성 (총 3개가 될 때까지)
-  // 생성 중 상태를 관리하기 위해 ref 사용 (재렌더링 방지 및 비동기 경쟁 상태 방지)
-  const isGeneratingRef = useRef(false);
   const requestedIndicesRef = useRef<Set<number>>(new Set([0])); // 0번은 이미 생성됨
 
   useEffect(() => {
@@ -69,56 +68,65 @@ export default function EditorPage() {
     // 유저가 직접 업로드한 경우 추가 이미지 생성하지 않음
     if (imagePrompt === '[USER_UPLOADED]') return;
 
-    // 이미 3개 이상이면 생성 중단
-    if (generatedImages.length >= 3) return;
+    // 필요한 총 이미지 개수
+    const targetCount = 3;
 
-    // 이미 생성 중이면 중단
-    if (isGeneratingRef.current) return;
+    // 생성해야 할 인덱스들을 파악하고 병렬 요청
+    const generateImagesParallel = () => {
+      // 1부터 2까지 (총 3개)
+      for (let i = 1; i < targetCount; i++) {
+        // 이미 생성되었거나(generatedImages에 있거나) 요청 중이면 스킵
+        // 주의: generatedImages는 비동기 업데이트라 즉시 반영 안 될 수 있으므로
+        // requestedIndicesRef를 메인으로 신뢰
+        if (requestedIndicesRef.current.has(i)) continue;
 
-    const generateMoreImages = async () => {
-      // 현재 리스트 길이를 기준으로 다음 인덱스 결정
-      const nextIndex = generatedImages.length;
+        // 요청 시작 표시
+        requestedIndicesRef.current.add(i);
 
-      // 이미 요청한 인덱스인지 확인 (중복 요청 방지)
-      if (requestedIndicesRef.current.has(nextIndex)) return;
-      if (nextIndex >= 3) return;
+        // 개별 요청 함수 (비동기 실행)
+        const fetchImage = async (index: number) => {
+          try {
+            const response = await fetch('/api/generate-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                summary,
+                styles,
+                variationIndex: index,
+                randomSeed, // 시드 전달
+              }),
+            });
 
-      isGeneratingRef.current = true;
-      requestedIndicesRef.current.add(nextIndex);
+            if (response.ok) {
+              const data = await response.json();
+              addGeneratedImage({
+                url: data.imageUrl,
+                prompt: data.imagePrompt,
+              });
+            } else {
+              // 실패 시 재시도 가능하게 제거
+              requestedIndicesRef.current.delete(index);
+            }
+          } catch (error) {
+            console.error(`이미지 ${index} 생성 실패:`, error);
+            requestedIndicesRef.current.delete(index);
+          }
+        };
 
-      try {
-        const response = await fetch('/api/generate-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            summary,
-            styles,
-            variationIndex: nextIndex,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          // 중복 체크 후 추가
-          addGeneratedImage({
-            url: data.imageUrl,
-            prompt: data.imagePrompt,
-          });
-        } else {
-          // 실패 시 요청 기록 삭제하여 재시도 가능하게 함
-          requestedIndicesRef.current.delete(nextIndex);
-        }
-      } catch (error) {
-        console.error('추가 이미지 생성 실패:', error);
-        requestedIndicesRef.current.delete(nextIndex);
-      } finally {
-        isGeneratingRef.current = false;
+        // 비동기 호출 (await 안 함)
+        fetchImage(i);
       }
     };
 
-    generateMoreImages();
-    // dependency에 generatedImages.length를 넣어 하나 생성될 때마다 다시 트리거되게 함
-  }, [summary, styles, generatedImages.length, addGeneratedImage, imagePrompt]);
+    generateImagesParallel();
+  }, [
+    summary,
+    styles,
+    generatedImages.length, // 길이가 변하면 다시 체크 (이미 요청한 건 requestedIndicesRef가 막음)
+    addGeneratedImage,
+    imagePrompt,
+    randomSeed,
+  ]);
 
   // 비율에 따른 에디터 컨테이너 크기 계산
   const getEditorContainerSize = useCallback(() => {
