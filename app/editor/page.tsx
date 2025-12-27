@@ -62,6 +62,9 @@ export default function EditorPage() {
   // 2. 추가 이미지 백그라운드 생성 (총 3개가 될 때까지)
   const requestedIndicesRef = useRef<Set<number>>(new Set([0])); // 0번은 이미 생성됨
 
+  // 부모 컨테이너(흰색 박스)의 실제 크기를 측정하기 위한 Ref
+  const containerParentRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     // 1. Hydration이 안 됐거나 필수 정보가 없으면 중단
     if (!hasHydrated || !summary || !styles) return;
@@ -143,9 +146,24 @@ export default function EditorPage() {
     const viewportHeight =
       typeof window !== 'undefined' ? window.innerHeight : 800;
 
-    // 컨테이너가 들어갈 수 있는 최대 크기 (패딩 고려)
-    const maxWidth = Math.min(1200, viewportWidth - 100); // 좌우 패딩 고려
-    const maxHeight = Math.min(viewportHeight * 0.7, viewportHeight - 300); // 상하 여백 고려 (60% -> 70%로 증가)
+    // 컨테이너가 들어갈 수 있는 최대 크기 계산
+    // 단순 계산 대신, 실제 부모 요소의 너비를 우선적으로 사용합니다.
+    let maxWidth;
+    let isExact = false;
+
+    if (containerParentRef.current) {
+      // 1. 실제 렌더링된 부모 요소의 너비를 측정 (CSS 규칙이 모두 적용된 최종 크기)
+      maxWidth = containerParentRef.current.clientWidth;
+      isExact = true;
+    } else {
+      // 2. Ref가 없을 때(초기 로딩 등)를 위한 Fallback (기존 방식보다 보수적으로 잡음)
+      maxWidth = Math.min(1200, viewportWidth - 80);
+    }
+
+    // 미세한 렌더링 오차 방지를 위해 2px 정도 여유를 둠
+    maxWidth = Math.max(0, maxWidth - 2);
+
+    const maxHeight = Math.min(viewportHeight * 0.7, viewportHeight - 300); // 상하 여백 고려
 
     let width: number;
     let height: number;
@@ -177,7 +195,7 @@ export default function EditorPage() {
       width = (height * 4) / 5;
     }
 
-    return { width, height };
+    return { width, height, isExact };
   }, [styles?.aspectRatio]);
 
   const [containerSize, setContainerSize] = useState(() => ({
@@ -185,20 +203,48 @@ export default function EditorPage() {
     height: 1000,
   }));
 
+  // 정확한 크기가 계산되어 렌더링 준비가 되었는지 여부
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // 비율 변경 및 화면 크기 변경 시 컨테이너 크기 재계산
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const updateSize = () => {
-      setContainerSize(getEditorContainerSize());
+      const { width, height, isExact } = getEditorContainerSize();
+      setContainerSize({ width, height });
+      // 정확한 크기(Ref 기반)로 계산되었다면 화면에 표시
+      if (isExact) {
+        setIsInitialized(true);
+      }
     };
 
-    // 초기 크기 설정
+    // 1. 초기 실행
     updateSize();
 
-    // 리사이즈 이벤트 리스너 추가
+    // 2. DOM 렌더링 직후 한 번 더 실행 (Ref가 확실히 연결된 후)
+    const timeoutId = setTimeout(updateSize, 0);
+
+    // 3. Window 리사이즈 이벤트
     window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+
+    // 4. 부모 요소 크기 변화 감지 (ResizeObserver)
+    // 부모 컨테이너의 크기가 실제로 잡히거나 변할 때마다 정확한 크기로 재조정
+    let resizeObserver: ResizeObserver | null = null;
+    if (containerParentRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        updateSize();
+      });
+      resizeObserver.observe(containerParentRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      clearTimeout(timeoutId);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
   }, [getEditorContainerSize]);
   // SUCCESs 원칙 관련 상태
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -1379,7 +1425,7 @@ export default function EditorPage() {
             {/* 캔버스 영역 - 홍보 문구 스타일 바로 아래 */}
             <div className="lg:col-span-3">
               <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex justify-center">
+                <div className="flex justify-center" ref={containerParentRef}>
                   <div
                     className="relative"
                     style={{ width: `${containerSize.width}px` }}
@@ -1430,6 +1476,8 @@ export default function EditorPage() {
                         height: `${containerSize.height}px`,
                         maxWidth: '100%',
                         touchAction: 'none',
+                        opacity: isInitialized ? 1 : 0,
+                        transition: 'opacity 0.2s ease-in-out',
                       }}
                       onMouseDown={(e) => {
                         // 빈 공간 클릭 시 선택 해제
