@@ -65,6 +65,9 @@ export default function EditorPage() {
   // 부모 컨테이너(흰색 박스)의 실제 크기를 측정하기 위한 Ref
   const containerParentRef = useRef<HTMLDivElement>(null);
 
+  // 텍스트 자동 생성 초기화 여부 확인용 Ref
+  const hasInitializedTextRef = useRef(false);
+
   useEffect(() => {
     // 1. Hydration이 안 됐거나 필수 정보가 없으면 중단
     if (!hasHydrated || !summary || !styles) return;
@@ -409,8 +412,14 @@ export default function EditorPage() {
     // }
 
     // 선택된 원칙의 추천 텍스트 생성 (successTexts가 있을 때만, 첫 화면에서만)
-    if (successTexts && currentPrinciple && textElements.length === 0) {
+    if (
+      successTexts &&
+      currentPrinciple &&
+      textElements.length === 0 &&
+      !hasInitializedTextRef.current
+    ) {
       createRecommendedText();
+      hasInitializedTextRef.current = true;
     }
   }, [summary, styles, imageUrl, successTexts, router, hasHydrated]);
 
