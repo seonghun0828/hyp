@@ -258,6 +258,12 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(false);
   const [isTextButtonMinimized, setIsTextButtonMinimized] = useState(false);
 
+  // 스냅 가이드라인 상태
+  const [snapGuides, setSnapGuides] = useState({
+    vertical: false, // 세로 중앙선 (가로 중앙 정렬)
+    horizontal: false, // 가로 중앙선 (세로 중앙 정렬)
+  });
+
   // 선택된 요소의 폰트 인덱스 가져오기
   const getSelectedFontIndex = () => {
     if (!selectedElement) return 0;
@@ -288,7 +294,7 @@ export default function EditorPage() {
             const fontFamily = newFont.style.fontFamily;
 
             // 텍스트의 실제 크기 측정
-            const textWidth = measureTextWidthWithDOM(
+            const { width: textWidth } = measureTextSizeWithDOM(
               element.text,
               element.fontSize,
               fontFamily
@@ -493,26 +499,30 @@ export default function EditorPage() {
     // setIsHydrated(true);
   }, []);
 
-  // DOM을 사용한 정확한 텍스트 너비 측정
-  const measureTextWidthWithDOM = (
+  // DOM을 사용한 정확한 텍스트 너비 및 높이 측정
+  const measureTextSizeWithDOM = (
     text: string,
     fontSize: number,
     fontFamily: string
-  ): number => {
+  ): { width: number; height: number } => {
     // 임시 요소 생성
-    const measureElement = document.createElement('span');
+    const measureElement = document.createElement('div');
     measureElement.style.visibility = 'hidden';
     measureElement.style.position = 'absolute';
     measureElement.style.whiteSpace = 'pre';
     measureElement.style.fontSize = `${fontSize}px`;
     measureElement.style.fontFamily = fontFamily;
+    measureElement.style.lineHeight = 'normal';
+    measureElement.style.display = 'inline-block';
+    measureElement.style.padding = '4px 8px'; // 실제 텍스트 박스 패딩 포함
     measureElement.textContent = text;
 
     document.body.appendChild(measureElement);
     const width = measureElement.offsetWidth;
+    const height = measureElement.offsetHeight;
     document.body.removeChild(measureElement);
 
-    return width;
+    return { width, height };
   };
 
   // 폰트 크기 자동 조절 (DOM 기반)
@@ -526,7 +536,7 @@ export default function EditorPage() {
     let fontSize = maxFontSize;
 
     while (fontSize >= minFontSize) {
-      const width = measureTextWidthWithDOM(text, fontSize, fontFamily);
+      const { width } = measureTextSizeWithDOM(text, fontSize, fontFamily);
       if (width <= maxWidth) {
         return fontSize;
       }
@@ -606,26 +616,17 @@ export default function EditorPage() {
     // 실제로 사용할 글자 크기 (기존 추천 텍스트의 스타일 유지)
     const actualFontSize = styleSource?.fontSize ?? optimalFontSize;
 
-    // 텍스트 너비 측정
-    const textWidth = measureTextWidthWithDOM(
-      currentText,
-      actualFontSize,
-      fontFamily
-    );
+    // 텍스트 너비 및 높이 측정
+    const { width: totalTextWidth, height: totalTextHeight } =
+      measureTextSizeWithDOM(currentText, actualFontSize, fontFamily);
 
     // 가운데 정렬 계산
-    const totalTextWidth = textWidth + textPaddingLeft + textPaddingRight;
     let centerX = (containerWidth - totalTextWidth) / 2;
 
     // 컨테이너 높이 가져오기
     const containerHeight = getContainerHeight();
 
     // 위치 계산
-    const textHeight = actualFontSize * 1.5;
-    const padding = 16;
-    const totalHeight = textHeight + 8;
-
-    // 위치는 기존 추천 텍스트의 위치를 유지 (있으면)
     let finalX = styleSource?.x ?? centerX;
     let finalY = styleSource?.y ?? 100;
 
@@ -636,8 +637,8 @@ export default function EditorPage() {
     if (finalX < 0) {
       finalX = 0;
     }
-    if (finalY + totalHeight > containerHeight) {
-      finalY = Math.max(0, containerHeight - totalHeight);
+    if (finalY + totalTextHeight > containerHeight) {
+      finalY = Math.max(0, containerHeight - totalTextHeight);
     }
     if (finalY < 0) {
       finalY = 0;
@@ -900,15 +901,12 @@ export default function EditorPage() {
             const fontFamily = currentFont.style.fontFamily;
 
             // 텍스트의 실제 크기 측정
-            const textWidth = measureTextWidthWithDOM(
-              newElement.text,
-              newElement.fontSize,
-              fontFamily
-            );
-            const textHeight = newElement.fontSize * 1.5; // 대략적인 높이
-            const padding = 16; // 좌우 패딩 (4px + 8px) * 2
-            const totalWidth = textWidth + padding;
-            const totalHeight = textHeight + 8; // 상하 패딩
+            const { width: totalWidth, height: totalHeight } =
+              measureTextSizeWithDOM(
+                newElement.text,
+                newElement.fontSize,
+                fontFamily
+              );
 
             // 위치를 컨테이너 안으로 제한
             let newX = newElement.x;
@@ -965,10 +963,58 @@ export default function EditorPage() {
     const offsetX = clientX - containerRect.left - element.x;
     const offsetY = clientY - containerRect.top - element.y;
 
+    // 현재 폰트 정보 가져오기 (드래그 중 크기 계산용)
+    const currentFont = fonts[element.fontIndex];
+    const fontFamily = currentFont.style.fontFamily;
+
+    // 텍스트 크기 측정 (중심점 계산용)
+    // 실제 렌더링된 DOM 요소의 크기를 사용하여 정확도 향상
+    const domElement = document.getElementById(element.id);
+    let totalWidth = 0;
+    let totalHeight = 0;
+
+    if (domElement) {
+      totalWidth = domElement.offsetWidth;
+      totalHeight = domElement.offsetHeight;
+    } else {
+      // Fallback: DOM 요소를 찾지 못한 경우 (거의 발생하지 않음)
+      const { width, height } = measureTextSizeWithDOM(
+        element.text,
+        element.fontSize,
+        fontFamily
+      );
+      totalWidth = width;
+      totalHeight = height;
+    }
+
     // 마우스 이벤트 핸들러
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const newX = moveEvent.clientX - containerRect.left - offsetX;
-      const newY = moveEvent.clientY - containerRect.top - offsetY;
+      let newX = moveEvent.clientX - containerRect.left - offsetX;
+      let newY = moveEvent.clientY - containerRect.top - offsetY;
+
+      // 스냅 기능 로직
+      const containerCenterX = containerRect.width / 2;
+      const containerCenterY = containerRect.height / 2;
+      const elementCenterX = newX + totalWidth / 2;
+      const elementCenterY = newY + totalHeight / 2;
+
+      const SNAP_THRESHOLD = 15; // 스냅 거리 임계값 (px)
+      let snapV = false;
+      let snapH = false;
+
+      // 가로 중앙 정렬 (세로선 표시)
+      if (Math.abs(elementCenterX - containerCenterX) < SNAP_THRESHOLD) {
+        newX = containerCenterX - totalWidth / 2;
+        snapV = true;
+      }
+
+      // 세로 중앙 정렬 (가로선 표시)
+      if (Math.abs(elementCenterY - containerCenterY) < SNAP_THRESHOLD) {
+        newY = containerCenterY - totalHeight / 2;
+        snapH = true;
+      }
+
+      setSnapGuides({ vertical: snapV, horizontal: snapH });
 
       setTextElements((prev) =>
         prev.map((el) =>
@@ -979,6 +1025,7 @@ export default function EditorPage() {
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setSnapGuides({ vertical: false, horizontal: false });
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('touchmove', handleTouchMove);
@@ -991,8 +1038,32 @@ export default function EditorPage() {
       moveEvent.preventDefault(); // 스크롤 방지
       moveEvent.stopPropagation(); // 이벤트 전파 방지
       const touch = moveEvent.touches[0];
-      const newX = touch.clientX - containerRect.left - offsetX;
-      const newY = touch.clientY - containerRect.top - offsetY;
+      let newX = touch.clientX - containerRect.left - offsetX;
+      let newY = touch.clientY - containerRect.top - offsetY;
+
+      // 스냅 기능 로직 (터치)
+      const containerCenterX = containerRect.width / 2;
+      const containerCenterY = containerRect.height / 2;
+      const elementCenterX = newX + totalWidth / 2;
+      const elementCenterY = newY + totalHeight / 2;
+
+      const SNAP_THRESHOLD = 15; // 스냅 거리 임계값 (px)
+      let snapV = false;
+      let snapH = false;
+
+      // 가로 중앙 정렬 (세로선 표시)
+      if (Math.abs(elementCenterX - containerCenterX) < SNAP_THRESHOLD) {
+        newX = containerCenterX - totalWidth / 2;
+        snapV = true;
+      }
+
+      // 세로 중앙 정렬 (가로선 표시)
+      if (Math.abs(elementCenterY - containerCenterY) < SNAP_THRESHOLD) {
+        newY = containerCenterY - totalHeight / 2;
+        snapH = true;
+      }
+
+      setSnapGuides({ vertical: snapV, horizontal: snapH });
 
       setTextElements((prev) =>
         prev.map((el) =>
@@ -1007,6 +1078,7 @@ export default function EditorPage() {
         e.stopPropagation();
       }
       setIsDragging(false);
+      setSnapGuides({ vertical: false, horizontal: false });
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('touchmove', handleTouchMove);
@@ -1552,6 +1624,15 @@ export default function EditorPage() {
                           }
                         }}
                       />
+
+                      {/* 스냅 가이드라인 */}
+                      {snapGuides.vertical && (
+                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-blue-500 z-0 transform -translate-x-1/2 pointer-events-none" />
+                      )}
+                      {snapGuides.horizontal && (
+                        <div className="absolute left-0 right-0 top-1/2 h-px bg-blue-500 z-0 transform -translate-y-1/2 pointer-events-none" />
+                      )}
+
                       {/* 텍스트 오버레이 */}
                       {textElements.map((element) => {
                         const isEditing = editingTextId === element.id;
@@ -1560,6 +1641,7 @@ export default function EditorPage() {
                         return (
                           <div
                             key={element.id}
+                            id={element.id}
                             className={`absolute cursor-move flex flex-col select-none z-10  ${elementFontClassName}`}
                             style={{
                               left: `${element.x}px`,
@@ -1607,6 +1689,7 @@ export default function EditorPage() {
                           >
                             {/* 편집/삭제 버튼 - absolute로 오버레이하여 레이아웃에 영향 없음 */}
                             {element.isSelected &&
+                              !isDragging &&
                               (() => {
                                 // 버튼 크기를 화면 크기에 비례하여 계산
                                 const viewportWidth =
