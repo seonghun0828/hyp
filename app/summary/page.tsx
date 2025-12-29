@@ -197,13 +197,13 @@ export default function SummaryPage() {
                 />
               </div>
 
-              {/* 고객이 느낄 이득 */}
+              {/* 고객이 느낄 이점 */}
               <div>
                 <label
                   htmlFor="customer_benefit"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  고객이 느낄 이득 *
+                  고객이 느낄 이점 *
                 </label>
                 <textarea
                   id="customer_benefit"

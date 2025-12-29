@@ -590,8 +590,9 @@ export default function EditorPage() {
     const textPaddingLeft = 8;
     const textPaddingRight = 8;
 
-    // 실제 사용 가능한 너비
-    const availableWidth = containerWidth - textPaddingLeft - textPaddingRight;
+    // 실제 사용 가능한 너비 (이미지 너비보다 작게 설정 - 85% 수준)
+    const availableWidth =
+      (containerWidth - textPaddingLeft - textPaddingRight) * 0.65;
 
     // 최적의 폰트 크기 계산
     const optimalFontSize = calculateOptimalFontSize(
