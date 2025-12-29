@@ -413,6 +413,7 @@ export default function EditorPage() {
 
     // 선택된 원칙의 추천 텍스트 생성 (successTexts가 있을 때만, 첫 화면에서만)
     if (
+      isInitialized &&
       successTexts &&
       currentPrinciple &&
       textElements.length === 0 &&
@@ -421,11 +422,20 @@ export default function EditorPage() {
       createRecommendedText();
       hasInitializedTextRef.current = true;
     }
-  }, [summary, styles, imageUrl, successTexts, router, hasHydrated]);
+  }, [
+    summary,
+    styles,
+    imageUrl,
+    successTexts,
+    router,
+    hasHydrated,
+    isInitialized,
+  ]);
 
   // 홍보 문구 스타일 변경 시 추천 텍스트 재생성
   useEffect(() => {
-    if (!hasHydrated || !successTexts || !currentPrinciple) return;
+    if (!hasHydrated || !successTexts || !currentPrinciple || !isInitialized)
+      return;
 
     // 같은 원칙의 추천 텍스트가 없으면 생성
     const hasRecommendedForCurrent = textElements.some(
@@ -438,7 +448,13 @@ export default function EditorPage() {
       createRecommendedText();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, hasHydrated, successTexts, currentPrinciple?.key]);
+  }, [
+    currentIndex,
+    hasHydrated,
+    successTexts,
+    currentPrinciple?.key,
+    isInitialized,
+  ]);
 
   // summary가 변경될 때 successTexts 초기화
   const [lastSummaryUrl, setLastSummaryUrl] = useState<string | null>(null);
