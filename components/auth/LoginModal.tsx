@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import GoogleLoginButton from './GoogleLoginButton';
+import { INITIAL_CREDITS } from '@/lib/constants';
 
 interface LoginModalProps {
   open: boolean;
@@ -37,7 +38,13 @@ export default function LoginModal({
           <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800 mb-2">
             <p className="font-semibold mb-1">💡 회원가입 혜택</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>가입 즉시 <span className="font-bold">7,700 크레딧</span> 제공</li>
+              <li>
+                가입 즉시{' '}
+                <span className="font-bold">
+                  {INITIAL_CREDITS.MEMBER} 크레딧
+                </span>{' '}
+                제공
+              </li>
               <li>생성된 콘텐츠 저장 및 관리</li>
               <li>더 정교한 AI 분석 기능</li>
             </ul>
@@ -48,4 +55,3 @@ export default function LoginModal({
     </Dialog>
   );
 }
-

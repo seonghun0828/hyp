@@ -64,17 +64,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 크레딧 차감 (캐시 미스인 경우에만)
-    if (anonToken) {
-      try {
-        await deductCredits({ anonToken }, AI_COSTS.SUMMARY);
-      } catch (error) {
-        return NextResponse.json(
-          { error: 'INSUFFICIENT_CREDITS', message: '크레딧이 부족합니다.' },
-          { status: 402 }
-        );
-      }
-    }
+    // 크레딧 차감 로직 제거 (무료)
+    // if (anonToken) { ... }
+
 
     // URL에서 제품 정보 가져오기 및 전처리
     const preprocessedContent = await extractAndPreprocessUrl(url);

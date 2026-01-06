@@ -86,7 +86,9 @@ export default function EditorPage() {
     }
 
     // 생성해야 할 인덱스들을 파악하고 병렬 요청
-    const generateImagesParallel = () => {
+    const generateImagesParallel = async () => {
+      const promises: Promise<boolean>[] = [];
+
       for (let i = 1; i < MAX_IMAGES; i++) {
         // 이미 생성되었거나 요청 중이면 스킵
         if (requestedIndicesRef.current.has(i)) continue;
@@ -94,8 +96,8 @@ export default function EditorPage() {
         // 요청 시작 표시
         requestedIndicesRef.current.add(i);
 
-        // 개별 요청 함수 (비동기 실행)
-        const fetchImage = async (index: number) => {
+        // 개별 요청 함수 (Promise 반환)
+        const fetchImage = async (index: number): Promise<boolean> => {
           try {
             const response = await fetch('/api/generate-image', {
               method: 'POST',
@@ -114,22 +116,47 @@ export default function EditorPage() {
                 url: data.imageUrl,
                 prompt: data.imagePrompt,
               });
+              return true;
             } else {
-              // 402 체크
+              // 402 체크 (이제 발생하지 않겠지만 안전장치)
               if (response.status === 402) {
                 setShowLoginModal(true);
               }
               // 실패 시 재시도 가능하게 제거
               requestedIndicesRef.current.delete(index);
+              return false;
             }
           } catch (error) {
             console.error(`이미지 ${index} 생성 실패:`, error);
             requestedIndicesRef.current.delete(index);
+            return false;
           }
         };
 
-        // 비동기 호출 (await 안 함)
-        fetchImage(i);
+        promises.push(fetchImage(i));
+      }
+
+      // 요청한 이미지 생성 작업들이 있다면 완료 대기 후 크레딧 차감
+      if (promises.length > 0) {
+        const results = await Promise.all(promises);
+        const allSuccess = results.every((success) => success);
+
+        // 요청한 모든 이미지가 성공적으로 생성되었을 때만 크레딧 차감
+        if (allSuccess) {
+          try {
+            const response = await fetch('/api/credits/deduct', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reason: 'IMAGE_GENERATION_BATCH' }),
+            });
+
+            if (response.status === 402) {
+              setShowLoginModal(true);
+            }
+          } catch (error) {
+            console.error('크레딧 차감 실패:', error);
+          }
+        }
       }
     };
 

@@ -48,17 +48,8 @@ export async function POST(request: NextRequest) {
       // 캐시 미스 - AI로 생성
     }
 
-    // 크레딧 차감 (캐시 미스인 경우에만)
-    if (anonToken) {
-      try {
-        await deductCredits({ anonToken }, AI_COSTS.PROMOTION_TEXT);
-      } catch (error) {
-        return NextResponse.json(
-          { error: 'INSUFFICIENT_CREDITS', message: '크레딧이 부족합니다.' },
-          { status: 402 }
-        );
-      }
-    }
+    // 크레딧 차감 로직 제거 (무료)
+    // if (anonToken) { ... }
 
     // 2. 캐시 미스 - AI로 생성
     // SUCCESs 원칙에 맞는 홍보문구 생성 (하나씩)

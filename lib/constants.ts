@@ -28,15 +28,15 @@ export const MAX_IMAGES = 3;
  * AI 기능별 비용 정의
  */
 export const AI_COSTS = {
-  SUMMARY: 100, // 링크 분석
-  IMAGE_GENERATION: 500, // 이미지 생성
-  PROMOTION_TEXT: 100, // 홍보 문구 생성
+  SUMMARY: 0, // 링크 분석
+  IMAGE_GENERATION: 2, // 이미지 3장 생성 (에디터 진입 시)
+  PROMOTION_TEXT: 0, // 홍보 문구 생성
 } as const;
 
 /**
  * 초기 제공 크레딧 정의
  */
 export const INITIAL_CREDITS = {
-  ANON: 2200, // 비로그인 유저
-  MEMBER: 7700, // 로그인 유저
+  ANON: 3, // 비로그인 유저
+  MEMBER: 5, // 로그인 유저
 } as const;

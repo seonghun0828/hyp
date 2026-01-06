@@ -19,17 +19,8 @@ export async function POST(request: NextRequest) {
 
     const anonToken = request.cookies.get('anon_token')?.value;
 
-    // 크레딧 차감
-    if (anonToken) {
-      try {
-        await deductCredits({ anonToken }, AI_COSTS.IMAGE_GENERATION);
-      } catch (error) {
-        return NextResponse.json(
-          { error: 'INSUFFICIENT_CREDITS', message: '크레딧이 부족합니다.' },
-          { status: 402 }
-        );
-      }
-    }
+    // 크레딧 차감 로직 제거 (에디터 페이지에서 일괄 차감)
+    // if (anonToken) { ... }
 
     // prompts.ts의 getImagePrompt 함수 사용
     // summary에서 category 추출하여 전달
