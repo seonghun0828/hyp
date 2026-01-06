@@ -13,6 +13,7 @@ import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
 import { fetchUserCredits, deductCredits } from '@/lib/api/credits';
 import { generateImage } from '@/lib/api/images';
+import { useCreditStore } from '@/lib/store';
 
 const minFont = 4;
 const maxFont = 36;
@@ -49,6 +50,8 @@ export default function EditorPage() {
     resetGeneratedImages,
     randomSeed, // 추가
   } = useFunnelStore();
+
+  const { credits, fetchCredits, updateCredits } = useCreditStore();
 
   // 1. 페이지 진입 시 첫 번째 이미지를 리스트에 추가 (중복 방지)
   useEffect(() => {
@@ -87,6 +90,9 @@ export default function EditorPage() {
     for (let i = 0; i < generatedImages.length; i++) {
       requestedIndicesRef.current.add(i);
     }
+
+    // 크레딧 스토어 갱신 (최신 상태 유지)
+    fetchCredits();
 
     // 생성해야 할 인덱스들을 파악하고 병렬 요청
     const generateImagesParallel = async () => {
@@ -139,6 +145,8 @@ export default function EditorPage() {
         if (allSuccess) {
           try {
             await deductCredits(undefined, 'IMAGE_GENERATION_BATCH');
+            // 크레딧 차감 후 스토어 업데이트
+            fetchCredits();
           } catch (error: any) {
             console.error('크레딧 차감 실패:', error);
             if (error.status === 402) {
@@ -167,10 +175,10 @@ export default function EditorPage() {
 
     try {
       // 1. 크레딧 및 유저 정보 확인
-      const { credits, user } = await fetchUserCredits();
+      const { user } = await fetchUserCredits(); // user 정보만 필요
 
-      // 2. UI 분기 처리
-      if (credits < 1) {
+      // 2. UI 분기 처리 (store의 credits 사용)
+      if (credits === null || credits < 1) {
         if (user) {
           setShowPaymentModal(true);
         } else {
@@ -215,6 +223,8 @@ export default function EditorPage() {
       if (allSuccess) {
         try {
           await deductCredits(1, 'ADDITIONAL_IMAGE_GENERATION');
+          // 크레딧 차감 후 스토어 업데이트
+          fetchCredits();
           trackEvent('generate_more_images_success', { count: 2 });
         } catch (error) {
           console.error('크레딧 차감 실패:', error);
@@ -2279,6 +2289,14 @@ export default function EditorPage() {
       <PaymentModal
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
+        onSuccess={() => {
+          // 충전 완료 시 스토어 업데이트 (낙관적 + 서버 동기화)
+          updateCredits((credits || 0) + 100);
+          fetchCredits();
+
+          // 만약 '추가 생성' 중에 모달이 떴다면 재시도 로직을 실행할 수도 있음
+          // 현재는 단순히 닫고 사용자가 다시 버튼을 누르게 함
+        }}
       />
     </div>
   );

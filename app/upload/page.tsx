@@ -9,7 +9,7 @@ import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
-import { fetchUserCredits } from '@/lib/api/credits';
+import { useCreditStore } from '@/lib/store';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -30,15 +30,15 @@ export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null);
+  const { credits, fetchCredits, updateCredits } = useCreditStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 크레딧 조회
   useEffect(() => {
     if (hasHydrated) {
-      fetchUserCredits().then(({ credits }) => setCredits(credits));
+      fetchCredits();
     }
-  }, [hasHydrated]);
+  }, [hasHydrated, fetchCredits]);
 
   // SUCCESs 문구 생성 관련 상태 (백그라운드에서만 사용)
   const [textsGenerating, setTextsGenerating] = useState(false);
@@ -547,8 +547,10 @@ export default function UploadPage() {
           </div>
         }
         onSuccess={() => {
-          // 충전 완료 간주 -> 크레딧 상태 업데이트 (프리체크 통과용)
-          setCredits((prev) => (prev || 0) + 100);
+          // 충전 완료 간주 -> 크레딧 상태 업데이트 (낙관적 + 서버 동기화)
+          updateCredits((credits || 0) + 100);
+          fetchCredits();
+
           // 이미지 생성 재시도 (비동기 상태 업데이트 고려하여 setTimeout 사용)
           setTimeout(() => executeAIGenerate(), 0);
         }}

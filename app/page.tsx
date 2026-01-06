@@ -11,7 +11,7 @@ import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
-import { fetchUserCredits } from '@/lib/api/credits';
+import { useCreditStore } from '@/lib/store';
 
 const stepNames = [
   '링크 입력',
@@ -30,7 +30,8 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [credits, setCredits] = useState<number | null>(null);
+
+  const { credits, fetchCredits, updateCredits } = useCreditStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,10 +56,11 @@ export default function HomePage() {
     await executeSubmit(inputUrl);
   };
 
-  // 크레딧 조회
+  // 크레딧 조회 (store에서 관리하므로 여기서 useEffect로 호출할 필요 없음 - CreditDisplay에서 호출됨)
+  // 단, 페이지 진입 시 최신 상태 보장을 위해 호출해도 무방함
   useEffect(() => {
-    fetchUserCredits().then(({ credits }) => setCredits(credits));
-  }, []);
+    fetchCredits();
+  }, [fetchCredits]);
 
   const executeSubmit = async (targetUrl: string) => {
     setLoading(true);
@@ -214,8 +216,10 @@ export default function HomePage() {
           </div>
         }
         onSuccess={() => {
-          // 충전 완료 간주 -> 크레딧 상태 업데이트
-          setCredits((prev) => (prev || 0) + 100);
+          // 충전 완료 간주 -> 크레딧 상태 업데이트 (낙관적 + 서버 동기화)
+          updateCredits((credits || 0) + 100);
+          fetchCredits();
+
           // 분석 시작 (비동기 상태 업데이트 고려하여 setTimeout 사용)
           setTimeout(() => executeSubmit(inputUrl), 0);
         }}
