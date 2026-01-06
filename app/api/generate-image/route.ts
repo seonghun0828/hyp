@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { getImagePrompt } from '@/lib/prompts';
+import { AI_COSTS } from '@/lib/constants';
+import { deductCredits } from '@/lib/credits';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -13,6 +15,20 @@ export async function POST(request: NextRequest) {
         { error: 'summary is required' },
         { status: 400 }
       );
+    }
+
+    const anonToken = request.cookies.get('anon_token')?.value;
+
+    // 크레딧 차감
+    if (anonToken) {
+      try {
+        await deductCredits({ anonToken }, AI_COSTS.IMAGE_GENERATION);
+      } catch (error) {
+        return NextResponse.json(
+          { error: 'INSUFFICIENT_CREDITS', message: '크레딧이 부족합니다.' },
+          { status: 402 }
+        );
+      }
     }
 
     // prompts.ts의 getImagePrompt 함수 사용

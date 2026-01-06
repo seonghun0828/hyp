@@ -5,6 +5,8 @@ import {
   getSuccessTextSystemPrompt,
   getSuccessTextUserPrompt,
 } from '@/lib/prompts';
+import { AI_COSTS } from '@/lib/constants';
+import { deductCredits } from '@/lib/credits';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -20,6 +22,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const anonToken = request.cookies.get('anon_token')?.value;
 
     // 캐시 키 생성: url_스타일조합
     const cacheKey = `${url}_${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}`;
@@ -42,6 +46,18 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       // 캐시 미스 - AI로 생성
+    }
+
+    // 크레딧 차감 (캐시 미스인 경우에만)
+    if (anonToken) {
+      try {
+        await deductCredits({ anonToken }, AI_COSTS.PROMOTION_TEXT);
+      } catch (error) {
+        return NextResponse.json(
+          { error: 'INSUFFICIENT_CREDITS', message: '크레딧이 부족합니다.' },
+          { status: 402 }
+        );
+      }
     }
 
     // 2. 캐시 미스 - AI로 생성

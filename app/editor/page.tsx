@@ -9,6 +9,7 @@ import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import ColorThief from 'colorthief';
 import { fonts, fontNames } from '@/lib/fonts';
+import LoginModal from '@/components/auth/LoginModal';
 
 const minFont = 4;
 const maxFont = 36;
@@ -114,6 +115,10 @@ export default function EditorPage() {
                 prompt: data.imagePrompt,
               });
             } else {
+              // 402 체크
+              if (response.status === 402) {
+                setShowLoginModal(true);
+              }
               // 실패 시 재시도 가능하게 제거
               requestedIndicesRef.current.delete(index);
             }
@@ -257,6 +262,7 @@ export default function EditorPage() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [isTextButtonMinimized, setIsTextButtonMinimized] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // 스냅 가이드라인 상태
   const [snapGuides, setSnapGuides] = useState({
@@ -2144,6 +2150,8 @@ export default function EditorPage() {
             </div>
           );
         })()}
+
+      <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
     </div>
   );
 }

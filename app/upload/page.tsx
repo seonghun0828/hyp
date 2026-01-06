@@ -7,6 +7,7 @@ import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
+import LoginModal from '@/components/auth/LoginModal';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // SUCCESs 문구 생성 관련 상태 (백그라운드에서만 사용)
@@ -137,6 +139,12 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
+        // 402 체크
+        if (response.status === 402) {
+          setShowLoginModal(true);
+          setLoading(false);
+          return;
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.message ||
@@ -200,6 +208,10 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
+        if (response.status === 402) {
+          setShowLoginModal(true);
+          return;
+        }
         throw new Error('SUCCESs 문구 생성에 실패했습니다.');
       }
 
@@ -237,6 +249,12 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
+        if (response.status === 402) {
+          setShowLoginModal(true);
+          // 스트리밍 중단
+          setTextsGenerating(false);
+          return;
+        }
         throw new Error('SUCCESs 문구 생성에 실패했습니다.');
       }
 
@@ -496,6 +514,8 @@ export default function UploadPage() {
           </div>
         </div>
       </div>
+
+      <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
     </div>
   );
 }

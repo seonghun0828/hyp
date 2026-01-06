@@ -3,6 +3,8 @@ import OpenAI from 'openai';
 import { supabase } from '@/lib/supabase';
 import { getSummarySystemPrompt, getSummaryUserPrompt } from '@/lib/prompts';
 import { extractAndPreprocessUrl } from '@/lib/summary';
+import { AI_COSTS } from '@/lib/constants';
+import { deductCredits } from '@/lib/credits';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -15,6 +17,8 @@ export async function POST(request: NextRequest) {
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
+
+    const anonToken = request.cookies.get('anon_token')?.value;
 
     // 캐시 체크 - 기존 데이터가 있는지 확인
     if (supabase) {
@@ -57,6 +61,18 @@ export async function POST(request: NextRequest) {
         }
       } catch (cacheError) {
         // 캐시 체크 실패 시에도 AI 분석 진행
+      }
+    }
+
+    // 크레딧 차감 (캐시 미스인 경우에만)
+    if (anonToken) {
+      try {
+        await deductCredits({ anonToken }, AI_COSTS.SUMMARY);
+      } catch (error) {
+        return NextResponse.json(
+          { error: 'INSUFFICIENT_CREDITS', message: '크레딧이 부족합니다.' },
+          { status: 402 }
+        );
       }
     }
 

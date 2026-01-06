@@ -9,6 +9,7 @@ import { isValidUrl } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
+import LoginModal from '@/components/auth/LoginModal';
 
 const stepNames = [
   '링크 입력',
@@ -25,6 +26,7 @@ export default function HomePage() {
   const [inputUrl, setInputUrl] = useState(url);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +57,13 @@ export default function HomePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // 402 Payment Required: 크레딧 부족
+        if (response.status === 402) {
+          setShowLoginModal(true);
+          setLoading(false);
+          return;
+        }
 
         // 에러 타입별 처리
         if (response.status === 403 && errorData.error === 'BOT_BLOCKED') {
@@ -173,6 +182,8 @@ export default function HomePage() {
           <ScrollToTopButton />
         </div>
       </div>
+
+      <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
     </div>
   );
 }
