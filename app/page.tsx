@@ -10,6 +10,8 @@ import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
+import PaymentModal from '@/components/PaymentModal';
+import { fetchUserCredits } from '@/lib/api/credits';
 
 const stepNames = [
   '링크 입력',
@@ -27,6 +29,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +46,23 @@ export default function HomePage() {
       return;
     }
 
+    // 크레딧 확인 (0이면 모달 표시)
+    if (credits !== null && credits <= 0) {
+      setShowPaymentModal(true);
+      return;
+    }
+
+    await executeSubmit(inputUrl);
+  };
+
+  // 크레딧 조회
+  useEffect(() => {
+    fetchUserCredits().then(({ credits }) => setCredits(credits));
+  }, []);
+
+  const executeSubmit = async (targetUrl: string) => {
     setLoading(true);
-    setUrl(inputUrl);
+    setUrl(targetUrl);
 
     try {
       // API 호출하여 제품 요약 생성
@@ -81,7 +100,7 @@ export default function HomePage() {
             )
           ) {
             // 재시도 로직
-            handleSubmit(e);
+            executeSubmit(targetUrl);
             return;
           }
           setError(errorData.message || '서버 오류가 발생했습니다.');
@@ -184,6 +203,23 @@ export default function HomePage() {
       </div>
 
       <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
+      <PaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        description={
+          <div className="text-center">
+            🔒 무료 체험을 모두 사용했어요
+            <br />
+            크레딧을 충전하고 바로 시작해보세요!
+          </div>
+        }
+        onSuccess={() => {
+          // 충전 완료 간주 -> 크레딧 상태 업데이트
+          setCredits((prev) => (prev || 0) + 100);
+          // 분석 시작 (비동기 상태 업데이트 고려하여 setTimeout 사용)
+          setTimeout(() => executeSubmit(inputUrl), 0);
+        }}
+      />
     </div>
   );
 }
