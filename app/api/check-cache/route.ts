@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { getMarketingTextCache } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
@@ -12,8 +13,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const supabase = await createClient();
+
     // 캐시 조회
-    const cachedData = await getMarketingTextCache(cacheKey);
+    const cachedData = await getMarketingTextCache(cacheKey, supabase);
     const exists = !!cachedData;
 
     return NextResponse.json({ exists });

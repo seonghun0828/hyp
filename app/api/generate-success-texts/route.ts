@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { createClient } from '@/lib/supabase/server';
 import { getMarketingTextCache, saveMarketingTextCache } from '@/lib/supabase';
 import {
   getSuccessTextSystemPrompt,
   getSuccessTextUserPrompt,
 } from '@/lib/prompts';
-import { AI_COSTS } from '@/lib/constants';
-import { deductCredits } from '@/lib/credits';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -23,14 +22,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const anonToken = request.cookies.get('anon_token')?.value;
+    const supabase = await createClient();
 
     // 캐시 키 생성: url_스타일조합
     const cacheKey = `${url}_${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}`;
 
     // 1. 캐시 조회
     try {
-      const cachedData = await getMarketingTextCache(cacheKey);
+      const cachedData = await getMarketingTextCache(cacheKey, supabase);
       if (cachedData) {
         return NextResponse.json({
           texts: {
@@ -135,7 +134,7 @@ export async function POST(request: NextRequest) {
         credible: finalTexts.credible,
         emotional: finalTexts.emotional,
         story: finalTexts.story,
-      });
+      }, supabase);
     } catch (error) {
       // 캐시 저장 실패해도 결과는 반환
     }

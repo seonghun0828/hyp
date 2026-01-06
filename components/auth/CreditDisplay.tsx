@@ -1,20 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { INITIAL_CREDITS } from '@/lib/constants';
+import { createClient } from '@/lib/supabase/client';
 
 export default function CreditDisplay() {
   const [credits, setCredits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Check if Supabase client is initialized
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-
+    const supabase = createClient();
+    
     const fetchCredits = async () => {
       try {
         // 1. Get current user

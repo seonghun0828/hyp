@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Button from '@/components/Button';
 import { signInWithGoogle } from '@/lib/auth';
 
@@ -18,11 +19,12 @@ export default function GoogleLoginButton({
   children = 'Google로 시작하기',
 }: GoogleLoginButtonProps) {
   const [loading, setLoading] = useState(false);
+  const pathname = usePathname();
 
   const handleLogin = async () => {
     try {
       setLoading(true);
-      await signInWithGoogle();
+      await signInWithGoogle(pathname);
     } catch (error) {
       alert('로그인 중 오류가 발생했습니다.');
     } finally {

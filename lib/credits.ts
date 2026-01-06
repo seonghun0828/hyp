@@ -1,10 +1,12 @@
-import { supabase } from './supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabase as globalSupabase } from './supabase';
 import { INITIAL_CREDITS } from './constants';
 
-export async function getCredits(identifier: {
-  userId?: string;
-  anonToken?: string;
-}) {
+export async function getCredits(
+  identifier: { userId?: string; anonToken?: string },
+  client?: SupabaseClient
+) {
+  const supabase = client || globalSupabase;
   if (!supabase) throw new Error('Supabase client not initialized');
 
   const { userId, anonToken } = identifier;
@@ -90,22 +92,25 @@ export async function getCredits(identifier: {
 
 export async function checkCredits(
   identifier: { userId?: string; anonToken?: string },
-  cost: number
+  cost: number,
+  client?: SupabaseClient
 ): Promise<boolean> {
-  const credits = await getCredits(identifier);
+  const credits = await getCredits(identifier, client);
   return credits.total >= cost;
 }
 
 export async function deductCredits(
   identifier: { userId?: string; anonToken?: string },
-  cost: number
+  cost: number,
+  client?: SupabaseClient
 ) {
+  const supabase = client || globalSupabase;
   if (!supabase) throw new Error('Supabase client not initialized');
 
   const { userId, anonToken } = identifier;
 
   // getCredits handles creation if needed
-  const credits = await getCredits(identifier);
+  const credits = await getCredits(identifier, supabase);
 
   if (credits.total < cost) {
     throw new Error('Insufficient credits');
@@ -151,7 +156,8 @@ export async function deductCredits(
   return { free: newFree, paid: newPaid, total: newFree + newPaid };
 }
 
-export async function createAnonCredits(anonToken: string) {
+export async function createAnonCredits(anonToken: string, client?: SupabaseClient) {
+  const supabase = client || globalSupabase;
   if (!supabase) throw new Error('Supabase client not initialized');
 
   const { error } = await supabase.from('user_credits').insert({

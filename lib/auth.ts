@@ -1,12 +1,17 @@
-import { supabase } from './supabase';
+import { createClient } from '@/lib/supabase/client';
 
-export async function signInWithGoogle() {
-  if (!supabase) throw new Error('Supabase client not initialized');
+export async function signInWithGoogle(nextPath?: string) {
+  const supabase = createClient();
+  const redirectTo = new URL(`${window.location.origin}/auth/callback`);
+  
+  if (nextPath) {
+    redirectTo.searchParams.set('next', nextPath);
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: redirectTo.toString(),
     },
   });
 
@@ -19,18 +24,13 @@ export async function signInWithGoogle() {
 }
 
 export async function signOut() {
-  if (!supabase) throw new Error('Supabase client not initialized');
-
+  const supabase = createClient();
   const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error('Error signing out:', error);
-    throw error;
-  }
+  if (error) throw error;
 }
 
 export async function getCurrentUser() {
-  if (!supabase) return null;
+  const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 }
-

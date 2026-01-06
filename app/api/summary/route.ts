@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { getSummarySystemPrompt, getSummaryUserPrompt } from '@/lib/prompts';
 import { extractAndPreprocessUrl } from '@/lib/summary';
-import { AI_COSTS } from '@/lib/constants';
-import { deductCredits } from '@/lib/credits';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -18,55 +16,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
 
-    const anonToken = request.cookies.get('anon_token')?.value;
+    const supabase = await createClient();
 
     // 캐시 체크 - 기존 데이터가 있는지 확인
-    if (supabase) {
-      try {
-        const { data: existingData, error: fetchError } = await supabase
-          .from('product_summaries')
-          .select('*')
-          .eq('url', url)
-          .single();
+    try {
+      const { data: existingData, error: fetchError } = await supabase
+        .from('product_summaries')
+        .select('*')
+        .eq('url', url)
+        .single();
 
-        if (!fetchError && existingData) {
-          const responseData: any = {
-            id: existingData.id,
-            title: existingData.title,
-            core_value: existingData.core_value,
-            target_customer: existingData.target_customer,
-            competitive_edge: existingData.competitive_edge,
-            customer_benefit: existingData.customer_benefit,
-            emotional_keyword: existingData.emotional_keyword,
-            feature_summary: existingData.feature_summary,
-            usage_scenario: existingData.usage_scenario,
+      if (!fetchError && existingData) {
+        const responseData: any = {
+          id: existingData.id,
+          title: existingData.title,
+          core_value: existingData.core_value,
+          target_customer: existingData.target_customer,
+          competitive_edge: existingData.competitive_edge,
+          customer_benefit: existingData.customer_benefit,
+          emotional_keyword: existingData.emotional_keyword,
+          feature_summary: existingData.feature_summary,
+          usage_scenario: existingData.usage_scenario,
+        };
+
+        // 카테고리 정보 추가
+        if (
+          existingData.category_industry ||
+          existingData.category_form ||
+          existingData.category_purpose
+        ) {
+          responseData.category = {
+            industry: existingData.category_industry || '',
+            form: existingData.category_form || '',
+            purpose: existingData.category_purpose || '',
           };
-
-          // 카테고리 정보 추가
-          if (
-            existingData.category_industry ||
-            existingData.category_form ||
-            existingData.category_purpose
-          ) {
-            responseData.category = {
-              industry: existingData.category_industry || '',
-              form: existingData.category_form || '',
-              purpose: existingData.category_purpose || '',
-            };
-          }
-
-          return NextResponse.json(responseData);
-        } else {
-          // 캐시 미스 - AI 분석 진행
         }
-      } catch (cacheError) {
-        // 캐시 체크 실패 시에도 AI 분석 진행
+
+        return NextResponse.json(responseData);
       }
+    } catch (cacheError) {
+      // 캐시 체크 실패 시에도 AI 분석 진행
     }
 
     // 크레딧 차감 로직 제거 (무료)
     // if (anonToken) { ... }
-
 
     // URL에서 제품 정보 가져오기 및 전처리
     const preprocessedContent = await extractAndPreprocessUrl(url);
@@ -129,38 +122,34 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Supabase에 저장 (환경 변수가 있을 때만)
+    // Supabase에 저장
     let summaryId = null;
 
-    if (supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('product_summaries')
-          .insert({
-            url,
-            title: summaryData.title,
-            core_value: summaryData.core_value,
-            target_customer: summaryData.target_customer,
-            competitive_edge: summaryData.competitive_edge,
-            customer_benefit: summaryData.customer_benefit,
-            emotional_keyword: summaryData.emotional_keyword,
-            feature_summary: summaryData.feature_summary,
-            usage_scenario: summaryData.usage_scenario,
-            category_industry: summaryData.category?.industry || null,
-            category_form: summaryData.category?.form || null,
-            category_purpose: summaryData.category?.purpose || null,
-          })
-          .select()
-          .single();
+    try {
+      const { data, error } = await supabase
+        .from('product_summaries')
+        .insert({
+          url,
+          title: summaryData.title,
+          core_value: summaryData.core_value,
+          target_customer: summaryData.target_customer,
+          competitive_edge: summaryData.competitive_edge,
+          customer_benefit: summaryData.customer_benefit,
+          emotional_keyword: summaryData.emotional_keyword,
+          feature_summary: summaryData.feature_summary,
+          usage_scenario: summaryData.usage_scenario,
+          category_industry: summaryData.category?.industry || null,
+          category_form: summaryData.category?.form || null,
+          category_purpose: summaryData.category?.purpose || null,
+        })
+        .select()
+        .single();
 
-        if (error) {
-          // 에러 발생 시에도 계속 진행
-        } else {
-          summaryId = data?.id;
-        }
-      } catch (supabaseError) {
-        // Supabase 연결 에러 시에도 계속 진행
+      if (!error) {
+        summaryId = data?.id;
       }
+    } catch (supabaseError) {
+      // Supabase 연결 에러 시에도 계속 진행
     }
 
     const responseData: any = {

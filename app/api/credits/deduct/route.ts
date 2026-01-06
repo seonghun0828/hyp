@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { deductCredits } from '@/lib/credits';
 import { AI_COSTS } from '@/lib/constants';
 
@@ -12,11 +12,10 @@ export async function POST(request: NextRequest) {
     
     // 로그인 유저 확인
     let userId: string | undefined;
-    if (supabase) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        userId = user.id;
-      }
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      userId = user.id;
     }
 
     if (!userId && !anonToken) {
@@ -30,7 +29,7 @@ export async function POST(request: NextRequest) {
     const cost = amount || AI_COSTS.IMAGE_GENERATION;
 
     try {
-      await deductCredits({ userId, anonToken }, cost);
+      await deductCredits({ userId, anonToken }, cost, supabase);
       return NextResponse.json({ success: true, deducted: cost });
     } catch (error) {
       // 크레딧 부족 에러 처리
@@ -50,4 +49,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

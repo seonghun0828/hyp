@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,12 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!supabase) {
-      return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 500 }
-      );
-    }
+    const supabase = await createClient();
 
     // 생성된 콘텐츠 저장
     // styles를 JSON 문자열로 저장 (DB 스키마에 styles 컬럼이 있다고 가정)

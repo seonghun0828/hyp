@@ -1,11 +1,11 @@
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 /**
  * 현재 사용자의 크레딧을 조회합니다.
  * 로그인 유저의 경우 DB에서, 비로그인 유저의 경우 쿠키 기반 API로 조회합니다.
  */
 export async function fetchUserCredits() {
-  if (!supabase) throw new Error('Supabase client not initialized');
+  const supabase = createClient();
 
   const {
     data: { user },
