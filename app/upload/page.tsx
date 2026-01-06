@@ -8,6 +8,8 @@ import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
+import PaymentModal from '@/components/PaymentModal';
+import { fetchUserCredits } from '@/lib/api/credits';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -27,7 +29,16 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 크레딧 조회
+  useEffect(() => {
+    if (hasHydrated) {
+      fetchUserCredits().then(({ credits }) => setCredits(credits));
+    }
+  }, [hasHydrated]);
 
   // SUCCESs 문구 생성 관련 상태 (백그라운드에서만 사용)
   const [textsGenerating, setTextsGenerating] = useState(false);
@@ -110,7 +121,7 @@ export default function UploadPage() {
     }
   };
 
-  const handleAIGenerate = async () => {
+  const executeAIGenerate = async () => {
     setLoading(true);
     setError('');
 
@@ -181,6 +192,15 @@ export default function UploadPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAIGenerate = async () => {
+    // 크레딧 부족 시 모달 표시
+    if (credits !== null && credits < 2) {
+      setShowPaymentModal(true);
+      return;
+    }
+    await executeAIGenerate();
   };
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
@@ -516,6 +536,23 @@ export default function UploadPage() {
       </div>
 
       <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
+      <PaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        description={
+          <div className="text-center">
+            생성된 이미지와 홍보 문구를 볼 수 있는
+            <br />
+            다음 단계로 이동하려면 2크레딧이 필요해요.
+          </div>
+        }
+        onSuccess={() => {
+          // 충전 완료 간주 -> 크레딧 상태 업데이트 (프리체크 통과용)
+          setCredits((prev) => (prev || 0) + 100);
+          // 이미지 생성 재시도 (비동기 상태 업데이트 고려하여 setTimeout 사용)
+          setTimeout(() => executeAIGenerate(), 0);
+        }}
+      />
     </div>
   );
 }

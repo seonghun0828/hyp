@@ -13,19 +13,25 @@ import { Button } from '@/components/ui/button';
 interface PaymentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  description?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
 export default function PaymentModal({
   open,
   onOpenChange,
+  description,
+  onSuccess,
 }: PaymentModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>크레딧 충전</DialogTitle>
-          <DialogDescription>
-            크레딧이 부족합니다. 결제를 통해 충전해주세요.
+          <DialogDescription asChild>
+            <div className="text-muted-foreground text-sm">
+              {description || '크레딧이 부족합니다. 결제를 통해 충전해주세요.'}
+            </div>
           </DialogDescription>
         </DialogHeader>
         <div className="py-6 flex flex-col items-center justify-center gap-4 text-center">
@@ -40,7 +46,14 @@ export default function PaymentModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             닫기
           </Button>
-          <Button onClick={() => onOpenChange(false)}>충전하기 (Test)</Button>
+          <Button
+            onClick={() => {
+              onSuccess?.();
+              onOpenChange(false);
+            }}
+          >
+            충전하기 (Test)
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
