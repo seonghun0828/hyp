@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { getImagePrompt } from '@/lib/prompts';
+import { AI_COSTS } from '@/lib/constants';
+import { deductCredits } from '@/lib/credits';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -14,6 +16,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const anonToken = request.cookies.get('anon_token')?.value;
+
+    // 크레딧 차감 로직 제거 (에디터 페이지에서 일괄 차감)
+    // if (anonToken) { ... }
 
     // prompts.ts의 getImagePrompt 함수 사용
     // summary에서 category 추출하여 전달

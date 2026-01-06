@@ -7,6 +7,9 @@ import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
+import LoginModal from '@/components/auth/LoginModal';
+import PaymentModal from '@/components/PaymentModal';
+import { useCreditStore } from '@/lib/store';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -25,7 +28,17 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const { credits, fetchCredits, updateCredits } = useCreditStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 크레딧 조회
+  useEffect(() => {
+    if (hasHydrated) {
+      fetchCredits();
+    }
+  }, [hasHydrated, fetchCredits]);
 
   // SUCCESs 문구 생성 관련 상태 (백그라운드에서만 사용)
   const [textsGenerating, setTextsGenerating] = useState(false);
@@ -108,7 +121,7 @@ export default function UploadPage() {
     }
   };
 
-  const handleAIGenerate = async () => {
+  const executeAIGenerate = async () => {
     setLoading(true);
     setError('');
 
@@ -137,6 +150,12 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
+        // 402 체크
+        if (response.status === 402) {
+          setShowLoginModal(true);
+          setLoading(false);
+          return;
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.message ||
@@ -175,6 +194,15 @@ export default function UploadPage() {
     }
   };
 
+  const handleAIGenerate = async () => {
+    // 크레딧 부족 시 모달 표시
+    if (credits !== null && credits < 2) {
+      setShowPaymentModal(true);
+      return;
+    }
+    await executeAIGenerate();
+  };
+
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   // const [isHydrated, setIsHydrated] = useState(false);
 
@@ -200,6 +228,10 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
+        if (response.status === 402) {
+          setShowLoginModal(true);
+          return;
+        }
         throw new Error('SUCCESs 문구 생성에 실패했습니다.');
       }
 
@@ -237,6 +269,12 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
+        if (response.status === 402) {
+          setShowLoginModal(true);
+          // 스트리밍 중단
+          setTextsGenerating(false);
+          return;
+        }
         throw new Error('SUCCESs 문구 생성에 실패했습니다.');
       }
 
@@ -496,6 +534,27 @@ export default function UploadPage() {
           </div>
         </div>
       </div>
+
+      <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
+      <PaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        description={
+          <div className="text-center">
+            생성된 이미지와 홍보 문구를 볼 수 있는
+            <br />
+            다음 단계로 이동하려면 2크레딧이 필요해요.
+          </div>
+        }
+        onSuccess={() => {
+          // 충전 완료 간주 -> 크레딧 상태 업데이트 (낙관적 + 서버 동기화)
+          updateCredits((credits || 0) + 100);
+          fetchCredits();
+
+          // 이미지 생성 재시도 (비동기 상태 업데이트 고려하여 setTimeout 사용)
+          setTimeout(() => executeAIGenerate(), 0);
+        }}
+      />
     </div>
   );
 }

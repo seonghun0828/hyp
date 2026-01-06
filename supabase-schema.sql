@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS generated_contents (
   image_url TEXT,
   texts TEXT[] NOT NULL DEFAULT '{}',
   selected_principle TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-  is_promotional BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  is_promotional BOOLEAN DEFAULT FALSE
 );
 
 -- SUCCESs 원칙 홍보문구 캐시 테이블
@@ -57,6 +57,21 @@ CREATE TABLE IF NOT EXISTS quick_feedback (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 유저 크레딧 테이블
+CREATE TABLE IF NOT EXISTS user_credits (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  anon_token TEXT UNIQUE,
+  free_credits INTEGER DEFAULT 0,
+  paid_credits INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT user_or_token_check CHECK (
+    (user_id IS NOT NULL AND anon_token IS NULL) OR
+    (user_id IS NULL AND anon_token IS NOT NULL)
+  )
+);
+
 -- 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_product_summaries_url ON product_summaries(url);
 CREATE INDEX IF NOT EXISTS idx_product_summaries_created_at ON product_summaries(created_at);
@@ -68,12 +83,15 @@ CREATE INDEX IF NOT EXISTS idx_marketing_cache_expires ON marketing_text_cache(e
 CREATE INDEX IF NOT EXISTS idx_quick_feedback_user_id ON quick_feedback(user_id);
 CREATE INDEX IF NOT EXISTS idx_quick_feedback_result_id ON quick_feedback(result_id);
 CREATE INDEX IF NOT EXISTS idx_quick_feedback_created_at ON quick_feedback(created_at);
+CREATE INDEX IF NOT EXISTS idx_user_credits_user_id ON user_credits(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_credits_anon_token ON user_credits(anon_token);
 
 -- RLS (Row Level Security) 정책 설정
 ALTER TABLE product_summaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE generated_contents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE marketing_text_cache ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quick_feedback ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_credits ENABLE ROW LEVEL SECURITY;
 
 -- 모든 사용자가 읽기/쓰기 가능하도록 설정 (MVP용)
 CREATE POLICY "Allow all operations on product_summaries" ON product_summaries
@@ -88,5 +106,9 @@ CREATE POLICY "Allow all operations on marketing_text_cache" ON marketing_text_c
 CREATE POLICY "Allow all operations on quick_feedback" ON quick_feedback
   FOR ALL USING (true);
 
+-- 크레딧 테이블 정책: 자신의 크레딧만 볼 수 있음 (익명 토큰 포함 로직은 서버사이드에서 처리하거나 별도 정책 필요)
+-- MVP에서는 간단하게 모든 작업 허용하되, 서버 사이드 로직으로 제어
+CREATE POLICY "Allow all operations on user_credits" ON user_credits
+  FOR ALL USING (true);  
 -- 만료된 캐시 자동 삭제는 애플리케이션 레벨에서 처리
 -- 또는 Supabase에서 pg_cron 확장을 활성화한 후 위의 cron.schedule 코드를 실행

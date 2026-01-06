@@ -23,3 +23,20 @@ export const TOTAL_STEPS = STEP_NAMES.length;
  * 생성할 최대 이미지 개수
  */
 export const MAX_IMAGES = 3;
+
+/**
+ * AI 기능별 비용 정의
+ */
+export const AI_COSTS = {
+  SUMMARY: 0, // 링크 분석
+  IMAGE_GENERATION: 2, // 이미지 3장 생성 (에디터 진입 시)
+  PROMOTION_TEXT: 0, // 홍보 문구 생성
+} as const;
+
+/**
+ * 초기 제공 크레딧 정의
+ */
+export const INITIAL_CREDITS = {
+  ANON: 3, // 비로그인 유저
+  MEMBER: 5, // 로그인 유저
+} as const;

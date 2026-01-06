@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,12 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!supabase) {
-      return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 500 }
-      );
-    }
+    const supabase = await createClient();
 
     // 간단 피드백 저장
     const { data, error } = await supabase

@@ -9,6 +9,11 @@ import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import ColorThief from 'colorthief';
 import { fonts, fontNames } from '@/lib/fonts';
+import LoginModal from '@/components/auth/LoginModal';
+import PaymentModal from '@/components/PaymentModal';
+import { fetchUserCredits, deductCredits } from '@/lib/api/credits';
+import { generateImage } from '@/lib/api/images';
+import { useCreditStore } from '@/lib/store';
 
 const minFont = 4;
 const maxFont = 36;
@@ -45,6 +50,8 @@ export default function EditorPage() {
     resetGeneratedImages,
     randomSeed, // 추가
   } = useFunnelStore();
+
+  const { credits, fetchCredits, updateCredits } = useCreditStore();
 
   // 1. 페이지 진입 시 첫 번째 이미지를 리스트에 추가 (중복 방지)
   useEffect(() => {
@@ -84,8 +91,13 @@ export default function EditorPage() {
       requestedIndicesRef.current.add(i);
     }
 
+    // 크레딧 스토어 갱신 (최신 상태 유지)
+    fetchCredits();
+
     // 생성해야 할 인덱스들을 파악하고 병렬 요청
-    const generateImagesParallel = () => {
+    const generateImagesParallel = async () => {
+      const promises: Promise<boolean>[] = [];
+
       for (let i = 1; i < MAX_IMAGES; i++) {
         // 이미 생성되었거나 요청 중이면 스킵
         if (requestedIndicesRef.current.has(i)) continue;
@@ -93,38 +105,55 @@ export default function EditorPage() {
         // 요청 시작 표시
         requestedIndicesRef.current.add(i);
 
-        // 개별 요청 함수 (비동기 실행)
-        const fetchImage = async (index: number) => {
+        // 개별 요청 함수 (Promise 반환)
+        const fetchImage = async (index: number): Promise<boolean> => {
           try {
-            const response = await fetch('/api/generate-image', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                summary,
-                styles,
-                variationIndex: index,
-                randomSeed,
-              }),
+            const data = await generateImage({
+              summary,
+              styles,
+              variationIndex: index,
+              randomSeed,
             });
 
-            if (response.ok) {
-              const data = await response.json();
-              addGeneratedImage({
-                url: data.imageUrl,
-                prompt: data.imagePrompt,
-              });
-            } else {
-              // 실패 시 재시도 가능하게 제거
-              requestedIndicesRef.current.delete(index);
-            }
-          } catch (error) {
+            addGeneratedImage({
+              url: data.imageUrl,
+              prompt: data.imagePrompt,
+            });
+            return true;
+          } catch (error: any) {
             console.error(`이미지 ${index} 생성 실패:`, error);
+
+            // 402 체크
+            if (error.status === 402) {
+              setShowLoginModal(true);
+            }
+
             requestedIndicesRef.current.delete(index);
+            return false;
           }
         };
 
-        // 비동기 호출 (await 안 함)
-        fetchImage(i);
+        promises.push(fetchImage(i));
+      }
+
+      // 요청한 이미지 생성 작업들이 있다면 완료 대기 후 크레딧 차감
+      if (promises.length > 0) {
+        const results = await Promise.all(promises);
+        const allSuccess = results.every((success) => success);
+
+        // 요청한 모든 이미지가 성공적으로 생성되었을 때만 크레딧 차감
+        if (allSuccess) {
+          try {
+            await deductCredits(undefined, 'IMAGE_GENERATION_BATCH');
+            // 크레딧 차감 후 스토어 업데이트
+            fetchCredits();
+          } catch (error: any) {
+            console.error('크레딧 차감 실패:', error);
+            if (error.status === 402) {
+              setShowLoginModal(true);
+            }
+          }
+        }
       }
     };
 
@@ -138,6 +167,78 @@ export default function EditorPage() {
     imagePrompt,
     randomSeed,
   ]);
+
+  // 추가 이미지 생성 핸들러
+  const handleGenerateMoreClick = async () => {
+    if (isGeneratingMore || !summary || !styles) return;
+    setIsGeneratingMore(true);
+
+    try {
+      // 1. 크레딧 및 유저 정보 확인
+      const { user } = await fetchUserCredits(); // user 정보만 필요
+
+      // 2. UI 분기 처리 (store의 credits 사용)
+      if (credits === null || credits < 1) {
+        if (user) {
+          setShowPaymentModal(true);
+        } else {
+          setShowLoginModal(true);
+        }
+        setIsGeneratingMore(false);
+        return;
+      }
+
+      // 3. 이미지 생성 요청
+      const startIdx = generatedImages.length;
+      const promises: Promise<boolean>[] = [];
+
+      for (let i = 0; i < 2; i++) {
+        const fetchImage = async (index: number): Promise<boolean> => {
+          try {
+            const data = await generateImage({
+              summary,
+              styles,
+              variationIndex: index,
+              randomSeed,
+            });
+
+            addGeneratedImage({
+              url: data.imageUrl,
+              prompt: data.imagePrompt,
+            });
+            return true;
+          } catch (error) {
+            console.error(`추가 이미지 생성 실패:`, error);
+            return false;
+          }
+        };
+
+        promises.push(fetchImage(startIdx + i));
+      }
+
+      const results = await Promise.all(promises);
+      const allSuccess = results.every((success) => success);
+
+      // 4. 성공 시 크레딧 차감
+      if (allSuccess) {
+        try {
+          await deductCredits(1, 'ADDITIONAL_IMAGE_GENERATION');
+          // 크레딧 차감 후 스토어 업데이트
+          fetchCredits();
+          trackEvent('generate_more_images_success', { count: 2 });
+        } catch (error) {
+          console.error('크레딧 차감 실패:', error);
+        }
+      } else {
+        alert('일부 이미지 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('오류 발생:', error);
+      alert('작업 중 오류가 발생했습니다.');
+    } finally {
+      setIsGeneratingMore(false);
+    }
+  };
 
   // 비율에 따른 에디터 컨테이너 크기 계산
   const getEditorContainerSize = useCallback(() => {
@@ -257,6 +358,9 @@ export default function EditorPage() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [isTextButtonMinimized, setIsTextButtonMinimized] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
 
   // 스냅 가이드라인 상태
   const [snapGuides, setSnapGuides] = useState({
@@ -1862,13 +1966,49 @@ export default function EditorPage() {
                         </button>
                       ))}
 
-                      {/* 로딩 스켈레톤 (3개가 안 찼으면 보여줌) */}
+                      {/* 로딩 스켈레톤 (3개가 안 찼으면 보여줌) - 자동 생성 중일 때만 */}
                       {generatedImages.length < MAX_IMAGES && (
                         <div className="w-24 h-32 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 shrink-0 animate-pulse">
                           <div className="text-xl mb-1">✨</div>
                           <span className="text-xs">생성 중...</span>
                         </div>
                       )}
+
+                      {/* 이미지 더 생성해보기 버튼 (항상 마지막에 표시) */}
+                      <button
+                        onClick={handleGenerateMoreClick}
+                        disabled={
+                          isGeneratingMore ||
+                          generatedImages.length < MAX_IMAGES
+                        }
+                        className={`w-24 h-32 rounded-lg bg-white border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-500 hover:border-blue-500 hover:text-blue-500 transition-colors shrink-0 ${
+                          isGeneratingMore ||
+                          generatedImages.length < MAX_IMAGES
+                            ? 'opacity-50 cursor-not-allowed'
+                            : ''
+                        }`}
+                      >
+                        {isGeneratingMore ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mb-2"></div>
+                            <span className="text-xs text-center px-1">
+                              생성 중...
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-xl mb-1">+</div>
+                            <span className="text-xs text-center px-1">
+                              이미지 더<br />
+                              생성하기
+                              <br />
+                              <span className="text-[10px] text-gray-400 font-normal">
+                                (1 크레딧)
+                              </span>
+                            </span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -2144,6 +2284,20 @@ export default function EditorPage() {
             </div>
           );
         })()}
+
+      <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
+      <PaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        onSuccess={() => {
+          // 충전 완료 시 스토어 업데이트 (낙관적 + 서버 동기화)
+          updateCredits((credits || 0) + 100);
+          fetchCredits();
+
+          // 만약 '추가 생성' 중에 모달이 떴다면 재시도 로직을 실행할 수도 있음
+          // 현재는 단순히 닫고 사용자가 다시 버튼을 누르게 함
+        }}
+      />
     </div>
   );
 }

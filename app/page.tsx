@@ -9,6 +9,9 @@ import { isValidUrl } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
+import LoginModal from '@/components/auth/LoginModal';
+import PaymentModal from '@/components/PaymentModal';
+import { useCreditStore } from '@/lib/store';
 
 const stepNames = [
   '링크 입력',
@@ -25,6 +28,10 @@ export default function HomePage() {
   const [inputUrl, setInputUrl] = useState(url);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  const { credits, fetchCredits, updateCredits } = useCreditStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +47,24 @@ export default function HomePage() {
       return;
     }
 
+    // 크레딧 확인 (0이면 모달 표시)
+    if (credits !== null && credits <= 0) {
+      setShowPaymentModal(true);
+      return;
+    }
+
+    await executeSubmit(inputUrl);
+  };
+
+  // 크레딧 조회 (store에서 관리하므로 여기서 useEffect로 호출할 필요 없음 - CreditDisplay에서 호출됨)
+  // 단, 페이지 진입 시 최신 상태 보장을 위해 호출해도 무방함
+  useEffect(() => {
+    fetchCredits();
+  }, [fetchCredits]);
+
+  const executeSubmit = async (targetUrl: string) => {
     setLoading(true);
-    setUrl(inputUrl);
+    setUrl(targetUrl);
 
     try {
       // API 호출하여 제품 요약 생성
@@ -55,6 +78,13 @@ export default function HomePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // 402 Payment Required: 크레딧 부족
+        if (response.status === 402) {
+          setShowLoginModal(true);
+          setLoading(false);
+          return;
+        }
 
         // 에러 타입별 처리
         if (response.status === 403 && errorData.error === 'BOT_BLOCKED') {
@@ -72,7 +102,7 @@ export default function HomePage() {
             )
           ) {
             // 재시도 로직
-            handleSubmit(e);
+            executeSubmit(targetUrl);
             return;
           }
           setError(errorData.message || '서버 오류가 발생했습니다.');
@@ -173,6 +203,27 @@ export default function HomePage() {
           <ScrollToTopButton />
         </div>
       </div>
+
+      <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
+      <PaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        description={
+          <div className="text-center">
+            🔒 무료 체험을 모두 사용했어요
+            <br />
+            크레딧을 충전하고 바로 시작해보세요!
+          </div>
+        }
+        onSuccess={() => {
+          // 충전 완료 간주 -> 크레딧 상태 업데이트 (낙관적 + 서버 동기화)
+          updateCredits((credits || 0) + 100);
+          fetchCredits();
+
+          // 분석 시작 (비동기 상태 업데이트 고려하여 setTimeout 사용)
+          setTimeout(() => executeSubmit(inputUrl), 0);
+        }}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { get, set, del } from 'idb-keyval';
 import { ProductCategory } from './categories/types';
+import { fetchUserCredits } from '@/lib/api/credits';
 
 // Custom storage object using IndexedDB
 const storage: StateStorage = {
@@ -105,6 +106,31 @@ interface FunnelState {
   setFinalImageUrl: (imageUrl: string) => void;
   reset: () => void;
 }
+
+// --- Credit Store ---
+interface CreditState {
+  credits: number | null;
+  loading: boolean;
+  fetchCredits: () => Promise<void>;
+  updateCredits: (newCredits: number) => void;
+}
+
+export const useCreditStore = create<CreditState>((set) => ({
+  credits: null,
+  loading: false,
+  fetchCredits: async () => {
+    set({ loading: true });
+    try {
+      const { credits } = await fetchUserCredits();
+      set({ credits });
+    } catch (error) {
+      console.error('Failed to fetch credits:', error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+  updateCredits: (newCredits) => set({ credits: newCredits }),
+}));
 
 export const useFunnelStore = create<FunnelState>()(
   persist(

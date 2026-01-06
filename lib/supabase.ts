@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // 환경 변수가 있을 때만 Supabase 클라이언트 생성
+// @deprecated Use createClient from '@/lib/supabase/client' or '@/lib/supabase/server' instead
 export const supabase =
   supabaseUrl && supabaseAnonKey
     ? createClient(supabaseUrl, supabaseAnonKey)
@@ -144,20 +146,23 @@ export interface Database {
 }
 
 // 캐시 조회 함수
-export async function getMarketingTextCache(cacheKey: string) {
-  if (!supabase) {
+export async function getMarketingTextCache(
+  cacheKey: string,
+  client?: SupabaseClient
+) {
+  const sb = client || supabase;
+  if (!sb) {
     throw new Error('Supabase client not initialized');
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('marketing_text_cache')
     .select('*')
     .eq('cache_key', cacheKey)
     .gt('expires_at', new Date().toISOString())
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== 'PGRST116') {
-    // PGRST116은 "no rows found" 에러
+  if (error) {
     throw error;
   }
 
@@ -165,22 +170,26 @@ export async function getMarketingTextCache(cacheKey: string) {
 }
 
 // 캐시 저장 함수
-export async function saveMarketingTextCache(cacheData: {
-  cache_key: string;
-  url: string;
-  concept_name: string;
-  simple: string;
-  unexpected: string;
-  concrete: string;
-  credible: string;
-  emotional: string;
-  story: string;
-}) {
-  if (!supabase) {
+export async function saveMarketingTextCache(
+  cacheData: {
+    cache_key: string;
+    url: string;
+    concept_name: string;
+    simple: string;
+    unexpected: string;
+    concrete: string;
+    credible: string;
+    emotional: string;
+    story: string;
+  },
+  client?: SupabaseClient
+) {
+  const sb = client || supabase;
+  if (!sb) {
     throw new Error('Supabase client not initialized');
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('marketing_text_cache')
     .upsert(cacheData, { onConflict: 'cache_key' })
     .select()

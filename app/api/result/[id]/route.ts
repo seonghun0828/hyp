@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
@@ -15,12 +15,7 @@ export async function GET(
       );
     }
 
-    if (!supabase) {
-      return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 500 }
-      );
-    }
+    const supabase = await createClient();
 
     // generated_contents 테이블에서 데이터 조회
     // product_summaries 테이블과 조인하여 summary 정보도 함께 가져옴

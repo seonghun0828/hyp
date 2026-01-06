@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { GoogleTagManager } from '@next/third-parties/google';
 import './globals.css';
 import { inter } from '@/lib/fonts';
+import CreditDisplay from '@/components/auth/CreditDisplay';
 
 export const metadata: Metadata = {
   title: {
@@ -18,8 +19,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased font-inter`}>
+    <body className={`${inter.variable} antialiased font-inter`}>
         <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID!} />
+        <CreditDisplay />
         {children}
       </body>
     </html>

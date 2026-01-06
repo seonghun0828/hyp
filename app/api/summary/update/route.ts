@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,12 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
 
-    if (!supabase) {
-      return NextResponse.json({
-        success: true,
-        message: 'Supabase not available, data saved to localStorage only',
-      });
-    }
+    const supabase = await createClient();
 
     try {
       // 기존 데이터가 있는지 확인
