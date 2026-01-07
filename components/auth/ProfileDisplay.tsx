@@ -73,7 +73,7 @@ export default function ProfileDisplay() {
               ) : (
                 <div className="flex flex-col gap-2">
                   <p className="text-sm font-medium text-gray-900">
-                    로그인 하시겠어요?
+                    첫 로그인이면 5크레딧 선물! 🎁
                   </p>
                   <button
                     onClick={handleGoogleLogin}
@@ -105,20 +105,22 @@ export default function ProfileDisplay() {
 
             <div className="h-px bg-gray-100 my-1" />
 
-            {/* Credit Recharge Button */}
-            <button
-              onClick={() => setShowPayment(true)}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between group"
-            >
-              <span className="text-sm font-medium text-gray-700">
-                크레딧 충전
-              </span>
-              <span className="text-lg group-hover:scale-110 transition-transform">
-                ⚡️
-              </span>
-            </button>
+            {/* Credit Recharge Button - Only for logged in users */}
+            {user && (
+              <button
+                onClick={() => setShowPayment(true)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between group"
+              >
+                <span className="text-sm font-medium text-gray-700">
+                  크레딧 충전
+                </span>
+                <span className="text-lg group-hover:scale-110 transition-transform">
+                  ⚡️
+                </span>
+              </button>
+            )}
 
-            {/* Remaining Credits Button */}
+            {/* Remaining Credits Button - For everyone */}
             <button
               onClick={() => setShowGuide(true)}
               className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between group"
@@ -147,9 +149,14 @@ export default function ProfileDisplay() {
         open={showGuide}
         onOpenChange={setShowGuide}
         currentCredits={credits}
+        isLoggedIn={!!user}
         onOpenRecharge={() => {
           setShowGuide(false);
-          setShowPayment(true);
+          if (user) {
+            setShowPayment(true);
+          } else {
+            handleGoogleLogin();
+          }
         }}
       />
     </>

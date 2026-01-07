@@ -15,6 +15,7 @@ interface CreditGuideModalProps {
   onOpenChange: (open: boolean) => void;
   currentCredits: number | null;
   onOpenRecharge: () => void;
+  isLoggedIn: boolean;
 }
 
 export default function CreditGuideModal({
@@ -22,6 +23,7 @@ export default function CreditGuideModal({
   onOpenChange,
   currentCredits,
   onOpenRecharge,
+  isLoggedIn,
 }: CreditGuideModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -95,7 +97,7 @@ export default function CreditGuideModal({
               onOpenRecharge();
             }}
           >
-            크레딧 충전하기
+            {isLoggedIn ? '크레딧 충전하기' : '로그인하고 5크레딧 선물 받기'}
           </Button>
         </DialogFooter>
       </DialogContent>
