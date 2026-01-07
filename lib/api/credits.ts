@@ -61,3 +61,22 @@ export async function deductCredits(amount: number | undefined, reason: string) 
 
   return await response.json();
 }
+
+/**
+ * 크레딧을 충전합니다.
+ * @param amount 충전할 크레딧 양
+ */
+export async function rechargeCredits(amount: number) {
+  const response = await fetch('/api/credits/recharge', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Credit recharge failed');
+  }
+
+  return await response.json();
+}
