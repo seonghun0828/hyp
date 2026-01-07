@@ -12,8 +12,7 @@ import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
 import { useCreditStore } from '@/lib/store';
-import { getCurrentUser } from '@/lib/auth';
-import { User } from '@supabase/supabase-js';
+import { useAuthStore } from '@/lib/auth-store';
 
 const stepNames = [
   '링크 입력',
@@ -32,13 +31,12 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuthStore();
 
   const { credits, fetchCredits, updateCredits } = useCreditStore();
 
   useEffect(() => {
     fetchCredits();
-    getCurrentUser().then(setUser);
   }, [fetchCredits]);
 
   const handleSubmit = async (e: React.FormEvent) => {

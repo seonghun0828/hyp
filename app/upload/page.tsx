@@ -10,6 +10,7 @@ import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
 import { useCreditStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/auth-store';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function UploadPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { credits, fetchCredits, updateCredits } = useCreditStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuthStore();
 
   // 크레딧 조회
   useEffect(() => {
@@ -539,6 +541,7 @@ export default function UploadPage() {
       <PaymentModal
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
+        isLoggedIn={!!user}
         description={
           <div className="text-center">
             생성된 이미지와 홍보 문구를 볼 수 있는

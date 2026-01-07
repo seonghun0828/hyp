@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFunnelStore, SuccessTexts } from '@/lib/store';
+import { useFunnelStore } from '@/lib/store';
 import { STEP_NAMES, TOTAL_STEPS, MAX_IMAGES } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
@@ -11,9 +11,10 @@ import ColorThief from 'colorthief';
 import { fonts, fontNames } from '@/lib/fonts';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
-import { fetchUserCredits, deductCredits } from '@/lib/api/credits';
+import { deductCredits } from '@/lib/api/credits';
 import { generateImage } from '@/lib/api/images';
 import { useCreditStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/auth-store';
 
 const minFont = 4;
 const maxFont = 36;
@@ -52,6 +53,7 @@ export default function EditorPage() {
   } = useFunnelStore();
 
   const { credits, fetchCredits, updateCredits } = useCreditStore();
+  const { user } = useAuthStore();
 
   // 1. 페이지 진입 시 첫 번째 이미지를 리스트에 추가 (중복 방지)
   useEffect(() => {
@@ -174,9 +176,6 @@ export default function EditorPage() {
     setIsGeneratingMore(true);
 
     try {
-      // 1. 크레딧 및 유저 정보 확인
-      const { user } = await fetchUserCredits(); // user 정보만 필요
-
       // 2. UI 분기 처리 (store의 credits 사용)
       if (credits === null || credits < 1) {
         if (user) {
@@ -2289,6 +2288,7 @@ export default function EditorPage() {
       <PaymentModal
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
+        isLoggedIn={!!user}
         onSuccess={() => {
           // 충전 완료 시 스토어 업데이트 (낙관적 + 서버 동기화)
           updateCredits((credits || 0) + 100);
