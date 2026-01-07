@@ -12,6 +12,8 @@ import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
 import { useCreditStore } from '@/lib/store';
+import { getCurrentUser } from '@/lib/auth';
+import { User } from '@supabase/supabase-js';
 
 const stepNames = [
   '링크 입력',
@@ -30,8 +32,14 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   const { credits, fetchCredits, updateCredits } = useCreditStore();
+
+  useEffect(() => {
+    fetchCredits();
+    getCurrentUser().then(setUser);
+  }, [fetchCredits]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,12 +63,6 @@ export default function HomePage() {
 
     await executeSubmit(inputUrl);
   };
-
-  // 크레딧 조회 (store에서 관리하므로 여기서 useEffect로 호출할 필요 없음 - CreditDisplay에서 호출됨)
-  // 단, 페이지 진입 시 최신 상태 보장을 위해 호출해도 무방함
-  useEffect(() => {
-    fetchCredits();
-  }, [fetchCredits]);
 
   const executeSubmit = async (targetUrl: string) => {
     setLoading(true);
@@ -208,13 +210,7 @@ export default function HomePage() {
       <PaymentModal
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
-        description={
-          <div className="text-center">
-            🔒 무료 체험을 모두 사용했어요
-            <br />
-            크레딧을 충전하고 바로 시작해보세요!
-          </div>
-        }
+        isLoggedIn={!!user}
         onSuccess={() => {
           // 충전 완료 간주 -> 크레딧 상태 업데이트 (낙관적 + 서버 동기화)
           updateCredits((credits || 0) + 100);

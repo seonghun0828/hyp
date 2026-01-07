@@ -72,9 +72,14 @@ export default function ProfileDisplay() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <p className="text-sm font-medium text-gray-900">
-                    첫 로그인이면 5크레딧 선물! 🎁
-                  </p>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-bold text-gray-900">
+                      첫 로그인 시 5크레딧 선물! 🎁
+                    </p>
+                    <p className="text-xs text-gray-500 font-normal">
+                      로그인하고 무료로 시작해보세요
+                    </p>
+                  </div>
                   <button
                     onClick={handleGoogleLogin}
                     className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
@@ -143,6 +148,7 @@ export default function ProfileDisplay() {
         open={showPayment}
         onOpenChange={setShowPayment}
         onSuccess={() => fetchCredits()}
+        isLoggedIn={!!user}
       />
 
       <CreditGuideModal
