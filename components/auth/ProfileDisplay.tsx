@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useCreditStore } from '@/lib/store';
-import { getCurrentUser, signInWithGoogle } from '@/lib/auth';
+import { useAuthStore } from '@/lib/auth-store';
+import { signInWithGoogle } from '@/lib/auth';
 import PaymentModal from '@/components/PaymentModal';
 import CreditGuideModal from '@/components/auth/CreditGuideModal';
-import { User } from '@supabase/supabase-js';
 import { usePathname } from 'next/navigation';
 
 export default function ProfileDisplay() {
-  const { credits, fetchCredits, loading } = useCreditStore();
-  const [user, setUser] = useState<User | null>(null);
+  const { credits, fetchCredits, loading: creditLoading } = useCreditStore();
+  const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -19,7 +19,6 @@ export default function ProfileDisplay() {
 
   useEffect(() => {
     fetchCredits();
-    getCurrentUser().then(setUser);
   }, [fetchCredits]);
 
   useEffect(() => {
@@ -46,7 +45,7 @@ export default function ProfileDisplay() {
     }
   };
 
-  if (loading && credits === null) return null;
+  if (creditLoading && credits === null) return null;
   // Even if credits are null (e.g. error), we might want to show the profile if user info is available?
   // But original code returned null. Let's stick to showing it unless critical failure, but original logic was strict.
   // Assuming credits default to 0 or something if fetched.

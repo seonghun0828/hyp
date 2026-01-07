@@ -3,6 +3,7 @@ import { GoogleTagManager } from '@next/third-parties/google';
 import './globals.css';
 import { inter } from '@/lib/fonts';
 import ProfileDisplay from '@/components/auth/ProfileDisplay';
+import AuthProvider from '@/components/auth/AuthProvider';
 
 export const metadata: Metadata = {
   title: {
@@ -21,8 +22,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} antialiased font-inter`}>
         <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID!} />
-        <ProfileDisplay />
-        {children}
+        <AuthProvider>
+          <ProfileDisplay />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
