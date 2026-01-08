@@ -33,6 +33,7 @@ export default function AspectRatioPage() {
   const router = useRouter();
   const { summary, styles, setAspectRatio } = useFunnelStore();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -56,6 +57,7 @@ export default function AspectRatioPage() {
   }, [summary, styles, router, isHydrated]);
 
   const handleSelect = (ratioId: string) => {
+    setSelectedId(ratioId);
     setAspectRatio(ratioId);
 
     trackEvent('style_select', {
@@ -110,7 +112,7 @@ export default function AspectRatioPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {aspectRatioOptions.map((option) => {
-              const isSelected = styles.aspectRatio === option.id;
+              const isSelected = selectedId === option.id;
               return (
                 <div
                   key={option.id}
@@ -149,7 +151,13 @@ export default function AspectRatioPage() {
           </div>
 
           <div className="mt-8 text-center">
-            <Button variant="ghost" onClick={() => router.back()}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelectedId(null);
+                router.back();
+              }}
+            >
               뒤로가기
             </Button>
           </div>

@@ -14,6 +14,7 @@ export default function ModelsPage() {
   const router = useRouter();
   const { summary, styles, setModel } = useFunnelStore();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -32,6 +33,7 @@ export default function ModelsPage() {
   }, [summary, styles, router, isHydrated]);
 
   const handleSelect = (optionId: string) => {
+    setSelectedId(optionId);
     setModel(optionId);
 
     trackEvent('style_select', {
@@ -86,12 +88,18 @@ export default function ModelsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {models.map((option) => (
-              <div
-                key={option.id}
-                onClick={() => handleSelect(option.id)}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer"
-              >
+            {models.map((option) => {
+              const isSelected = selectedId === option.id;
+              return (
+                <div
+                  key={option.id}
+                  onClick={() => handleSelect(option.id)}
+                  className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer border-2 ${
+                    isSelected
+                      ? 'border-blue-500 ring-2 ring-blue-300'
+                      : 'border-transparent'
+                  }`}
+                >
                 <div className="p-6">
                   <div className="aspect-video bg-gray-100 rounded-lg mb-4 relative overflow-hidden">
                     <Image
@@ -107,11 +115,18 @@ export default function ModelsPage() {
                   <p className="text-gray-600 text-sm">{option.description}</p>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
 
           <div className="mt-8 text-center">
-            <Button variant="ghost" onClick={() => router.back()}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelectedId(null);
+                router.back();
+              }}
+            >
               뒤로가기
             </Button>
           </div>
