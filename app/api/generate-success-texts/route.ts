@@ -13,7 +13,7 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { url, summary, styles } = await request.json();
+    const { url, summary, styles, locale = 'ko' } = await request.json();
 
     if (!url || !summary || !styles) {
       return NextResponse.json(
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // 캐시 키 생성: url_스타일조합
-    const cacheKey = `${url}_${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}`;
+    // 캐시 키 생성: url_스타일조합_locale
+    const cacheKey = `${url}_${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}_${locale}`;
 
     // 1. 캐시 조회
     try {
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: getSuccessTextSystemPrompt(principle),
+            content: getSuccessTextSystemPrompt(principle, locale),
           },
           {
             role: 'user',
@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
         credible: finalTexts.credible,
         emotional: finalTexts.emotional,
         story: finalTexts.story,
+        locale: locale,
       }, supabase);
     } catch (error) {
       // 캐시 저장 실패해도 결과는 반환

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCreditStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
 import { signInWithGoogle } from '@/lib/auth';
@@ -16,6 +17,7 @@ export default function ProfileDisplay() {
   const [showGuide, setShowGuide] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const t = useTranslations('auth');
 
   useEffect(() => {
     fetchCredits();
@@ -46,9 +48,6 @@ export default function ProfileDisplay() {
   };
 
   if (creditLoading && credits === null) return null;
-  // Even if credits are null (e.g. error), we might want to show the profile if user info is available?
-  // But original code returned null. Let's stick to showing it unless critical failure, but original logic was strict.
-  // Assuming credits default to 0 or something if fetched.
 
   return (
     <>
@@ -66,17 +65,17 @@ export default function ProfileDisplay() {
             <div className="px-4 py-2">
               {user ? (
                 <div className="text-sm">
-                  <p className="text-gray-500 text-xs mb-1">로그인된 계정</p>
+                  <p className="text-gray-500 text-xs mb-1">{t('loggedInAs')}</p>
                   <p className="font-medium truncate">{user.email}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col gap-0.5">
                     <p className="text-sm font-bold text-gray-900">
-                      첫 로그인 시 5크레딧 선물! 🎁
+                      {t('firstLoginGift')}
                     </p>
                     <p className="text-xs text-gray-500 font-normal">
-                      로그인하고 무료로 시작해보세요
+                      {t('loginPrompt') || 'Log in and start for free'}
                     </p>
                   </div>
                   <button
@@ -101,7 +100,7 @@ export default function ProfileDisplay() {
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                       />
                     </svg>
-                    Google로 시작하기
+                    {t('googleLogin')}
                   </button>
                 </div>
               )}
@@ -116,7 +115,7 @@ export default function ProfileDisplay() {
                 className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between group"
               >
                 <span className="text-sm font-medium text-gray-700">
-                  크레딧 충전
+                  {t('recharge')}
                 </span>
                 <span className="text-lg group-hover:scale-110 transition-transform">
                   ⚡️
@@ -130,7 +129,7 @@ export default function ProfileDisplay() {
               className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between group"
             >
               <span className="text-sm font-medium text-gray-700">
-                남은 크레딧
+                {t('remainingCredits')}
               </span>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm">🪙</span>

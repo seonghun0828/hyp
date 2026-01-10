@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface CreditGuideModalProps {
   open: boolean;
@@ -25,17 +26,19 @@ export default function CreditGuideModal({
   onOpenRecharge,
   isLoggedIn,
 }: CreditGuideModalProps) {
+  const t = useTranslations('creditGuide');
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>크레딧 안내</DialogTitle>
+          <DialogTitle>{t('title')}</DialogTitle>
         </DialogHeader>
 
         <div className="py-4 space-y-6">
           {/* Current Credits */}
           <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-lg">
-            <span className="text-sm text-gray-500 mb-1">현재 보유 크레딧</span>
+            <span className="text-sm text-gray-500 mb-1">{t('currentCredits')}</span>
             <div className="text-3xl font-bold text-primary flex items-center gap-2">
               <span>🪙</span>
               <span>{currentCredits?.toLocaleString() ?? 0}</span>
@@ -44,45 +47,43 @@ export default function CreditGuideModal({
 
           {/* Accordions */}
           <div className="space-y-2">
-            <AccordionItem title="크레딧이 무엇인가요?">
+            <AccordionItem title={t('whatIsCredit.title')}>
               <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
-                <p>
-                  제품 분석부터 이미지 생성, 홍보 문구 추천까지
+                <p className="whitespace-pre-line">
+                  {t('whatIsCredit.content1')}
                   <br />
                   <span className="font-semibold text-gray-900">
-                    {' '}
-                    한 번의 전체 과정을 완료하는 데 2 크레딧
+                    {t('whatIsCredit.highlight1')}
                   </span>
-                  이 사용됩니다.
+                  {t('whatIsCredit.content1End')}
                   <br />
-                  (기본 이미지 + 추가 이미지 2장 포함)
+                  {t('whatIsCredit.note')}
                 </p>
-                <p>
-                  더 많은 이미지를 보고 싶다면
+                <p className="whitespace-pre-line">
+                  {t('whatIsCredit.content2')}
                   <br />
                   <span className="font-semibold text-gray-900">
-                    {' '}
-                    1 크레딧으로 2장의 추가 이미지
+                    {t('whatIsCredit.highlight2')}
                   </span>
-                  를 생성할 수 있습니다.
+                  {t('whatIsCredit.content2End')}
                 </p>
               </div>
             </AccordionItem>
 
-            <AccordionItem title="크레딧을 어떻게 충전하나요?">
+            <AccordionItem title={t('howToRecharge.title')}>
               <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
-                <p>
-                  처음 방문하시면{' '}
+                <p className="whitespace-pre-line">
+                  {t('howToRecharge.content1')}{' '}
                   <span className="font-semibold text-gray-900">
-                    체험용 3 크레딧
+                    {t('howToRecharge.highlight1')}
                   </span>
-                  을 드리고,
+                  {t('howToRecharge.content1End')}
                   <br />
-                  로그인하시면{' '}
-                  <span className="font-semibold text-gray-900">5 크레딧</span>
-                  을 추가로 드려요!
+                  {t('howToRecharge.content2')}{' '}
+                  <span className="font-semibold text-gray-900">{t('howToRecharge.highlight2')}</span>
+                  {t('howToRecharge.content2End')}
                 </p>
-                <p>모두 사용하셨다면 충전하여 계속 이용하실 수 있습니다.</p>
+                <p>{t('howToRecharge.content3')}</p>
               </div>
             </AccordionItem>
           </div>
@@ -97,7 +98,7 @@ export default function CreditGuideModal({
               onOpenRecharge();
             }}
           >
-            {isLoggedIn ? '크레딧 충전하기' : '로그인하고 5크레딧 선물 받기'}
+            {isLoggedIn ? t('rechargeButton') : t('loginButton')}
           </Button>
         </DialogFooter>
       </DialogContent>

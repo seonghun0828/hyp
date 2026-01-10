@@ -2,19 +2,27 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { useFunnelStore } from '@/lib/store';
-import { toneMoods, getStyleCategoryById } from '@/lib/styles';
-import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
+import { toneMoods } from '@/lib/styles';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
-import Image from 'next/image';
 
-export default function TonesMoodsPage() {
+export default function ToneMoodsPage() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('styles.tones');
+  const tStyles = useTranslations('styles');
+  const tSteps = useTranslations('steps');
+  const tCommon = useTranslations('common');
+  
   const { summary, styles, setToneMood } = useFunnelStore();
   const [isHydrated, setIsHydrated] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const stepNames = [tSteps('linkInput'), tSteps('productSummary'), tSteps('messageType'), tSteps('imageUpload'), tSteps('editor'), tSteps('result')];
 
   useEffect(() => {
     setIsHydrated(true);
@@ -23,14 +31,14 @@ export default function TonesMoodsPage() {
   useEffect(() => {
     if (!isHydrated) return;
     if (!summary) {
-      router.push('/');
+      router.push(`/${locale}`);
       return;
     }
     if (!styles?.messageType || !styles?.visualStyle) {
-      router.push('/styles/messages');
+      router.push(`/${locale}/styles/expressions`);
       return;
     }
-  }, [summary, styles, router, isHydrated]);
+  }, [summary, styles, router, isHydrated, locale]);
 
   const handleSelect = (optionId: string) => {
     setSelectedId(optionId);
@@ -39,11 +47,12 @@ export default function TonesMoodsPage() {
     trackEvent('style_select', {
       step: 5,
       page: 'tones-moods',
-      category: 'tones-moods',
+      category: 'tones',
       option_id: optionId,
+      locale,
     });
 
-    router.push('/styles/models');
+    router.push(`/${locale}/styles/models`);
   };
 
   if (!isHydrated) {
@@ -51,7 +60,7 @@ export default function TonesMoodsPage() {
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+          <p className="text-gray-600">{tCommon('loading')}</p>
         </div>
       </div>
     );
@@ -61,30 +70,26 @@ export default function TonesMoodsPage() {
     return null;
   }
 
-  const category = getStyleCategoryById('tones-moods');
-
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <ProgressBar
-        currentStep={5}
-        totalSteps={TOTAL_STEPS}
-        stepNames={STEP_NAMES}
-      />
+      <ProgressBar currentStep={5} totalSteps={6} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 pb-12 md:py-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {category?.name} 선택
+              {t('title')} {tStyles('selectTitle')}
             </h1>
-            <p className="text-gray-600">
-              원하는 결과물에 비슷한 스타일을 선택해주세요
-            </p>
+            <p className="text-gray-600">{tStyles('selectDescription')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {toneMoods.map((option) => {
               const isSelected = selectedId === option.id;
+              // bright-cheerful -> brightCheerful (카멜케이스 변환)
+              const optionKey = option.id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+              const label = optionKey.charAt(0).toUpperCase() + optionKey.slice(1);
+              
               return (
                 <div
                   key={option.id}
@@ -95,35 +100,29 @@ export default function TonesMoodsPage() {
                       : 'border-transparent'
                   }`}
                 >
-                <div className="p-6">
-                  <div className="aspect-video bg-gray-100 rounded-lg mb-4 relative overflow-hidden">
-                    <Image
-                      src={option.src}
-                      alt={option.label}
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="p-6">
+                    <div className="aspect-video bg-gray-100 rounded-lg mb-4 relative overflow-hidden">
+                      <Image
+                        src={option.src}
+                        alt={t(optionKey as any) || label}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      {t(optionKey as any) || label}
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      {t(`${optionKey}Desc` as any) || option.aiPrompt}
+                    </p>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {option.label}
-                  </h3>
-                  <p className="text-gray-600 text-sm">{option.description}</p>
                 </div>
-              </div>
-            );
+              );
             })}
           </div>
 
           <div className="mt-8 text-center">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSelectedId(null);
-                router.back();
-              }}
-            >
-              뒤로가기
-            </Button>
+            <Button variant="ghost" onClick={() => router.back()}>{tCommon('back')}</Button>
           </div>
         </div>
       </div>
