@@ -20,7 +20,18 @@ export default function AspectRatioPage() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const stepNames = [tSteps('linkInput'), tSteps('productSummary'), tSteps('messageType'), tSteps('imageUpload'), tSteps('editor'), tSteps('result')];
+  const stepNames = [
+    tSteps('linkInput'),
+    tSteps('productSummary'),
+    tSteps('messageType'),
+    tSteps('expressionStyle'),
+    tSteps('toneMood'),
+    tSteps('modelComposition'),
+    tSteps('aspectRatio'),
+    tSteps('imageUpload'),
+    tSteps('editor'),
+    tSteps('result'),
+  ];
 
   const aspectRatioOptions = [
     {
@@ -102,7 +113,7 @@ export default function AspectRatioPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <ProgressBar currentStep={7} totalSteps={6} stepNames={stepNames} />
+      <ProgressBar currentStep={7} totalSteps={10} stepNames={stepNames} />
 
       <div className="container mx-auto px-4 pb-12 md:py-12">
         <div className="max-w-4xl mx-auto">

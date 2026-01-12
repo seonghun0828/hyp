@@ -33,6 +33,10 @@ export default function SummaryPage() {
     tSteps('linkInput'),
     tSteps('productSummary'),
     tSteps('messageType'),
+    tSteps('expressionStyle'),
+    tSteps('toneMood'),
+    tSteps('modelComposition'),
+    tSteps('aspectRatio'),
     tSteps('imageUpload'),
     tSteps('editor'),
     tSteps('result'),
@@ -123,7 +127,7 @@ export default function SummaryPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <ProgressBar
         currentStep={2}
-        totalSteps={6}
+        totalSteps={10}
         stepNames={stepNames}
       />
 

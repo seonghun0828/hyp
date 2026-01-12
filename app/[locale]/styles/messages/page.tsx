@@ -26,6 +26,10 @@ export default function MessagesPage() {
     tSteps('linkInput'),
     tSteps('productSummary'),
     tSteps('messageType'),
+    tSteps('expressionStyle'),
+    tSteps('toneMood'),
+    tSteps('modelComposition'),
+    tSteps('aspectRatio'),
     tSteps('imageUpload'),
     tSteps('editor'),
     tSteps('result'),
@@ -77,7 +81,7 @@ export default function MessagesPage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
         currentStep={3}
-        totalSteps={6}
+        totalSteps={10}
         stepNames={stepNames}
       />
 

@@ -65,6 +65,10 @@ export default function EditorPage() {
     tSteps('linkInput'),
     tSteps('productSummary'),
     tSteps('messageType'),
+    tSteps('expressionStyle'),
+    tSteps('toneMood'),
+    tSteps('modelComposition'),
+    tSteps('aspectRatio'),
     tSteps('imageUpload'),
     tSteps('editor'),
     tSteps('result'),
@@ -1371,8 +1375,8 @@ export default function EditorPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
-        currentStep={5}
-        totalSteps={6}
+        currentStep={9}
+        totalSteps={10}
         stepNames={stepNames}
       />
 
