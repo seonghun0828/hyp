@@ -4,12 +4,14 @@ interface ProgressBarProps {
   currentStep: number;
   totalSteps: number;
   stepNames: string[];
+  onStepClick?: (stepIndex: number) => void;
 }
 
 export default function ProgressBar({
   currentStep,
   totalSteps,
   stepNames,
+  onStepClick,
 }: ProgressBarProps) {
   const progress = (currentStep / totalSteps) * 100;
   const isFirstStep = currentStep === 1;
@@ -25,20 +27,44 @@ export default function ProgressBar({
         {/* 텍스트 라벨 - 첫 단계에서는 숨김, 모바일에서도 숨김 */}
         {!isFirstStep && (
           <div className="hidden md:flex justify-between items-center mb-2">
-            {stepNames.map((name, index) => (
-              <div
-                key={index}
-                className={`text-sm font-medium ${
-                  index < currentStep
-                    ? 'text-blue-600'
-                    : index === currentStep - 1
-                    ? 'text-blue-600'
-                    : 'text-gray-400'
-                }`}
-              >
-                {name}
-              </div>
-            ))}
+            {stepNames.map((name, index) => {
+              const stepNumber = index + 1;
+              const isClickable = onStepClick && stepNumber <= currentStep;
+              const isCurrentStep = stepNumber === currentStep;
+              
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => {
+                    if (isClickable && onStepClick) {
+                      onStepClick(stepNumber);
+                    }
+                  }}
+                  disabled={!isClickable}
+                  className={`text-sm font-medium transition-colors ${
+                    index < currentStep
+                      ? 'text-blue-600'
+                      : index === currentStep - 1
+                      ? 'text-blue-600'
+                      : 'text-gray-400'
+                  } ${
+                    isClickable
+                      ? 'cursor-pointer hover:text-blue-800 hover:underline'
+                      : 'cursor-default'
+                  } ${
+                    isCurrentStep ? 'font-bold' : ''
+                  }`}
+                  title={
+                    isClickable
+                      ? `Go to step ${stepNumber}: ${name}`
+                      : undefined
+                  }
+                >
+                  {name}
+                </button>
+              );
+            })}
           </div>
         )}
 

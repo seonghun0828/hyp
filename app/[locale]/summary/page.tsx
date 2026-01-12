@@ -119,6 +119,26 @@ export default function SummaryPage() {
     }
   };
 
+  const handleStepClick = (stepNumber: number) => {
+    const stepRoutes: Record<number, string> = {
+      1: `/${locale}`,
+      2: `/${locale}/summary`,
+      3: `/${locale}/styles/messages`,
+      4: `/${locale}/styles/expressions`,
+      5: `/${locale}/styles/tones-moods`,
+      6: `/${locale}/styles/models`,
+      7: `/${locale}/styles/aspect-ratio`,
+      8: `/${locale}/upload`,
+      9: `/${locale}/editor`,
+      10: `/${locale}/result`,
+    };
+    
+    const route = stepRoutes[stepNumber];
+    if (route && route !== window.location.pathname) {
+      router.push(route);
+    }
+  };
+
   if (!url) {
     return null;
   }
@@ -129,6 +149,7 @@ export default function SummaryPage() {
         currentStep={2}
         totalSteps={10}
         stepNames={stepNames}
+        onStepClick={handleStepClick}
       />
 
       <div className="container mx-auto px-4 pb-12 md:py-12">
