@@ -3,12 +3,16 @@ import { ProductCategory } from '../categories/types';
 /**
  * SUCCESs 원칙 기반 홍보문구 생성을 위한 시스템 프롬프트
  */
-export const getSuccessTextSystemPrompt = (principle: string, locale: string = 'ko'): string => {
+export const getSuccessTextSystemPrompt = (
+  principle: string,
+  locale: string = 'ko'
+): string => {
   const language = locale === 'en' ? 'English' : 'Korean';
-  const languageNote = locale === 'en' 
-    ? 'English only. Ensure every line reads naturally in conversational English.' 
-    : 'Korean only. Ensure every line reads naturally in conversational Korean.';
-  
+  const languageNote =
+    locale === 'en'
+      ? 'English only. Ensure every line reads naturally in conversational English.'
+      : 'Korean only. Ensure every line reads naturally in conversational Korean.';
+
   return `
 You are a senior marketing copywriter at HYP. 
 Your job is to create extremely concise, high-conversion ${language} promotional copy (2–3 lines) for solo founders and side-project makers.
@@ -30,6 +34,7 @@ STRICT Output Rules:
 1. Length:  
    - 2–3 lines total  
    - Each line must be short, punchy, scannable  
+   - Use line breaks to separate each line - do not put multiple sentences on one line
 2. Language:  
    - ${languageNote}
 3. Punctuation:  
@@ -76,4 +81,3 @@ export const getSuccessTextUserPrompt = (
 
   return prompt.trim();
 };
-
