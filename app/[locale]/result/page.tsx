@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useFunnelStore } from '@/lib/store';
-import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { generateFileName, getOrCreateSessionId } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
@@ -13,6 +13,11 @@ import { PromotionPrompt } from '@/components/PromotionPrompt';
 
 export default function ResultPage() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('result');
+  const tSteps = useTranslations('steps');
+  const tCommon = useTranslations('common');
+  
   const {
     summary,
     reset,
@@ -21,6 +26,19 @@ export default function ResultPage() {
     setImagePrompt,
     setFinalImageUrl: setStoreFinalImageUrl,
   } = useFunnelStore();
+  
+  const stepNames = [
+    tSteps('linkInput'),
+    tSteps('productSummary'),
+    tSteps('messageType'),
+    tSteps('expressionStyle'),
+    tSteps('toneMood'),
+    tSteps('modelComposition'),
+    tSteps('aspectRatio'),
+    tSteps('imageUpload'),
+    tSteps('editor'),
+    tSteps('result'),
+  ];
   const [downloading, setDownloading] = useState(false);
   const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -200,7 +218,7 @@ export default function ResultPage() {
     try {
       const response = await fetch(finalImageUrl);
       if (!response.ok)
-        throw new Error(`이미지 다운로드 실패: ${response.status}`);
+        throw new Error(t('errorDownloadFailed', { status: response.status }));
       const blob = await response.blob();
       const fileName = generateFileName(summary.title || summary.core_value);
 
@@ -214,7 +232,7 @@ export default function ResultPage() {
 
         // 파일 공유가 가능한지 한 번 더 체크
         if (navigator.canShare({ files: [file] })) {
-          alert('이미지 저장 버튼을 눌러 이미지를 저장하세요.');
+          alert(t('iosShareHint'));
           try {
             await navigator.share({
               files: [file],
@@ -224,9 +242,7 @@ export default function ResultPage() {
           } catch (shareError) {
             // 사용자가 공유 창을 닫거나 취소한 경우 (AbortError)는 조용히 무시
             if ((shareError as Error).name !== 'AbortError') {
-              alert(
-                '파일로 다운로드 합니다. 다운 받은 이미지는 파일 탐색기에서 확인할 수 있습니다.'
-              );
+              alert(t('iosShareFallback'));
               console.error('공유 실패, 다운로드로 전환합니다:', shareError);
               // 공유 실패 시 아래의 다운로드 로직으로 진행
             } else {
@@ -293,7 +309,7 @@ export default function ResultPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">
-            {isLoadingResult ? '결과를 불러오는 중...' : '로딩 중...'}
+            {isLoadingResult ? t('loadingResult') : tCommon('loading')}
           </p>
         </div>
       </div>
@@ -305,28 +321,49 @@ export default function ResultPage() {
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">이미지를 불러오는 중...</p>
+          <p className="text-gray-600">{t('loadingImage')}</p>
         </div>
       </div>
     );
   }
 
+  const handleStepClick = (stepNumber: number) => {
+    const stepRoutes: Record<number, string> = {
+      1: `/${locale}`,
+      2: `/${locale}/summary`,
+      3: `/${locale}/styles/messages`,
+      4: `/${locale}/styles/expressions`,
+      5: `/${locale}/styles/tones-moods`,
+      6: `/${locale}/styles/models`,
+      7: `/${locale}/styles/aspect-ratio`,
+      8: `/${locale}/upload`,
+      9: `/${locale}/editor`,
+      10: `/${locale}/result`,
+    };
+    
+    const route = stepRoutes[stepNumber];
+    if (route && route !== window.location.pathname) {
+      router.push(route);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
         currentStep={10}
-        totalSteps={TOTAL_STEPS}
-        stepNames={STEP_NAMES}
+        totalSteps={10}
+        stepNames={stepNames}
+        onStepClick={handleStepClick}
       />
 
       <div className="container mx-auto px-4 pb-12 md:py-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              🎉 홍보 콘텐츠 완성
+              {t('completionTitle')}
             </h1>
             <p className="text-gray-600">
-              AI와 함께 만든 멋진 작품이 완성됐습니다!
+              {t('completionDescription')}
             </p>
           </div>
 
@@ -336,7 +373,7 @@ export default function ResultPage() {
               <div className="flex justify-center items-center mb-6">
                 <img
                   src={finalImageUrl}
-                  alt="완성된 홍보 콘텐츠"
+                  alt={t('completedImageAlt')}
                   className="rounded-lg shadow-md mx-auto"
                 />
               </div>
@@ -345,7 +382,7 @@ export default function ResultPage() {
               {!hasQuickFeedback && (
                 <div className="mb-6 text-center">
                   <p className="text-lg font-medium text-gray-700 mb-4">
-                    이 결과, 어땠나요?
+                    {t('feedbackQuestion')}
                   </p>
                   <div className="flex justify-center gap-4">
                     <button
@@ -354,7 +391,7 @@ export default function ResultPage() {
                     >
                       <span className="text-2xl">👍</span>
                       <span className="text-sm font-medium text-gray-700">
-                        좋았어요
+                        {t('feedbackGood')}
                       </span>
                     </button>
                     <button
@@ -363,7 +400,7 @@ export default function ResultPage() {
                     >
                       <span className="text-2xl">🤔</span>
                       <span className="text-sm font-medium text-gray-700">
-                        보통이에요
+                        {t('feedbackNeutral')}
                       </span>
                     </button>
                     <button
@@ -372,7 +409,7 @@ export default function ResultPage() {
                     >
                       <span className="text-2xl">👎</span>
                       <span className="text-sm font-medium text-gray-700">
-                        별로예요
+                        {t('feedbackBad')}
                       </span>
                     </button>
                   </div>
@@ -387,7 +424,7 @@ export default function ResultPage() {
                   size="lg"
                   className="flex-1 sm:flex-none"
                 >
-                  {downloading ? '다운로드 중...' : 'PNG 다운로드'}
+                  {downloading ? t('downloading') : t('downloadButton')}
                 </Button>
 
                 <Button
@@ -396,7 +433,7 @@ export default function ResultPage() {
                   size="lg"
                   className="flex-1 sm:flex-none"
                 >
-                  새로 만들기
+                  {t('createNew')}
                 </Button>
               </div>
             </div>
@@ -405,10 +442,8 @@ export default function ResultPage() {
           {/* 추가 정보 */}
           <div className="mt-8 text-center">
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <p className="text-gray-600 text-sm">
-                이 콘텐츠는 HYP(Highlight Your Product)로 생성되었습니다.
-                <br />
-                SNS나 마케팅에 자유롭게 활용하세요!
+              <p className="text-gray-600 text-sm whitespace-pre-line">
+                {t('contentFooter')}
               </p>
             </div>
           </div>

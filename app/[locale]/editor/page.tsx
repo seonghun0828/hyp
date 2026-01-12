@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useFunnelStore } from '@/lib/store';
-import { STEP_NAMES, TOTAL_STEPS, MAX_IMAGES } from '@/lib/constants';
+import { MAX_IMAGES } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
@@ -35,6 +36,11 @@ interface TextElement {
 
 export default function EditorPage() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('editor');
+  const tSteps = useTranslations('steps');
+  const tCommon = useTranslations('common');
+
   const {
     summary,
     styles,
@@ -49,11 +55,24 @@ export default function EditorPage() {
     setImagePrompt,
     hasHydrated,
     resetGeneratedImages,
-    randomSeed, // 추가
+    randomSeed,
   } = useFunnelStore();
 
   const { credits, fetchCredits, updateCredits } = useCreditStore();
   const { user } = useAuthStore();
+
+  const stepNames = [
+    tSteps('linkInput'),
+    tSteps('productSummary'),
+    tSteps('messageType'),
+    tSteps('expressionStyle'),
+    tSteps('toneMood'),
+    tSteps('modelComposition'),
+    tSteps('aspectRatio'),
+    tSteps('imageUpload'),
+    tSteps('editor'),
+    tSteps('result'),
+  ];
 
   // 1. 페이지 진입 시 첫 번째 이미지를 리스트에 추가 (중복 방지)
   useEffect(() => {
@@ -115,6 +134,7 @@ export default function EditorPage() {
               styles,
               variationIndex: index,
               randomSeed,
+              locale,
             });
 
             addGeneratedImage({
@@ -199,6 +219,7 @@ export default function EditorPage() {
               styles,
               variationIndex: index,
               randomSeed,
+              locale,
             });
 
             addGeneratedImage({
@@ -207,7 +228,7 @@ export default function EditorPage() {
             });
             return true;
           } catch (error) {
-            console.error(`추가 이미지 생성 실패:`, error);
+            console.error(t('errorAdditionalImageFailed'), error);
             return false;
           }
         };
@@ -229,11 +250,11 @@ export default function EditorPage() {
           console.error('크레딧 차감 실패:', error);
         }
       } else {
-        alert('일부 이미지 생성에 실패했습니다.');
+        alert(t('errorSomeImagesFailed'));
       }
     } catch (error) {
       console.error('오류 발생:', error);
-      alert('작업 중 오류가 발생했습니다.');
+      alert(t('errorDuringWork'));
     } finally {
       setIsGeneratingMore(false);
     }
@@ -442,42 +463,30 @@ export default function EditorPage() {
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
 
-  // SUCCESs 원칙 정의 (한글)
+  // SUCCESs 원칙 정의
   const principles = [
     {
       key: 'simple',
-      label: '단순성',
-      desc: '메시지를 한눈에 이해할 수 있게 핵심만 전달해요.',
       color: 'bg-blue-500',
     },
     {
       key: 'unexpected',
-      label: '의외성',
-      desc: '예상 밖의 전개로 주목을 끌어요.',
       color: 'bg-purple-500',
     },
     {
       key: 'concrete',
-      label: '구체성',
-      desc: '생생한 사실과 사례로 보여줘요.',
       color: 'bg-green-500',
     },
     {
       key: 'credible',
-      label: '신뢰성',
-      desc: '근거와 데이터로 믿음을 줘요.',
       color: 'bg-orange-500',
     },
     {
       key: 'emotional',
-      label: '감성',
-      desc: '사람의 마음을 움직이는 감정을 담아요.',
       color: 'bg-pink-500',
     },
     {
       key: 'story',
-      label: '스토리',
-      desc: '이야기로 제품의 가치를 자연스럽게 전달해요.',
       color: 'bg-indigo-500',
     },
   ] as const;
@@ -1306,7 +1315,7 @@ export default function EditorPage() {
       });
 
       if (!saveResponse.ok) {
-        throw new Error('콘텐츠 저장에 실패했습니다.');
+        throw new Error(t('errorSaveFailed'));
       }
 
       const saveData = await saveResponse.json();
@@ -1326,14 +1335,10 @@ export default function EditorPage() {
       });
 
       // 결과 페이지로 이동 (URL 쿼리 파라미터에 result-id 추가)
-      router.push(`/result?result-id=${contentId}`);
+      router.push(`/${locale}/result?result-id=${contentId}`);
     } catch (error) {
       console.error('Save error:', error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : '저장 중 오류가 발생했습니다. 다시 시도해주세요.'
-      );
+      alert(error instanceof Error ? error.message : t('errorSave'));
     } finally {
       setLoading(false);
     }
@@ -1345,7 +1350,7 @@ export default function EditorPage() {
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+          <p className="text-gray-600">{tCommon('loading')}</p>
         </div>
       </div>
     );
@@ -1367,15 +1372,34 @@ export default function EditorPage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
         currentStep={9}
-        totalSteps={TOTAL_STEPS}
-        stepNames={STEP_NAMES}
+        totalSteps={10}
+        stepNames={stepNames}
+        onStepClick={(stepNumber: number) => {
+          const stepRoutes: Record<number, string> = {
+            1: `/${locale}`,
+            2: `/${locale}/summary`,
+            3: `/${locale}/styles/messages`,
+            4: `/${locale}/styles/expressions`,
+            5: `/${locale}/styles/tones-moods`,
+            6: `/${locale}/styles/models`,
+            7: `/${locale}/styles/aspect-ratio`,
+            8: `/${locale}/upload`,
+            9: `/${locale}/editor`,
+            10: `/${locale}/result`,
+          };
+
+          const route = stepRoutes[stepNumber];
+          if (route && route !== window.location.pathname) {
+            router.push(route);
+          }
+        }}
       />
 
       <div className="container mx-auto px-4 pb-8 md:py-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              콘텐츠 에디터
+              {t('title')}
             </h1>
           </div>
 
@@ -1384,7 +1408,7 @@ export default function EditorPage() {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  홍보 문구 스타일
+                  {t('promotionalTextStyle')}
                 </h3>
 
                 {/* 현재 원칙 표시 */}
@@ -1397,10 +1421,14 @@ export default function EditorPage() {
                         ></div>
                         <div>
                           <p className="text-sm font-medium">
-                            {currentPrinciple?.label}
+                            {currentPrinciple?.key
+                              ? t(`principles.${currentPrinciple.key}.label`)
+                              : ''}
                           </p>
                           <p className="text-xs text-gray-600">
-                            {currentPrinciple?.desc}
+                            {currentPrinciple?.key
+                              ? t(`principles.${currentPrinciple.key}.desc`)
+                              : ''}
                           </p>
                         </div>
                       </div>
@@ -1417,7 +1445,7 @@ export default function EditorPage() {
                             : 'bg-gray-50 text-gray-400 cursor-not-allowed'
                         }`}
                       >
-                        ← 이전
+                        {t('previous')}
                       </button>
 
                       <div className="text-xs text-gray-500 flex items-center">
@@ -1435,7 +1463,7 @@ export default function EditorPage() {
                             : 'bg-gray-50 text-gray-400 cursor-not-allowed'
                         }`}
                       >
-                        다음 →
+                        {t('next')}
                       </button>
                     </div>
                   </div>
@@ -1443,10 +1471,10 @@ export default function EditorPage() {
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                     <p className="text-gray-600 text-sm">
-                      문구를 생성하고 있습니다...
+                      {t('generatingTexts')}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      {loadedPrinciples.length} / 6 완료
+                      {loadedPrinciples.length} / 6 {t('completed')}
                     </p>
                   </div>
                 )}
@@ -1456,12 +1484,12 @@ export default function EditorPage() {
               {selectedElement && (
                 <div className="bg-white rounded-lg shadow-md p-6 mt-6 hidden lg:block">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    텍스트 스타일
+                    {t('textStyle')}
                   </h3>
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      글꼴 설정
+                      {t('fontSetting')}
                     </label>
                     <div className="flex gap-2 flex-wrap">
                       {fontNames.map((fontName, index) => (
@@ -1483,7 +1511,7 @@ export default function EditorPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        색상
+                        {t('color')}
                       </label>
                       {colorPalette.length > 0 ? (
                         <div className="flex justify-between gap-1">
@@ -1525,7 +1553,7 @@ export default function EditorPage() {
                         </div>
                       ) : (
                         <div className="text-sm text-gray-500 py-2">
-                          이미지에서 색상을 추출하는 중...
+                          {t('extractingColors')}
                         </div>
                       )}
                     </div>
@@ -1533,7 +1561,7 @@ export default function EditorPage() {
                     <div className="flex">
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          배경색
+                          {t('backgroundColor')}
                         </label>
                         <button
                           className={`px-4 py-2 rounded text-sm transition-colors ${(() => {
@@ -1584,14 +1612,14 @@ export default function EditorPage() {
                             const current = textElements.find(
                               (el) => el.id === selectedElement
                             );
-                            if (!current) return '글자';
+                            if (!current) return t('backgroundText');
 
                             if (current.backgroundColor === 'white') {
-                              return '하얀색';
+                              return t('backgroundWhite');
                             } else if (current.backgroundColor === 'black') {
-                              return '검정색';
+                              return t('backgroundBlack');
                             } else {
-                              return '없음';
+                              return t('backgroundNone');
                             }
                           })()}
                         </button>
@@ -1599,7 +1627,7 @@ export default function EditorPage() {
 
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          글자 크기
+                          {t('fontSize')}
                         </label>
                         <input
                           type="range"
@@ -1650,7 +1678,7 @@ export default function EditorPage() {
                         }}
                       >
                         <span>+</span>
-                        {!isTextButtonMinimized && <span>텍스트</span>}
+                        {!isTextButtonMinimized && <span>{t('text')}</span>}
                       </button>
                       {!isTextButtonMinimized && (
                         <button
@@ -1663,7 +1691,7 @@ export default function EditorPage() {
                             fontSize: '10px',
                             lineHeight: '1',
                           }}
-                          title="최소화"
+                          title={t('minimize')}
                         >
                           −
                         </button>
@@ -1723,7 +1751,7 @@ export default function EditorPage() {
                             ];
                             setColorPalette(finalPalette);
                           } catch (error) {
-                            console.error('색상 추출 실패:', error);
+                            console.error(t('colorExtractionFailed'), error);
                           }
                         }}
                       />
@@ -1843,7 +1871,7 @@ export default function EditorPage() {
                                       onTouchStart={(e) => {
                                         e.stopPropagation();
                                       }}
-                                      title="텍스트 수정"
+                                      title={t('editText')}
                                     >
                                       ✏️
                                     </button>
@@ -1864,7 +1892,7 @@ export default function EditorPage() {
                                       onTouchStart={(e) => {
                                         e.stopPropagation();
                                       }}
-                                      title="텍스트 삭제"
+                                      title={t('deleteText')}
                                     >
                                       <svg
                                         width={iconSize}
@@ -1917,7 +1945,7 @@ export default function EditorPage() {
                                     )}px`,
                                   }}
                                 >
-                                  AI 추천
+                                  {t('aiRecommended')}
                                 </div>
                               )}
                             </div>
@@ -1932,7 +1960,7 @@ export default function EditorPage() {
                 {imagePrompt !== '[USER_UPLOADED]' && (
                   <div className="mt-6">
                     <h3 className="text-sm font-medium text-gray-700 mb-3">
-                      다른 스타일 보기
+                      {t('otherStyles')}
                     </h3>
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {/* 현재 생성된 이미지들 */}
@@ -1957,7 +1985,7 @@ export default function EditorPage() {
                           {imageUrl === img.url && (
                             <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
                               <div className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
-                                선택됨
+                                {t('selected')}
                               </div>
                             </div>
                           )}
@@ -1969,7 +1997,7 @@ export default function EditorPage() {
                       {generatedImages.length < MAX_IMAGES && (
                         <div className="w-24 h-32 rounded-lg bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 shrink-0 animate-pulse">
                           <div className="text-xl mb-1">✨</div>
-                          <span className="text-xs">생성 중...</span>
+                          <span className="text-xs">{t('generating')}</span>
                         </div>
                       )}
 
@@ -1991,18 +2019,17 @@ export default function EditorPage() {
                           <>
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current mb-2"></div>
                             <span className="text-xs text-center px-1">
-                              생성 중...
+                              {t('generating')}
                             </span>
                           </>
                         ) : (
                           <>
                             <div className="text-xl mb-1">+</div>
-                            <span className="text-xs text-center px-1">
-                              이미지 더<br />
-                              생성하기
+                            <span className="text-xs text-center px-1 whitespace-pre-line">
+                              {t('generateMoreImages')}
                               <br />
                               <span className="text-[10px] text-gray-400 font-normal">
-                                (1 크레딧)
+                                {t('creditCost')}
                               </span>
                             </span>
                           </>
@@ -2014,10 +2041,10 @@ export default function EditorPage() {
 
                 <div className="mt-6 flex justify-center gap-4">
                   <Button variant="outline" onClick={() => router.back()}>
-                    뒤로가기
+                    {t('back')}
                   </Button>
                   <Button onClick={handleSave} loading={loading}>
-                    완성하기
+                    {t('complete')}
                   </Button>
                 </div>
               </div>
@@ -2046,10 +2073,10 @@ export default function EditorPage() {
               }}
             >
               {/* 상단 고정 텍스트 박스 */}
-              <div className="w-full flex flex-col items-center py-6">
+              <div className="w-full flex flex-col items-center py-6 px-4">
                 {/* 스타일이 적용된 텍스트 편집 박스 */}
                 <div
-                  className={`inline-block ${editingFontClassName}`}
+                  className={`inline-block rounded-lg ${editingFontClassName}`}
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     color: editingElement.color,
@@ -2060,10 +2087,10 @@ export default function EditorPage() {
                         ? 'rgb(0, 0, 0)'
                         : 'rgb(255, 255, 255)',
                     padding: '4px 8px',
-                    borderRadius: '4px',
                     whiteSpace: 'pre',
                     fontSize: `${editingElement.fontSize}px`,
                     display: 'inline-block',
+                    maxWidth: 'calc(100vw - 32px)',
                   }}
                 >
                   <textarea
@@ -2093,32 +2120,35 @@ export default function EditorPage() {
                       letterSpacing: 'inherit',
                       width: 'auto',
                       minWidth: '1ch',
+                      maxWidth: 'calc(100vw - 48px)',
                       height: 'auto',
                     }}
-                    placeholder="텍스트를 입력하세요"
+                    placeholder={t('enterText')}
                     autoFocus
                     ref={(textarea) => {
                       if (textarea) {
                         // 초기 크기 설정
+                        const maxWidth = Math.min(
+                          textarea.scrollWidth,
+                          window.innerWidth - 48
+                        );
                         textarea.style.height = 'auto';
                         textarea.style.width = 'auto';
                         textarea.style.height = `${textarea.scrollHeight}px`;
-                        textarea.style.width = `${Math.max(
-                          textarea.scrollWidth,
-                          1
-                        )}px`;
+                        textarea.style.width = `${Math.max(maxWidth, 1)}px`;
                       }
                     }}
                     onInput={(e) => {
                       // textarea 크기 자동 조절
                       const target = e.target as HTMLTextAreaElement;
+                      const maxWidth = Math.min(
+                        target.scrollWidth,
+                        window.innerWidth - 48
+                      );
                       target.style.height = 'auto';
                       target.style.width = 'auto';
                       target.style.height = `${target.scrollHeight}px`;
-                      target.style.width = `${Math.max(
-                        target.scrollWidth,
-                        1
-                      )}px`;
+                      target.style.width = `${Math.max(maxWidth, 1)}px`;
                     }}
                   />
                 </div>
@@ -2130,7 +2160,7 @@ export default function EditorPage() {
                 >
                   <div className="mb-2">
                     <label className="block text-xs font-medium text-gray-700 mb-2">
-                      글꼴 설정
+                      {t('fontSetting')}
                     </label>
                     <div className="flex gap-1 flex-wrap">
                       {fontNames.map((fontName, index) => (
@@ -2152,7 +2182,7 @@ export default function EditorPage() {
                   <div className="space-y-2">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-2">
-                        색상
+                        {t('color')}
                       </label>
                       {colorPalette.length > 0 ? (
                         <div className="flex justify-between gap-1">
@@ -2192,7 +2222,7 @@ export default function EditorPage() {
                         </div>
                       ) : (
                         <div className="text-xs text-gray-500 py-2">
-                          이미지에서 색상을 추출하는 중...
+                          {t('extractingColors')}
                         </div>
                       )}
                     </div>
@@ -2200,7 +2230,7 @@ export default function EditorPage() {
                     <div className="flex">
                       <div className="flex-1">
                         <label className="block text-xs font-medium text-gray-700 mb-2">
-                          배경색
+                          {t('backgroundColor')}
                         </label>
                         <button
                           className={`px-2 py-1 rounded text-xs transition-colors ${(() => {
@@ -2242,16 +2272,16 @@ export default function EditorPage() {
                           }}
                         >
                           {(() => {
-                            if (!editingElement) return '글자';
+                            if (!editingElement) return t('backgroundText');
 
                             if (editingElement.backgroundColor === 'white') {
-                              return '하얀색';
+                              return t('backgroundWhite');
                             } else if (
                               editingElement.backgroundColor === 'black'
                             ) {
-                              return '검정색';
+                              return t('backgroundBlack');
                             } else {
-                              return '없음';
+                              return t('backgroundNone');
                             }
                           })()}
                         </button>
@@ -2259,7 +2289,7 @@ export default function EditorPage() {
 
                       <div className="flex-1">
                         <label className="block text-xs font-medium text-gray-700 mb-2">
-                          글자 크기
+                          {t('fontSize')}
                         </label>
                         <input
                           type="range"

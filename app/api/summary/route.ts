@@ -10,7 +10,9 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { url } = await request.json();
+    const { url, locale = 'ko' } = await request.json();
+    
+    console.log('🔍 [Summary API] Received:', { url, locale });
 
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -18,12 +20,13 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // 캐시 체크 - 기존 데이터가 있는지 확인
+    // 캐시 체크 - 기존 데이터가 있는지 확인 (URL + locale 조합)
     try {
       const { data: existingData, error: fetchError } = await supabase
         .from('product_summaries')
         .select('*')
         .eq('url', url)
+        .eq('locale', locale)
         .single();
 
       if (!fetchError && existingData) {
@@ -71,11 +74,11 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: getSummarySystemPrompt(),
+          content: getSummarySystemPrompt(locale),
         },
         {
           role: 'user',
-          content: getSummaryUserPrompt(preprocessedContent),
+          content: getSummaryUserPrompt(preprocessedContent, locale),
         },
       ],
       // GPT-5-mini는 temperature 파라미터를 지원하지 않음
@@ -138,6 +141,7 @@ export async function POST(request: NextRequest) {
           emotional_keyword: summaryData.emotional_keyword,
           feature_summary: summaryData.feature_summary,
           usage_scenario: summaryData.usage_scenario,
+          locale: locale,
           category_industry: summaryData.category?.industry || null,
           category_form: summaryData.category?.form || null,
           category_purpose: summaryData.category?.purpose || null,

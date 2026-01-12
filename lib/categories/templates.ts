@@ -18,29 +18,8 @@ export type IndustryType =
   | 'publishing';
 
 /**
- * 대분류(산업) 카테고리 한국어 라벨
- * 영어 키에 대응하는 한국어 라벨 매핑
- */
-export const INDUSTRY_LABELS: Record<IndustryType, string> = {
-  fashion_beauty: '패션 / 뷰티',
-  food_beverage: '푸드 / 음료',
-  electronics_it: '전자제품 / IT 기기',
-  living_interior: '리빙 / 인테리어',
-  travel_leisure: '여행 / 레저',
-  health_fitness: '헬스 / 피트니스',
-  education_self_development: '교육 / 자기계발',
-  culture_arts_hobby: '문화 / 예술 / 취미',
-  game_entertainment: '게임 / 엔터테인먼트(영화/OTT/웹툰)',
-  pet: '반려동물',
-  finance_real_estate_law: '금융 / 부동산 / 법률',
-  business_productivity: '비즈니스 / 업무툴 / 생산성',
-  automotive_mobility: '자동차 / 모빌리티',
-  publishing: '출판(책, 전자책)',
-};
-
-/**
  * 대분류(산업) 카테고리별 프롬프트 템플릿
- * 각 카테고리별로 이미지 생성용 프롬프트 모듈을 정의
+ * AI 이미지 생성용 영어 프롬프트 (언어별 번역 불필요 - AI용)
  */
 export const INDUSTRY_TEMPLATES: Record<IndustryType, string> = {
   fashion_beauty: `Industry: Fashion / Beauty. Visual cues: runway or stylish urban street, well-styled models, focus on silhouette, fabric movement, texture and accessories. Emphasize confident poses and expressive styling. Use polished, editorial composition; show the product integrated into an outfit or beauty ritual. Convey trendiness and aspirational style.`,
@@ -70,20 +49,8 @@ export type FormType =
   | 'offline_service';
 
 /**
- * 중분류(형태) 카테고리 한국어 라벨
- * 영어 키에 대응하는 한국어 라벨 매핑
- */
-export const FORM_LABELS: Record<FormType, string> = {
-  physical_product: '실물 상품',
-  digital_product: '디지털 상품(콘텐츠 포함)',
-  web_service: '웹서비스(SaaS 포함)',
-  app: '앱',
-  offline_service: '오프라인 서비스',
-};
-
-/**
  * 중분류(형태) 카테고리별 프롬프트 템플릿
- * 각 형태별로 이미지 생성용 프롬프트 모듈을 정의
+ * AI 이미지 생성용 영어 프롬프트 (언어별 번역 불필요 - AI용)
  */
 export const FORM_TEMPLATES: Record<FormType, string> = {
   physical_product: `Form: Physical product. Visual cue: product as a tangible object — emphasize texture, scale, material, and how a person physically interacts with it. Use close-ups and lifestyle contexts combined.`,
@@ -105,21 +72,8 @@ export type PurposeType =
   | 'reservation_visit';
 
 /**
- * 소분류(목적) 카테고리 한국어 라벨
- * 영어 키에 대응하는 한국어 라벨 매핑
- */
-export const PURPOSE_LABELS: Record<PurposeType, string> = {
-  information_delivery: '정보 전달',
-  purchase_conversion: '구매 전환',
-  subscription_signup: '구독/가입',
-  app_installation: '앱 설치',
-  lead_generation: '리드(잠재고객) 수집',
-  reservation_visit: '예약/방문',
-};
-
-/**
  * 소분류(목적) 카테고리별 프롬프트 템플릿
- * 각 목적별로 이미지 생성용 프롬프트 모듈을 정의
+ * AI 이미지 생성용 영어 프롬프트 (언어별 번역 불필요 - AI용)
  */
 export const PURPOSE_TEMPLATES: Record<PurposeType, string> = {
   information_delivery: `Goal: Information delivery. Visual cue: clear, uncluttered composition focused on demonstrating a key feature or concept visually (use props or staged scenes). Prioritize clarity and explanatory posture in the image.`,
@@ -129,3 +83,40 @@ export const PURPOSE_TEMPLATES: Record<PurposeType, string> = {
   lead_generation: `Goal: Lead generation. Visual cue: approachable, professional scene showing value exchange (consultation, demo), soft but credible lighting. Convey trust and low-friction engagement.`,
   reservation_visit: `Goal: Reservation / Visit. Visual cue: location-centered imagery (interior or storefront) with people happily arriving or being welcomed. Convey atmosphere and ease of visit.`,
 };
+
+/**
+ * 타입별 키 목록 (번역 키와 매핑용)
+ */
+export const INDUSTRY_KEYS: readonly IndustryType[] = [
+  'fashion_beauty',
+  'food_beverage',
+  'electronics_it',
+  'living_interior',
+  'travel_leisure',
+  'health_fitness',
+  'education_self_development',
+  'culture_arts_hobby',
+  'game_entertainment',
+  'pet',
+  'finance_real_estate_law',
+  'business_productivity',
+  'automotive_mobility',
+  'publishing',
+] as const;
+
+export const FORM_KEYS: readonly FormType[] = [
+  'physical_product',
+  'digital_product',
+  'web_service',
+  'app',
+  'offline_service',
+] as const;
+
+export const PURPOSE_KEYS: readonly PurposeType[] = [
+  'information_delivery',
+  'purchase_conversion',
+  'subscription_signup',
+  'app_installation',
+  'lead_generation',
+  'reservation_visit',
+] as const;

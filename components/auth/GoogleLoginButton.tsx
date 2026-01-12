@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Button from '@/components/Button';
 import { signInWithGoogle } from '@/lib/auth';
 
@@ -16,17 +17,18 @@ export default function GoogleLoginButton({
   className = '',
   variant = 'primary',
   size = 'md',
-  children = 'Google로 시작하기',
+  children,
 }: GoogleLoginButtonProps) {
   const [loading, setLoading] = useState(false);
   const pathname = usePathname();
+  const t = useTranslations('auth');
 
   const handleLogin = async () => {
     try {
       setLoading(true);
       await signInWithGoogle(pathname);
     } catch (error) {
-      alert('로그인 중 오류가 발생했습니다.');
+      alert(t('loginError') || 'Login error occurred.');
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,7 @@ export default function GoogleLoginButton({
           />
         </svg>
       )}
-      {children}
+      {children || t('googleLogin')}
     </Button>
   );
 }

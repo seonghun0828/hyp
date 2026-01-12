@@ -12,11 +12,14 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     try {
-      // 기존 데이터가 있는지 확인
+      const locale = summaryData.locale || 'ko';
+      
+      // 기존 데이터가 있는지 확인 (URL + locale 조합)
       const { data: existingData, error: fetchError } = await supabase
         .from('product_summaries')
         .select('id')
         .eq('url', summaryData.url)
+        .eq('locale', locale)
         .single();
 
       let result;
@@ -34,11 +37,13 @@ export async function POST(request: NextRequest) {
             emotional_keyword: summaryData.emotional_keyword,
             feature_summary: summaryData.feature_summary,
             usage_scenario: summaryData.usage_scenario,
-            category_industry: summaryData.category?.industry || null, // ✅ 추가
-            category_form: summaryData.category?.form || null, // ✅ 추가
-            category_purpose: summaryData.category?.purpose || null, // ✅ 추가
+            category_industry: summaryData.category?.industry || null,
+            category_form: summaryData.category?.form || null,
+            category_purpose: summaryData.category?.purpose || null,
+            locale: locale,
           })
           .eq('url', summaryData.url)
+          .eq('locale', locale)
           .select()
           .single();
 
@@ -61,9 +66,10 @@ export async function POST(request: NextRequest) {
             emotional_keyword: summaryData.emotional_keyword,
             feature_summary: summaryData.feature_summary,
             usage_scenario: summaryData.usage_scenario,
-            category_industry: summaryData.category?.industry || null, // ✅ 추가
-            category_form: summaryData.category?.form || null, // ✅ 추가
-            category_purpose: summaryData.category?.purpose || null, // ✅ 추가
+            category_industry: summaryData.category?.industry || null,
+            category_form: summaryData.category?.form || null,
+            category_purpose: summaryData.category?.purpose || null,
+            locale: locale,
           })
           .select()
           .single();

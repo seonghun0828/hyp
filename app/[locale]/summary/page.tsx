@@ -2,14 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useFunnelStore, ProductSummary } from '@/lib/store';
-import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 
 export default function SummaryPage() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('summary');
+  const tSteps = useTranslations('steps');
+  const tCommon = useTranslations('common');
+  
   const { summary, setSummary, url } = useFunnelStore();
   const [formData, setFormData] = useState<ProductSummary>({
     url: '',
@@ -24,16 +29,29 @@ export default function SummaryPage() {
   });
   const [loading, setLoading] = useState(false);
 
+  const stepNames = [
+    tSteps('linkInput'),
+    tSteps('productSummary'),
+    tSteps('messageType'),
+    tSteps('expressionStyle'),
+    tSteps('toneMood'),
+    tSteps('modelComposition'),
+    tSteps('aspectRatio'),
+    tSteps('imageUpload'),
+    tSteps('editor'),
+    tSteps('result'),
+  ];
+
   useEffect(() => {
     if (!url) {
-      router.push('/');
+      router.push(`/${locale}`);
       return;
     }
 
     if (summary) {
       setFormData(summary);
     }
-  }, [url, summary, router]);
+  }, [url, summary, router, locale]);
 
   const handleInputChange = (field: keyof ProductSummary, value: string) => {
     setFormData((prev) => ({
@@ -59,7 +77,7 @@ export default function SummaryPage() {
     );
 
     if (hasEmptyRequired) {
-      alert('필수 항목을 모두 입력해주세요.');
+      alert(t('errorRequired'));
       setLoading(false);
       return;
     }
@@ -74,7 +92,7 @@ export default function SummaryPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, locale }),
       });
 
       if (!response.ok) {
@@ -82,25 +100,42 @@ export default function SummaryPage() {
         throw new Error(errorData.error || 'Failed to save to database');
       }
 
-      const result = await response.json();
-
-      // 저장 후 확인
-
       // 이벤트 추적
       trackEvent('summary_next', {
         step: 2,
         page: 'summary',
+        locale,
       });
 
-      router.push('/styles/messages');
+      router.push(`/${locale}/styles/messages`);
     } catch (err) {
       alert(
-        `저장 중 오류가 발생했습니다: ${
-          err instanceof Error ? err.message : '알 수 없는 오류'
+        `${t('errorSaving')}: ${
+          err instanceof Error ? err.message : 'Unknown error'
         }`
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStepClick = (stepNumber: number) => {
+    const stepRoutes: Record<number, string> = {
+      1: `/${locale}`,
+      2: `/${locale}/summary`,
+      3: `/${locale}/styles/messages`,
+      4: `/${locale}/styles/expressions`,
+      5: `/${locale}/styles/tones-moods`,
+      6: `/${locale}/styles/models`,
+      7: `/${locale}/styles/aspect-ratio`,
+      8: `/${locale}/upload`,
+      9: `/${locale}/editor`,
+      10: `/${locale}/result`,
+    };
+    
+    const route = stepRoutes[stepNumber];
+    if (route && route !== window.location.pathname) {
+      router.push(route);
     }
   };
 
@@ -112,18 +147,19 @@ export default function SummaryPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <ProgressBar
         currentStep={2}
-        totalSteps={TOTAL_STEPS}
-        stepNames={STEP_NAMES}
+        totalSteps={10}
+        stepNames={stepNames}
+        onStepClick={handleStepClick}
       />
 
       <div className="container mx-auto px-4 pb-12 md:py-12">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              제품 정보 확인
+              {t('title')}
             </h1>
             <p className="text-gray-600">
-              AI가 분석한 제품 정보를 확인하고 수정해주세요
+              {t('description')}
             </p>
           </div>
 
@@ -131,7 +167,7 @@ export default function SummaryPage() {
             {/* 필수 필드 섹션 */}
             <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                필수 정보
+                {t('requiredSection')}
               </h2>
 
               {/* 제품 핵심 가치 */}
@@ -140,7 +176,7 @@ export default function SummaryPage() {
                   htmlFor="core_value"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  제품 핵심 가치 *
+                  {t('coreValueLabel')}
                 </label>
                 <textarea
                   id="core_value"
@@ -150,7 +186,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
+                  placeholder={t('placeholder')}
                   required
                 />
               </div>
@@ -161,7 +197,7 @@ export default function SummaryPage() {
                   htmlFor="target_customer"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  타겟 고객 *
+                  {t('targetCustomerLabel')}
                 </label>
                 <input
                   type="text"
@@ -171,7 +207,7 @@ export default function SummaryPage() {
                     handleInputChange('target_customer', e.target.value)
                   }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
+                  placeholder={t('placeholder')}
                   required
                 />
               </div>
@@ -182,7 +218,7 @@ export default function SummaryPage() {
                   htmlFor="competitive_edge"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  주요 경쟁 우위 *
+                  {t('competitiveEdgeLabel')}
                 </label>
                 <textarea
                   id="competitive_edge"
@@ -192,7 +228,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
+                  placeholder={t('placeholder')}
                   required
                 />
               </div>
@@ -203,7 +239,7 @@ export default function SummaryPage() {
                   htmlFor="customer_benefit"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  고객이 느낄 이점 *
+                  {t('customerBenefitLabel')}
                 </label>
                 <textarea
                   id="customer_benefit"
@@ -213,7 +249,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
+                  placeholder={t('placeholder')}
                   required
                 />
               </div>
@@ -222,9 +258,9 @@ export default function SummaryPage() {
             {/* 선택 필드 섹션 */}
             <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-gray-300">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                추가 정보{' '}
+                {t('optionalSection')}{' '}
                 <span className="text-sm font-normal text-gray-500">
-                  (입력하시면 더 정확한 결과를 얻을 수 있습니다.)
+                  {t('optionalHint')}
                 </span>
               </h2>
 
@@ -234,7 +270,7 @@ export default function SummaryPage() {
                   htmlFor="feature_summary"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  주요 기능 요약
+                  {t('featureSummaryLabel')}
                 </label>
                 <textarea
                   id="feature_summary"
@@ -244,7 +280,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
+                  placeholder={t('placeholder')}
                 />
               </div>
 
@@ -254,7 +290,7 @@ export default function SummaryPage() {
                   htmlFor="emotional_keyword"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  감정 키워드
+                  {t('emotionalKeywordLabel')}
                 </label>
                 <input
                   type="text"
@@ -264,7 +300,7 @@ export default function SummaryPage() {
                     handleInputChange('emotional_keyword', e.target.value)
                   }
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
+                  placeholder={t('placeholder')}
                 />
               </div>
 
@@ -274,7 +310,7 @@ export default function SummaryPage() {
                   htmlFor="usage_scenario"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  사용 시나리오
+                  {t('usageScenarioLabel')}
                 </label>
                 <textarea
                   id="usage_scenario"
@@ -284,7 +320,7 @@ export default function SummaryPage() {
                   }
                   rows={2}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  placeholder="AI가 분석하지 못했습니다. 직접 입력해주세요"
+                  placeholder={t('placeholder')}
                 />
               </div>
             </div>
@@ -297,10 +333,10 @@ export default function SummaryPage() {
                 onClick={() => router.back()}
                 className="flex-1"
               >
-                뒤로가기
+                {tCommon('back')}
               </Button>
               <Button type="submit" loading={loading} className="flex-1">
-                다음
+                {tCommon('next')}
               </Button>
             </div>
           </form>

@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useFunnelStore } from '@/lib/store';
-import { STEP_NAMES, TOTAL_STEPS } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
@@ -14,6 +14,11 @@ import { useAuthStore } from '@/lib/auth-store';
 
 export default function UploadPage() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('upload');
+  const tSteps = useTranslations('steps');
+  const tCommon = useTranslations('common');
+  
   const {
     styles,
     summary,
@@ -26,6 +31,19 @@ export default function UploadPage() {
     addGeneratedImage,
     setRandomSeed,
   } = useFunnelStore();
+  
+  const stepNames = [
+    tSteps('linkInput'),
+    tSteps('productSummary'),
+    tSteps('messageType'),
+    tSteps('expressionStyle'),
+    tSteps('toneMood'),
+    tSteps('modelComposition'),
+    tSteps('aspectRatio'),
+    tSteps('imageUpload'),
+    tSteps('editor'),
+    tSteps('result'),
+  ];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
@@ -68,13 +86,13 @@ export default function UploadPage() {
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      setError('이미지 파일만 업로드 가능합니다.');
+      setError(t('errorImageOnly'));
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       // 5MB
-      setError('파일 크기는 5MB 이하여야 합니다.');
+      setError(t('errorFileSize'));
       return;
     }
 
@@ -107,11 +125,11 @@ export default function UploadPage() {
           method: 'upload',
         });
 
-        router.push('/editor');
+        router.push(`/${locale}/editor`);
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      setError('파일 업로드 중 오류가 발생했습니다.');
+      setError(t('errorUpload'));
     } finally {
       setLoading(false);
     }
@@ -148,6 +166,7 @@ export default function UploadPage() {
           styles: styles,
           variationIndex: 0, // 첫 번째 이미지 생성
           randomSeed: seed,
+          locale: locale,
         }),
       });
 
@@ -161,7 +180,7 @@ export default function UploadPage() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.message ||
-            '이미지 생성에 실패했습니다. 잠시 후 다시 시도해주세요.'
+            t('errorGeneration')
         );
       }
 
@@ -226,6 +245,7 @@ export default function UploadPage() {
           url: summary?.url,
           summary,
           styles,
+          locale,
         }),
       });
 
@@ -234,14 +254,14 @@ export default function UploadPage() {
           setShowLoginModal(true);
           return;
         }
-        throw new Error('SUCCESs 문구 생성에 실패했습니다.');
+        throw new Error(t('errorTextGeneration'));
       }
 
       const data = await response.json();
       setSuccessTexts(data.texts);
       setTextsReady(true);
     } catch (err) {
-      setError('문구 생성 중 오류가 발생했습니다.');
+      setError(t('errorTextGeneration'));
     } finally {
       setTextsGenerating(false);
     }
@@ -267,6 +287,7 @@ export default function UploadPage() {
           url: summary?.url,
           summary,
           styles,
+          locale,
         }),
       });
 
@@ -277,7 +298,7 @@ export default function UploadPage() {
           setTextsGenerating(false);
           return;
         }
-        throw new Error('SUCCESs 문구 생성에 실패했습니다.');
+        throw new Error(t('errorTextGeneration'));
       }
 
       const reader = response.body?.getReader();
@@ -326,7 +347,7 @@ export default function UploadPage() {
         }
       }
     } catch (err) {
-      setError('문구 생성 중 오류가 발생했습니다.');
+      setError(t('errorTextGeneration'));
     } finally {
       setTextsGenerating(false);
     }
@@ -422,7 +443,7 @@ export default function UploadPage() {
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+          <p className="text-gray-600">{tCommon('loading')}</p>
         </div>
       </div>
     );
@@ -444,18 +465,37 @@ export default function UploadPage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
         currentStep={8}
-        totalSteps={TOTAL_STEPS}
-        stepNames={STEP_NAMES}
+        totalSteps={10}
+        stepNames={stepNames}
+        onStepClick={(stepNumber: number) => {
+          const stepRoutes: Record<number, string> = {
+            1: `/${locale}`,
+            2: `/${locale}/summary`,
+            3: `/${locale}/styles/messages`,
+            4: `/${locale}/styles/expressions`,
+            5: `/${locale}/styles/tones-moods`,
+            6: `/${locale}/styles/models`,
+            7: `/${locale}/styles/aspect-ratio`,
+            8: `/${locale}/upload`,
+            9: `/${locale}/editor`,
+            10: `/${locale}/result`,
+          };
+          
+          const route = stepRoutes[stepNumber];
+          if (route && route !== window.location.pathname) {
+            router.push(route);
+          }
+        }}
       />
 
       <div className="container mx-auto px-4 pb-12 md:py-12">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              이미지 선택
+              {t('title')}
             </h1>
             <p className="text-gray-600">
-              제품 이미지를 업로드하거나 AI로 생성해보세요
+              {t('description')}
             </p>
           </div>
 
@@ -485,10 +525,10 @@ export default function UploadPage() {
                 <div className="text-4xl">📸</div>
                 <div>
                   <p className="text-lg font-medium text-gray-900">
-                    이미지를 드래그하거나 클릭하여 업로드
+                    {t('dragOrClick')}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    PNG, JPG, GIF 파일 (최대 5MB)
+                    {t('fileTypes')}
                   </p>
                 </div>
               </div>
@@ -500,7 +540,7 @@ export default function UploadPage() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">또는</span>
+                <span className="px-2 bg-white text-gray-500">{tCommon('or')}</span>
               </div>
             </div>
 
@@ -513,11 +553,10 @@ export default function UploadPage() {
                 size="lg"
                 className="w-full"
               >
-                AI로 이미지 생성
+                {t('generateWithAI')}
               </Button>
-              <p className="text-xs text-gray-500 mt-2">
-                AI가 자동으로 이미지를 생성합니다.
-                <br />더 정확한 결과를 원하시면 직접 업로드해주세요.
+              <p className="text-xs text-gray-500 mt-2 whitespace-pre-line">
+                {t('aiGenerateHint')}
               </p>
             </div>
 
@@ -530,7 +569,7 @@ export default function UploadPage() {
             {/* 뒤로가기 버튼 */}
             <div className="text-center">
               <Button variant="ghost" onClick={() => router.back()}>
-                뒤로가기
+                {tCommon('back')}
               </Button>
             </div>
           </div>

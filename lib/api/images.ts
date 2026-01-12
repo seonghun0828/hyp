@@ -5,6 +5,7 @@ interface GenerateImageParams {
   styles: Styles;
   variationIndex: number;
   randomSeed?: number;
+  locale?: string;
 }
 
 interface GenerateImageResponse {

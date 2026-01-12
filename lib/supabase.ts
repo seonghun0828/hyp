@@ -181,6 +181,7 @@ export async function saveMarketingTextCache(
     credible: string;
     emotional: string;
     story: string;
+    locale?: string;
   },
   client?: SupabaseClient
 ) {

@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from 'next-intl';
 import { signInWithGoogle } from '@/lib/auth';
 import { usePathname } from 'next/navigation';
 import { rechargeCredits } from '@/lib/api/credits';
@@ -31,6 +32,8 @@ export default function PaymentModal({
   isLoggedIn = false,
 }: PaymentModalProps) {
   const pathname = usePathname();
+  const t = useTranslations('payment');
+  const tAuth = useTranslations('auth');
   const [loading, setLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
@@ -45,24 +48,20 @@ export default function PaymentModal({
   const handleRecharge = async () => {
     try {
       setLoading(true);
-      // 50 크레딧 충전
       await rechargeCredits(5);
 
-      // 모달 닫기 및 성공 콜백
       onOpenChange(false);
       onSuccess?.();
 
-      // 피드백 프롬프트 표시 (별도 오버레이로 띄움)
       setShowFeedback(true);
     } catch (error) {
       console.error('Recharge failed:', error);
-      alert('충전에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      alert(t('errorRecharge'));
     } finally {
       setLoading(false);
     }
   };
 
-  // 피드백 프롬프트가 활성화된 경우 (모달이 닫힌 후 보여짐)
   if (showFeedback) {
     return <FeedbackPrompt onClose={() => setShowFeedback(false)} />;
   }
@@ -72,14 +71,12 @@ export default function PaymentModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isLoggedIn ? '베타 테스터 혜택 🎉' : '무료 체험 크레딧 소진'}
+            {isLoggedIn ? t('title') : t('titleNoCredit')}
           </DialogTitle>
           <DialogDescription asChild>
             <div className="text-muted-foreground text-sm">
               {description ||
-                (isLoggedIn
-                  ? '오픈 베타 기간 동안 무제한 무료로 이용하실 수 있습니다.'
-                  : '아쉬워하지 마세요! 로그인하면 무료로 더 이용할 수 있어요.')}
+                (isLoggedIn ? t('description') : t('descriptionNoCredit'))}
             </div>
           </DialogDescription>
         </DialogHeader>
@@ -87,16 +84,14 @@ export default function PaymentModal({
         {isLoggedIn ? (
           <div className="py-6 flex flex-col items-center justify-center gap-4 text-center">
             <div className="text-4xl">💎</div>
-            <p className="text-gray-600 text-sm">
-              서비스를 이용해주셔서 감사합니다.
-              <br />
-              버튼을 눌러 무료로 충전하고 계속 이용해보세요!
+            <p className="text-gray-600 text-sm whitespace-pre-line">
+              {t('message')}
             </p>
           </div>
         ) : (
           <div className="py-4 flex flex-col items-center justify-center gap-4 text-center">
             <p className="text-lg font-bold text-gray-900">
-              가입 즉시 5크레딧 선물! 🎁
+              {tAuth('firstLoginGift')}
             </p>
           </div>
         )}
@@ -109,14 +104,14 @@ export default function PaymentModal({
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
               >
-                닫기
+                {t('close') || 'Close'}
               </Button>
               <Button
                 onClick={handleRecharge}
                 disabled={loading}
                 className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0"
               >
-                {loading ? '충전 중...' : '무료로 충전하고 계속하기'}
+                {loading ? t('recharging') : t('rechargeButton')}
               </Button>
             </>
           ) : (
@@ -142,7 +137,7 @@ export default function PaymentModal({
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Google로 시작하기
+              {tAuth('googleLogin')}
             </Button>
           )}
         </DialogFooter>
