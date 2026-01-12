@@ -40,7 +40,7 @@ export default function EditorPage() {
   const t = useTranslations('editor');
   const tSteps = useTranslations('steps');
   const tCommon = useTranslations('common');
-  
+
   const {
     summary,
     styles,
@@ -60,7 +60,7 @@ export default function EditorPage() {
 
   const { credits, fetchCredits, updateCredits } = useCreditStore();
   const { user } = useAuthStore();
-  
+
   const stepNames = [
     tSteps('linkInput'),
     tSteps('productSummary'),
@@ -1338,11 +1338,7 @@ export default function EditorPage() {
       router.push(`/${locale}/result?result-id=${contentId}`);
     } catch (error) {
       console.error('Save error:', error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : t('errorSave')
-      );
+      alert(error instanceof Error ? error.message : t('errorSave'));
     } finally {
       setLoading(false);
     }
@@ -1391,7 +1387,7 @@ export default function EditorPage() {
             9: `/${locale}/editor`,
             10: `/${locale}/result`,
           };
-          
+
           const route = stepRoutes[stepNumber];
           if (route && route !== window.location.pathname) {
             router.push(route);
@@ -2077,10 +2073,10 @@ export default function EditorPage() {
               }}
             >
               {/* 상단 고정 텍스트 박스 */}
-              <div className="w-full flex flex-col items-center py-6">
+              <div className="w-full flex flex-col items-center py-6 px-4">
                 {/* 스타일이 적용된 텍스트 편집 박스 */}
                 <div
-                  className={`inline-block ${editingFontClassName}`}
+                  className={`inline-block rounded-lg ${editingFontClassName}`}
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     color: editingElement.color,
@@ -2091,10 +2087,10 @@ export default function EditorPage() {
                         ? 'rgb(0, 0, 0)'
                         : 'rgb(255, 255, 255)',
                     padding: '4px 8px',
-                    borderRadius: '4px',
                     whiteSpace: 'pre',
                     fontSize: `${editingElement.fontSize}px`,
                     display: 'inline-block',
+                    maxWidth: 'calc(100vw - 32px)',
                   }}
                 >
                   <textarea
@@ -2124,6 +2120,7 @@ export default function EditorPage() {
                       letterSpacing: 'inherit',
                       width: 'auto',
                       minWidth: '1ch',
+                      maxWidth: 'calc(100vw - 48px)',
                       height: 'auto',
                     }}
                     placeholder={t('enterText')}
@@ -2131,25 +2128,27 @@ export default function EditorPage() {
                     ref={(textarea) => {
                       if (textarea) {
                         // 초기 크기 설정
+                        const maxWidth = Math.min(
+                          textarea.scrollWidth,
+                          window.innerWidth - 48
+                        );
                         textarea.style.height = 'auto';
                         textarea.style.width = 'auto';
                         textarea.style.height = `${textarea.scrollHeight}px`;
-                        textarea.style.width = `${Math.max(
-                          textarea.scrollWidth,
-                          1
-                        )}px`;
+                        textarea.style.width = `${Math.max(maxWidth, 1)}px`;
                       }
                     }}
                     onInput={(e) => {
                       // textarea 크기 자동 조절
                       const target = e.target as HTMLTextAreaElement;
+                      const maxWidth = Math.min(
+                        target.scrollWidth,
+                        window.innerWidth - 48
+                      );
                       target.style.height = 'auto';
                       target.style.width = 'auto';
                       target.style.height = `${target.scrollHeight}px`;
-                      target.style.width = `${Math.max(
-                        target.scrollWidth,
-                        1
-                      )}px`;
+                      target.style.width = `${Math.max(maxWidth, 1)}px`;
                     }}
                   />
                 </div>
