@@ -165,6 +165,7 @@
     "color": "색상",
     "backgroundColor": "배경색",
     "fontSize": "글자 크기",
+    "fontWeight": "글자 굵기",
     "extractingColors": "이미지에서 색상을 추출하는 중...",
     "colorExtractionFailed": "색상 추출 실패:",
     "text": "텍스트",

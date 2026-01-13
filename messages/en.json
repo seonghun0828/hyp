@@ -165,6 +165,7 @@
     "color": "Color",
     "backgroundColor": "Background Color",
     "fontSize": "Font Size",
+    "fontWeight": "Font Weight",
     "extractingColors": "Extracting colors from image...",
     "colorExtractionFailed": "Color extraction failed:",
     "text": "Text",

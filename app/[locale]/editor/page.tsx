@@ -26,6 +26,7 @@ interface TextElement {
   x: number;
   y: number;
   fontSize: number;
+  fontWeight: number; // 글자 굵기 (100-900)
   color: string;
   backgroundColor: 'transparent' | 'black' | 'white';
   isSelected: boolean;
@@ -763,6 +764,7 @@ export default function EditorPage() {
       x: finalX,
       y: finalY,
       fontSize: actualFontSize,
+      fontWeight: styleSource?.fontWeight ?? 400,
       color: styleSource?.color ?? '#000000',
       backgroundColor: styleSource?.backgroundColor ?? 'white',
       isSelected: true,
@@ -845,6 +847,7 @@ export default function EditorPage() {
       x: finalX,
       y: finalY,
       fontSize: actualFontSize,
+      fontWeight: previousElement?.fontWeight ?? 400,
       color: previousElement?.color ?? '#000000',
       backgroundColor: previousElement?.backgroundColor ?? 'white',
       isSelected: true,
@@ -1492,7 +1495,7 @@ export default function EditorPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('fontSetting')}
                     </label>
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-2 flex-wrap max-h-[186px] overflow-y-auto p-1">
                       {fontNames.map((fontName, index) => (
                         <button
                           key={fontName}
@@ -1627,7 +1630,7 @@ export default function EditorPage() {
                       </div>
 
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-0.5">
                           {t('fontSize')}
                         </label>
                         <input
@@ -1645,6 +1648,33 @@ export default function EditorPage() {
                           }
                           className="w-full"
                         />
+                        <div className="mt-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-0.5">
+                            {t('fontWeight')}
+                          </label>
+                          <input
+                            type="range"
+                            min={100}
+                            max={900}
+                            step={100}
+                            value={
+                              textElements.find(
+                                (el) => el.id === selectedElement
+                              )?.fontWeight || 400
+                            }
+                            onChange={(e) =>
+                              updateElementStyle(selectedElement, {
+                                fontWeight: parseInt(e.target.value),
+                              })
+                            }
+                            className="w-full"
+                          />
+                          {/* <div className="text-xs text-gray-500 mt-1 text-center">
+                            {textElements.find(
+                              (el) => el.id === selectedElement
+                            )?.fontWeight || 400}
+                          </div> */}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1921,6 +1951,7 @@ export default function EditorPage() {
                                 }
                                 style={{
                                   color: element.color,
+                                  fontWeight: element.fontWeight,
                                   backgroundColor:
                                     element.backgroundColor === 'transparent'
                                       ? 'transparent'
@@ -2081,6 +2112,7 @@ export default function EditorPage() {
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     color: editingElement.color,
+                    fontWeight: editingElement.fontWeight,
                     backgroundColor:
                       editingElement.backgroundColor === 'transparent'
                         ? 'transparent'
@@ -2111,13 +2143,13 @@ export default function EditorPage() {
                       resize: 'none',
                       outline: 'none',
                       fontSize: `${editingElement.fontSize}px`,
+                      fontWeight: editingElement.fontWeight,
                       color: editingElement.color,
                       backgroundColor: 'transparent',
                       whiteSpace: 'pre',
                       lineHeight: 'normal',
                       overflow: 'hidden',
                       fontFamily: 'inherit',
-                      fontWeight: 'inherit',
                       letterSpacing: 'inherit',
                       width: 'auto',
                       minWidth: '1ch',
@@ -2163,7 +2195,7 @@ export default function EditorPage() {
                     <label className="block text-xs font-medium text-gray-700 mb-2">
                       {t('fontSetting')}
                     </label>
-                    <div className="flex gap-1 flex-wrap">
+                    <div className="flex gap-1 flex-wrap max-h-[102px] overflow-y-auto pr-1">
                       {fontNames.map((fontName, index) => (
                         <button
                           key={fontName}
@@ -2289,7 +2321,7 @@ export default function EditorPage() {
                       </div>
 
                       <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-0.5">
                           {t('fontSize')}
                         </label>
                         <input
@@ -2306,6 +2338,29 @@ export default function EditorPage() {
                           }}
                           className="w-full"
                         />
+                        <div className="mt-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
+                            {t('fontWeight')}
+                          </label>
+                          <input
+                            type="range"
+                            min={100}
+                            max={900}
+                            step={100}
+                            value={editingElement?.fontWeight || 400}
+                            onChange={(e) => {
+                              if (editingTextId) {
+                                updateElementStyle(editingTextId, {
+                                  fontWeight: parseInt(e.target.value),
+                                });
+                              }
+                            }}
+                            className="w-full"
+                          />
+                          {/* <div className="text-xs text-gray-500 mt-1 text-center">
+                            {editingElement?.fontWeight || 400}
+                          </div> */}
+                        </div>
                       </div>
                     </div>
                   </div>
