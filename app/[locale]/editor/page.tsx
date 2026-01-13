@@ -196,8 +196,9 @@ export default function EditorPage() {
     setIsGeneratingMore(true);
 
     try {
-      // 2. UI 분기 처리 (store의 credits 사용)
-      if (credits === null || credits < 1) {
+      // 2. UI 분기 처리 (store에서 최신 credits 가져오기)
+      const currentCredits = useCreditStore.getState().credits;
+      if (currentCredits === null || currentCredits < 1) {
         if (user) {
           setShowPaymentModal(true);
         } else {
@@ -2322,7 +2323,8 @@ export default function EditorPage() {
         onSuccess={async () => {
           // 충전 완료 후 서버에서 최신 크레딧 조회
           await fetchCredits();
-          // 사용자가 다시 '추가 생성' 버튼을 누르면 진행 가능
+          // 이미지 추가 생성 재시도
+          handleGenerateMoreClick();
         }}
       />
     </div>
