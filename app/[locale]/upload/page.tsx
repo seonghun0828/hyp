@@ -18,7 +18,8 @@ export default function UploadPage() {
   const t = useTranslations('upload');
   const tSteps = useTranslations('steps');
   const tCommon = useTranslations('common');
-  
+  const tPayment = useTranslations('payment');
+
   const {
     styles,
     summary,
@@ -31,7 +32,7 @@ export default function UploadPage() {
     addGeneratedImage,
     setRandomSeed,
   } = useFunnelStore();
-  
+
   const stepNames = [
     tSteps('linkInput'),
     tSteps('productSummary'),
@@ -178,10 +179,7 @@ export default function UploadPage() {
           return;
         }
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message ||
-            t('errorGeneration')
-        );
+        throw new Error(errorData.message || t('errorGeneration'));
       }
 
       const data = await response.json();
@@ -480,7 +478,7 @@ export default function UploadPage() {
             9: `/${locale}/editor`,
             10: `/${locale}/result`,
           };
-          
+
           const route = stepRoutes[stepNumber];
           if (route && route !== window.location.pathname) {
             router.push(route);
@@ -494,9 +492,7 @@ export default function UploadPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {t('title')}
             </h1>
-            <p className="text-gray-600">
-              {t('description')}
-            </p>
+            <p className="text-gray-600">{t('description')}</p>
           </div>
 
           <div className="space-y-6">
@@ -527,9 +523,7 @@ export default function UploadPage() {
                   <p className="text-lg font-medium text-gray-900">
                     {t('dragOrClick')}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {t('fileTypes')}
-                  </p>
+                  <p className="text-sm text-gray-500 mt-1">{t('fileTypes')}</p>
                 </div>
               </div>
             </div>
@@ -540,7 +534,9 @@ export default function UploadPage() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">{tCommon('or')}</span>
+                <span className="px-2 bg-white text-gray-500">
+                  {tCommon('or')}
+                </span>
               </div>
             </div>
 
@@ -583,9 +579,14 @@ export default function UploadPage() {
         isLoggedIn={!!user}
         description={
           <div className="text-center">
-            생성된 이미지와 홍보 문구를 볼 수 있는
-            <br />
-            다음 단계로 이동하려면 2크레딧이 필요해요.
+            {tPayment('uploadDescription')
+              .split('\n')
+              .map((line, i, arr) => (
+                <span key={i}>
+                  {line}
+                  {i < arr.length - 1 && <br />}
+                </span>
+              ))}
           </div>
         }
         onSuccess={() => {

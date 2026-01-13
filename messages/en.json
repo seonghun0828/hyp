@@ -267,6 +267,8 @@
     "description": "Unlimited free access during the open beta period.",
     "descriptionNoCredit": "Don't worry! Log in to use more for free.",
     "message": "Thank you for using our service.\nClick the button to recharge for free and continue!",
+    "homeDescription": "🔒 You've used all your free trial credits\nRecharge credits and get started right away!",
+    "uploadDescription": "To view the generated images and promotional texts and proceed to the next step, 2 credits are required.",
     "rechargeButton": "Recharge for Free and Continue",
     "recharging": "Recharging...",
     "errorRecharge": "Recharge failed. Please try again later.",
