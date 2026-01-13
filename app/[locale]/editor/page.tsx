@@ -2319,13 +2319,10 @@ export default function EditorPage() {
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
         isLoggedIn={!!user}
-        onSuccess={() => {
-          // 충전 완료 시 스토어 업데이트 (낙관적 + 서버 동기화)
-          updateCredits((credits || 0) + 100);
-          fetchCredits();
-
-          // 만약 '추가 생성' 중에 모달이 떴다면 재시도 로직을 실행할 수도 있음
-          // 현재는 단순히 닫고 사용자가 다시 버튼을 누르게 함
+        onSuccess={async () => {
+          // 충전 완료 후 서버에서 최신 크레딧 조회
+          await fetchCredits();
+          // 사용자가 다시 '추가 생성' 버튼을 누르면 진행 가능
         }}
       />
     </div>

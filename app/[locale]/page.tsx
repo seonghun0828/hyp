@@ -260,13 +260,11 @@ export default function HomePage() {
               ))}
           </div>
         }
-        onSuccess={() => {
-          // 충전 완료 간주 -> 크레딧 상태 업데이트 (낙관적 + 서버 동기화)
-          updateCredits((credits || 0) + 100);
-          fetchCredits();
-
-          // 분석 시작 (비동기 상태 업데이트 고려하여 setTimeout 사용)
-          setTimeout(() => executeSubmit(inputUrl), 0);
+        onSuccess={async () => {
+          // 충전 완료 후 서버에서 최신 크레딧 조회
+          await fetchCredits();
+          // 분석 시작
+          executeSubmit(inputUrl);
         }}
       />
     </div>
