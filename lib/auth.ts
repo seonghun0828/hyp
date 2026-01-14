@@ -1,8 +1,26 @@
 import { createClient } from '@/lib/supabase/client';
+import { locales } from '@/i18n';
 
 export async function signInWithGoogle(nextPath?: string) {
   const supabase = createClient();
-  const redirectTo = new URL(`${window.location.origin}/auth/callback`);
+  
+  // pathname에서 locale 추출 (예: /en/editor -> en)
+  let locale = 'en'; // 기본값
+  if (nextPath) {
+    const pathParts = nextPath.split('/').filter(Boolean);
+    if (pathParts.length > 0 && locales.includes(pathParts[0] as any)) {
+      locale = pathParts[0];
+    }
+  } else {
+    // pathname이 없으면 현재 URL에서 locale 추출
+    const currentPath = window.location.pathname;
+    const pathParts = currentPath.split('/').filter(Boolean);
+    if (pathParts.length > 0 && locales.includes(pathParts[0] as any)) {
+      locale = pathParts[0];
+    }
+  }
+  
+  const redirectTo = new URL(`${window.location.origin}/${locale}/auth/callback`);
   
   if (nextPath) {
     redirectTo.searchParams.set('next', nextPath);
