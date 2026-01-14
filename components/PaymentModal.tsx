@@ -51,8 +51,6 @@ export default function PaymentModal({
       await rechargeCredits(5);
 
       onOpenChange(false);
-      onSuccess?.();
-
       setShowFeedback(true);
     } catch (error) {
       console.error('Recharge failed:', error);
@@ -62,8 +60,14 @@ export default function PaymentModal({
     }
   };
 
+  const handleFeedbackClose = () => {
+    setShowFeedback(false);
+    // 피드백 모달이 닫힌 후에 onSuccess 호출
+    onSuccess?.();
+  };
+
   if (showFeedback) {
-    return <FeedbackPrompt onClose={() => setShowFeedback(false)} />;
+    return <FeedbackPrompt onClose={handleFeedbackClose} />;
   }
 
   return (

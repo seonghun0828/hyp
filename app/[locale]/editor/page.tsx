@@ -26,6 +26,7 @@ interface TextElement {
   x: number;
   y: number;
   fontSize: number;
+  fontWeight: number; // 글자 굵기 (100-900)
   color: string;
   backgroundColor: 'transparent' | 'black' | 'white';
   isSelected: boolean;
@@ -196,8 +197,9 @@ export default function EditorPage() {
     setIsGeneratingMore(true);
 
     try {
-      // 2. UI 분기 처리 (store의 credits 사용)
-      if (credits === null || credits < 1) {
+      // 2. UI 분기 처리 (store에서 최신 credits 가져오기)
+      const currentCredits = useCreditStore.getState().credits;
+      if (currentCredits === null || currentCredits < 1) {
         if (user) {
           setShowPaymentModal(true);
         } else {
@@ -762,6 +764,7 @@ export default function EditorPage() {
       x: finalX,
       y: finalY,
       fontSize: actualFontSize,
+      fontWeight: styleSource?.fontWeight ?? 400,
       color: styleSource?.color ?? '#000000',
       backgroundColor: styleSource?.backgroundColor ?? 'white',
       isSelected: true,
@@ -844,6 +847,7 @@ export default function EditorPage() {
       x: finalX,
       y: finalY,
       fontSize: actualFontSize,
+      fontWeight: previousElement?.fontWeight ?? 400,
       color: previousElement?.color ?? '#000000',
       backgroundColor: previousElement?.backgroundColor ?? 'white',
       isSelected: true,
@@ -1491,7 +1495,7 @@ export default function EditorPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('fontSetting')}
                     </label>
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-2 flex-wrap max-h-[186px] overflow-y-auto p-1">
                       {fontNames.map((fontName, index) => (
                         <button
                           key={fontName}
@@ -1626,7 +1630,7 @@ export default function EditorPage() {
                       </div>
 
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-0.5">
                           {t('fontSize')}
                         </label>
                         <input
@@ -1644,6 +1648,33 @@ export default function EditorPage() {
                           }
                           className="w-full"
                         />
+                        <div className="mt-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-0.5">
+                            {t('fontWeight')}
+                          </label>
+                          <input
+                            type="range"
+                            min={100}
+                            max={900}
+                            step={100}
+                            value={
+                              textElements.find(
+                                (el) => el.id === selectedElement
+                              )?.fontWeight || 400
+                            }
+                            onChange={(e) =>
+                              updateElementStyle(selectedElement, {
+                                fontWeight: parseInt(e.target.value),
+                              })
+                            }
+                            className="w-full"
+                          />
+                          {/* <div className="text-xs text-gray-500 mt-1 text-center">
+                            {textElements.find(
+                              (el) => el.id === selectedElement
+                            )?.fontWeight || 400}
+                          </div> */}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1920,6 +1951,7 @@ export default function EditorPage() {
                                 }
                                 style={{
                                   color: element.color,
+                                  fontWeight: element.fontWeight,
                                   backgroundColor:
                                     element.backgroundColor === 'transparent'
                                       ? 'transparent'
@@ -2080,6 +2112,7 @@ export default function EditorPage() {
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     color: editingElement.color,
+                    fontWeight: editingElement.fontWeight,
                     backgroundColor:
                       editingElement.backgroundColor === 'transparent'
                         ? 'transparent'
@@ -2110,13 +2143,13 @@ export default function EditorPage() {
                       resize: 'none',
                       outline: 'none',
                       fontSize: `${editingElement.fontSize}px`,
+                      fontWeight: editingElement.fontWeight,
                       color: editingElement.color,
                       backgroundColor: 'transparent',
                       whiteSpace: 'pre',
                       lineHeight: 'normal',
                       overflow: 'hidden',
                       fontFamily: 'inherit',
-                      fontWeight: 'inherit',
                       letterSpacing: 'inherit',
                       width: 'auto',
                       minWidth: '1ch',
@@ -2162,7 +2195,7 @@ export default function EditorPage() {
                     <label className="block text-xs font-medium text-gray-700 mb-2">
                       {t('fontSetting')}
                     </label>
-                    <div className="flex gap-1 flex-wrap">
+                    <div className="flex gap-1 flex-wrap max-h-[102px] overflow-y-auto pr-1">
                       {fontNames.map((fontName, index) => (
                         <button
                           key={fontName}
@@ -2288,7 +2321,7 @@ export default function EditorPage() {
                       </div>
 
                       <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-0.5">
                           {t('fontSize')}
                         </label>
                         <input
@@ -2305,6 +2338,29 @@ export default function EditorPage() {
                           }}
                           className="w-full"
                         />
+                        <div className="mt-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-0.5">
+                            {t('fontWeight')}
+                          </label>
+                          <input
+                            type="range"
+                            min={100}
+                            max={900}
+                            step={100}
+                            value={editingElement?.fontWeight || 400}
+                            onChange={(e) => {
+                              if (editingTextId) {
+                                updateElementStyle(editingTextId, {
+                                  fontWeight: parseInt(e.target.value),
+                                });
+                              }
+                            }}
+                            className="w-full"
+                          />
+                          {/* <div className="text-xs text-gray-500 mt-1 text-center">
+                            {editingElement?.fontWeight || 400}
+                          </div> */}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2319,13 +2375,11 @@ export default function EditorPage() {
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
         isLoggedIn={!!user}
-        onSuccess={() => {
-          // 충전 완료 시 스토어 업데이트 (낙관적 + 서버 동기화)
-          updateCredits((credits || 0) + 100);
-          fetchCredits();
-
-          // 만약 '추가 생성' 중에 모달이 떴다면 재시도 로직을 실행할 수도 있음
-          // 현재는 단순히 닫고 사용자가 다시 버튼을 누르게 함
+        onSuccess={async () => {
+          // 충전 완료 후 서버에서 최신 크레딧 조회
+          await fetchCredits();
+          // 이미지 추가 생성 재시도
+          handleGenerateMoreClick();
         }}
       />
     </div>

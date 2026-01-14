@@ -22,7 +22,8 @@ export default function HomePage() {
   const tHome = useTranslations('home');
   const tSteps = useTranslations('steps');
   const tCommon = useTranslations('common');
-  
+  const tPayment = useTranslations('payment');
+
   const { url, setUrl, setSummary } = useFunnelStore();
   const [inputUrl, setInputUrl] = useState(url);
   const [loading, setLoading] = useState(false);
@@ -79,7 +80,7 @@ export default function HomePage() {
 
     try {
       console.log('🌐 [HomePage] Sending to API:', { url: inputUrl, locale });
-      
+
       // API 호출하여 제품 요약 생성
       const response = await fetch('/api/summary', {
         method: 'POST',
@@ -166,7 +167,7 @@ export default function HomePage() {
       9: `/${locale}/editor`,
       10: `/${locale}/result`,
     };
-    
+
     const route = stepRoutes[stepNumber];
     if (route && route !== window.location.pathname) {
       router.push(route);
@@ -175,9 +176,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <ProgressBar 
-        currentStep={1} 
-        totalSteps={10} 
+      <ProgressBar
+        currentStep={1}
+        totalSteps={10}
         stepNames={stepNames}
         onStepClick={handleStepClick}
       />
@@ -186,8 +187,12 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto text-center">
           {/* 헤더 */}
           <div className="mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">{tCommon('appName')}</h1>
-            <p className="text-xl text-gray-600 mb-2">{tCommon('appTagline')}</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              {tCommon('appName')}
+            </h1>
+            <p className="text-xl text-gray-600 mb-2">
+              {tCommon('appTagline')}
+            </p>
             <p className="text-gray-500">
               {tHome('subtitle')}
               <br />
@@ -243,13 +248,23 @@ export default function HomePage() {
         open={showPaymentModal}
         onOpenChange={setShowPaymentModal}
         isLoggedIn={!!user}
-        onSuccess={() => {
-          // 충전 완료 간주 -> 크레딧 상태 업데이트 (낙관적 + 서버 동기화)
-          updateCredits((credits || 0) + 100);
-          fetchCredits();
-
-          // 분석 시작 (비동기 상태 업데이트 고려하여 setTimeout 사용)
-          setTimeout(() => executeSubmit(inputUrl), 0);
+        description={
+          <div className="text-center">
+            {tPayment('homeDescription')
+              .split('\n')
+              .map((line, i, arr) => (
+                <span key={i}>
+                  {line}
+                  {i < arr.length - 1 && <br />}
+                </span>
+              ))}
+          </div>
+        }
+        onSuccess={async () => {
+          // 충전 완료 후 서버에서 최신 크레딧 조회
+          await fetchCredits();
+          // 분석 시작
+          executeSubmit(inputUrl);
         }}
       />
     </div>
@@ -259,7 +274,7 @@ export default function HomePage() {
 // 스크롤 탑 버튼 컴포넌트
 function ScrollToTopButton() {
   const tHome = useTranslations('home');
-  
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -368,7 +383,11 @@ function ProcessSection() {
             <p className="text-sm font-medium text-gray-700 mb-2">
               {processSteps[index]}
             </p>
-            <ProcessImageMobile src={src} index={index} stepLabel={processSteps[index]} />
+            <ProcessImageMobile
+              src={src}
+              index={index}
+              stepLabel={processSteps[index]}
+            />
           </div>
         ))}
       </div>
@@ -377,7 +396,15 @@ function ProcessSection() {
 }
 
 // 모바일용 이미지 컴포넌트
-function ProcessImageMobile({ src, index, stepLabel }: { src: string; index: number; stepLabel: string }) {
+function ProcessImageMobile({
+  src,
+  index,
+  stepLabel,
+}: {
+  src: string;
+  index: number;
+  stepLabel: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.4 });
 
@@ -411,7 +438,7 @@ function ProcessImageMobile({ src, index, stepLabel }: { src: string; index: num
 // 사용 예시 섹션 컴포넌트
 function ExampleSection() {
   const tHome = useTranslations('home');
-  
+
   const examples = [
     {
       src: '/images/result-examples/result1-youtube.png',
