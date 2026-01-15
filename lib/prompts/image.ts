@@ -289,11 +289,16 @@ const getDynamicTonePrompt = (
 
     case 'energetic-vibrant':
       if (isSimpleStyle)
-        return 'High Contrast Neon Colors. Bold and dynamic color combinations. Electric and intense.';
+        return 'Bright and Vibrant Colors. Saturated primary colors, dynamic composition, full of life and movement.';
       const energeticVariations = [
-        'Neon Cyberpunk Lighting. Colorful neon lights (magenta and cyan), dark background, glowing effects, futuristic and intense. Color palette: Neon Purple, Cyan, Black.', // Cyberpunk
-        'Active Sunlight. Bright, hard sunlight (high noon), strong cast shadows, saturated colors, dynamic and powerful. Color palette: Orange, Vivid Blue, White.', // Sports
-        'Dynamic Studio Flash. High contrast colorful gels, motion blur suggestions, exciting and bold. Color palette: Electric Blue, Hot Pink, Vivid Purple.', // Studio Color
+        // A. 야외 활동/스포츠: 밝은 자연광, 건강한 에너지
+        'Active Outdoor Energy. Bright natural sunlight, clear blue sky, people in motion (jogging, cycling, sports). Fresh air feeling, healthy and dynamic lifestyle. Color palette: Sky Blue, Grass Green, Vibrant Orange.',
+        // B. 도시 라이프스타일: 활기찬 도시, 바쁜 일상 속 에너지
+        'Urban Vitality. Bustling city life, morning rush, coffee-to-go moments. Clean modern architecture, street energy without chaos. Bright daylight, optimistic urban mood. Color palette: Crisp White, Urban Blue, Warm Yellow.',
+        // C. 창의적 모멘텀: 아이디어가 터지는 순간, 영감
+        'Creative Momentum. Brainstorming energy, lightbulb moments, ideas flowing. Bright and inspiring workspace, sticky notes, whiteboards. Uplifting and motivational. Color palette: Sunny Yellow, Fresh Mint, Coral Orange.',
+        // D. 축제/이벤트: 파티, 축하, 즐거움
+        'Celebration Vibes. Festive atmosphere, confetti, balloons, joyful gathering. Party energy without being chaotic. Bright and cheerful celebration mood. Color palette: Party Pink, Bright Yellow, Confetti Multi-colors.',
       ];
       return selectOption(energeticVariations, variationIndex, randomSeed);
 
@@ -352,6 +357,7 @@ const getDynamicMessagePrompt = (
       const benefitVariations = [
         'Hero Shot Low Angle. The product is placed centrally, shot from a slightly low angle to make it look monumental and important. Rays of light or glow behind it.', // Hero
         'Visualizing the Intangible. Use floating icons or 3D elements around the product to represent abstract benefits (speed, security, growth). Magical realism style.', // Icons
+        'Radiating Benefits. The product at the center with multiple benefit icons or visual elements branching out from it via connecting lines or rays. Like a mind map showing all the advantages flowing from the product.', // Radiating
       ];
       // 라이프스타일 옵션은 사람이 있을 때 더 자연스러움 (없어도 가능은 하나 맥락상)
       if (!hasNoPerson) {
@@ -367,7 +373,7 @@ const getDynamicMessagePrompt = (
 
     case 'story':
       const storyVariations = [
-        'Three-Panel Layout. A subtle triptych (3 vertical sections) showing a sequence: 1. Start, 2. Action, 3. Result. Visual storytelling flow.', // Sequence
+        'Three-Panel Sequence. A triptych composition with 3 circular or rectangular sections showing a natural progression through visuals only.', // Sequence
         'Journey Path Composition. A winding road or path leading from a dark/uncertain foreground to a bright/successful background destination. The product is the vehicle or guide.', // Journey
         'Slice of Life Drama. A single frame that implies a larger story. A "decisive moment" full of context and narrative details. Like a movie still.', // Cinematic
       ];
