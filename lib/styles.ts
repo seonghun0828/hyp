@@ -24,12 +24,6 @@ export const messageTypes: StyleOption[] = [
     src: '/images/style-options/message-type-benefit.png',
   },
   {
-    id: 'proof',
-    aiPrompt:
-      'Show visual evidence such as metrics, results, or indicators that build trust.',
-    src: '/images/style-options/message-type-proof.png',
-  },
-  {
     id: 'comparison',
     aiPrompt:
       'Present a clear visual comparison highlighting the difference between two states or options.',

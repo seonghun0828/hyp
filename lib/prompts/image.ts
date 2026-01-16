@@ -246,7 +246,6 @@ const getDynamicMessagePrompt = (
     'problem-solving':
       messageTypes.find((m) => m.id === 'problem-solving')?.aiPrompt || '',
     benefit: messageTypes.find((m) => m.id === 'benefit')?.aiPrompt || '',
-    proof: messageTypes.find((m) => m.id === 'proof')?.aiPrompt || '',
     comparison: messageTypes.find((m) => m.id === 'comparison')?.aiPrompt || '',
     story: messageTypes.find((m) => m.id === 'story')?.aiPrompt || '',
   };
@@ -302,24 +301,6 @@ const getDynamicMessagePrompt = (
         'Three-Panel Sequence. A triptych composition with 3 circular or rectangular sections showing a natural progression through visuals only.', // Sequence
       ];
       return selectOption(storyVariations, variationIndex, randomSeed);
-
-    case 'proof':
-      const proofVariations = [
-        'Abstract Data Visualization. 3D charts, upward trending graphs, or percentage signs integrated artistically into the environment. Symbolizing growth and success.', // Data Art
-        'Seal of Excellence. Visual cues of certification, trophies, or 5-star symbols arranged elegantly around the product. Gold and silver accents.', // Awards
-      ];
-      // 군중 샷은 사람이 아예 없어야 하는 설정과는 충돌 가능성이 있으나, 배경의 군중은 'Human Person' 모델 설정과는 별개로 취급될 수도 있음.
-      // 하지만 안전하게 처리하려면:
-      if (!hasNoPerson) {
-        proofVariations.push(
-          'Social Proof Crowd. Suggestions of many people or avatars in the background, all facing or using the product. Implies popularity and community trust.'
-        );
-      } else {
-        proofVariations.push(
-          'Digital Popularity. Symbols of likes, hearts, and high view counts floating around the product interface. Implies digital popularity.'
-        );
-      }
-      return selectOption(proofVariations, variationIndex, randomSeed);
 
     default:
       return defaultPrompt;
