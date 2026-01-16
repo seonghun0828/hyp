@@ -297,8 +297,10 @@ const getDynamicMessagePrompt = (
 
     case 'story':
       const storyVariations = [
-        'Two-Panel Sequence. A diptych composition with 2 rectangular or circular sections showing a natural progression from before to after through visuals only.', // Two-Panel
-        'Three-Panel Sequence. A triptych composition with 3 circular or rectangular sections showing a natural progression through visuals only.', // Sequence
+        'Two-Panel Sequence. A diptych composition with 2 rectangular sections showing a natural progression through visuals only.', // Two-Panel
+        'Two-Panel Sequence. A diptych composition with 2 circular sections showing a natural progression through visuals only.', // Two-Panel
+        'Three-Panel Sequence. A triptych composition with 3 rectangular sections showing a natural progression through visuals only.', // Sequence
+        'Three-Panel Sequence. A triptych composition with 3 circular sections showing a natural progression through visuals only.', // Sequence
       ];
       return selectOption(storyVariations, variationIndex, randomSeed);
 
