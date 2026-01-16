@@ -32,7 +32,9 @@ const getDynamicModelPrompt = (
   modelId: string,
   visualId: string,
   categoryForm?: string,
-  categoryIndustry?: string
+  categoryIndustry?: string,
+  variationIndex?: number,
+  randomSeed?: number
 ): string => {
   // 기본값 (styles.ts에 정의된 값 사용을 위한 fallback)
   const basePrompts: Record<string, string> = {
@@ -81,7 +83,7 @@ const getDynamicModelPrompt = (
 
     case 'hands-only':
       if (['app', 'web_service', 'digital_product'].includes(categoryForm)) {
-        return `POV ${shotTerm}. Hands holding a smartphone or typing on a keyboard. Screen visible and in focus. Technology-focused context. Clean, modern manicure or natural hands.`;
+        return `POV ${shotTerm}. Hands holding a smartphone or typing on a keyboard. Screen visible and in focus only when the front face of the device is facing the viewer. If the device back is visible, show only the back cover without any screen content. Technology-focused context. Clean, modern manicure or natural hands.`;
       }
       if (categoryForm === 'physical_product') {
         return `Close-up of hands holding or touching the product. Emphasizing tactile experience and material quality. Natural lighting. Hands are interacting naturally with the object.`;
@@ -93,7 +95,7 @@ const getDynamicModelPrompt = (
         return `A natural lifestyle portrait. A person using or wearing the product in a daily setting. Soft lighting, authentic expression. Beauty-focused but natural, not an exaggerated runway look.`;
       }
       if (['app', 'web_service', 'digital_product'].includes(categoryForm)) {
-        return `Lifestyle ${shotTerm} of a user engaging with a device. Happy, focused expression while looking at the screen. Modern environment. The person is clearly enjoying the digital experience.`;
+        return `Lifestyle ${shotTerm} of a user engaging with a device. Happy, focused expression while looking at the screen. Show screen content only when the device front face is visible to the viewer. If the device back is visible, show only the back cover without screen content. Modern environment. The person is clearly enjoying the digital experience.`;
       }
       if (
         [
@@ -107,7 +109,24 @@ const getDynamicModelPrompt = (
       return `A natural lifestyle scene featuring a person using the product/service. Authentic emotions and context. The person is the protagonist of the scene.`;
 
     case 'character-mascot':
-      return `A stylized character or mascot representing the brand. Expressive poses, engaging directly with the viewer or the product element. The character should embody the brand personality.`;
+      const mascotVariations = [
+        // 로봇/기계형 캐릭터
+        'A friendly robot character with expressive eyes and rounded, approachable design. Modern tech aesthetic with clean lines and friendly personality. Expressive poses, engaging directly with the viewer or the product element.',
+        'A mechanical mascot with anthropomorphic features. Tech-inspired design with human-like expressions and gestures. The character should embody the brand personality.',
+
+        // 동물 캐릭터 (다양한 동물)
+        'A cute bear mascot with friendly expression and approachable pose. Soft, rounded design with warm personality. Expressive poses, engaging directly with the viewer or the product element.',
+        'A playful cat character with expressive eyes and dynamic pose. Friendly and energetic design. The character should embody the brand personality.',
+        'A cheerful dog mascot with happy expression. Approachable and trustworthy appearance. Expressive poses, engaging directly with the viewer or the product element.',
+        'A wise owl character with intelligent expression. Professional yet friendly design. The character should embody the brand personality.',
+        'A friendly rabbit mascot with energetic pose. Playful and approachable design. Expressive poses, engaging directly with the viewer or the product element.',
+        'A cute penguin character with charming expression. Friendly and memorable design. The character should embody the brand personality.',
+
+        // 추상/인간형 캐릭터
+        'An abstract geometric character with simple shapes and expressive features. Modern, minimalist design with personality. Expressive poses, engaging directly with the viewer or the product element.',
+        'A stylized humanoid character with exaggerated features and expressive poses. Friendly and approachable design. The character should embody the brand personality.',
+      ];
+      return selectOption(mascotVariations, variationIndex, randomSeed);
 
     default:
       return defaultPrompt;
@@ -150,7 +169,7 @@ const getDynamicVisualPrompt = (
         'Classic Japanese Anime (90s style). Cel-shading, distinct highlights, dramatic angles, vibrant colors.',
         'American Retro Cartoon (Rubber hose style). 1930s vintage animation, black and white or muted colors, rhythmic and bouncy character design.',
         'Modern Webtoon Style. Clean digital lines, trendy fashion, bright and saturated colors, polished finish.',
-        'French Bandes Dessinées (Moebius style). Intricate ink lines, flat pastel colors, surreal and sci-fi atmosphere, detailed environments.',
+        'French Bandes Dessinées (Moebius style). Intricate ink lines, flat pastel colors.',
         'Modern Flat Cartoon. Vector-like clean shapes, bold solid colors, minimalist character design, corporate illustration style.',
       ];
       return selectOption(cartoonVariations, variationIndex, randomSeed);
@@ -356,8 +375,8 @@ const getDynamicMessagePrompt = (
     case 'benefit':
       const benefitVariations = [
         'Hero Shot Low Angle. The product is placed centrally, shot from a slightly low angle to make it look monumental and important. Rays of light or glow behind it.', // Hero
-        'Visualizing the Intangible. Use floating icons or 3D elements around the product to represent abstract benefits (speed, security, growth). Magical realism style.', // Icons
-        'Radiating Benefits. The product at the center with multiple benefit icons or visual elements branching out from it via connecting lines or rays. Like a mind map showing all the advantages flowing from the product.', // Radiating
+        'Visualizing the Intangible. Integrate abstract benefit symbols naturally into the scene as visual metaphors. These symbols should blend seamlessly with the composition, not appear as separate floating icons. No text, numbers, or readable labels on any symbols.', // Icons
+        'Radiating Benefits. The product at the center with visual benefit elements organically flowing from it through natural connections (light rays, energy waves, or environmental elements). Represent benefits as abstract visual shapes and symbols integrated into the scene, not as separate icon elements. No text, numbers, or readable labels.', // Radiating
       ];
       // 라이프스타일 옵션은 사람이 있을 때 더 자연스러움 (없어도 가능은 하나 맥락상)
       if (!hasNoPerson) {
@@ -373,9 +392,8 @@ const getDynamicMessagePrompt = (
 
     case 'story':
       const storyVariations = [
+        'Two-Panel Sequence. A diptych composition with 2 rectangular or circular sections showing a natural progression from before to after through visuals only.', // Two-Panel
         'Three-Panel Sequence. A triptych composition with 3 circular or rectangular sections showing a natural progression through visuals only.', // Sequence
-        'Journey Path Composition. A winding road or path leading from a dark/uncertain foreground to a bright/successful background destination. The product is the vehicle or guide.', // Journey
-        'Slice of Life Drama. A single frame that implies a larger story. A "decisive moment" full of context and narrative details. Like a movie still.', // Cinematic
       ];
       return selectOption(storyVariations, variationIndex, randomSeed);
 
@@ -422,7 +440,9 @@ export const getImagePrompt = (
     styles.model,
     styles.visualStyle,
     category?.form,
-    category?.industry
+    category?.industry,
+    variationIndex,
+    randomSeed
   );
 
   // 동적 Visual Style Prompt 생성
@@ -468,6 +488,13 @@ Generate one high-quality SNS advertisement image.
 Avoid readable text. If text-like elements (UI labels, chart numbers) are necessary for the composition, represent them as abstract lines or illegible placeholders. Focus on visual symbols over written words.
 Use a realistic, clear, visually appealing composition that reflects the advertising purpose.  
 Avoid distortions, avoid artifacts, and maintain natural lighting.  
-Focus solely on visually conveying the product’s core value and purpose through the selected style package.
+Focus solely on visually conveying the product's core value and purpose through the selected style package.
+
+[Device Screen Display Rules]
+When showing devices (smartphones, tablets, laptops, monitors), strictly follow these rules:
+- If the front face of the device is visible, the screen content can be shown.
+- If only the back of the device is visible, NO screen content should appear (only the device back cover, camera module, logo, etc.).
+- If the device is held at an angle where the screen is partially visible, only show screen content on the visible portion.
+- Never show screen content on the back of a device. This is physically impossible and creates an unrealistic image.
 `;
 };
