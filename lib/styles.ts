@@ -71,35 +71,6 @@ export const visualStyles: StyleOption[] = [
   },
 ];
 
-// 톤 & 무드
-export const toneMoods: StyleOption[] = [
-  {
-    id: 'warm-comfortable',
-    aiPrompt: 'Create a warm, cozy, and comforting atmosphere.',
-    src: '/images/style-options/tone-mood-warm-comfortable.png',
-  },
-  {
-    id: 'trust-serious',
-    aiPrompt: 'Convey reliability, seriousness, and professional trust.',
-    src: '/images/style-options/tone-mood-trust-serious.png',
-  },
-  {
-    id: 'humor-light',
-    aiPrompt: 'Add a light-hearted, witty, and playful mood.',
-    src: '/images/style-options/tone-mood-humor-light.png',
-  },
-  {
-    id: 'premium-sophisticated',
-    aiPrompt: 'Evoke luxury, elegance, and refined sophistication.',
-    src: '/images/style-options/tone-mood-premium-sophisticated.png',
-  },
-  {
-    id: 'energetic-vibrant',
-    aiPrompt: 'Infuse energy, liveliness, and vibrancy into the scene.',
-    src: '/images/style-options/tone-mood-energetic-vibrant.png',
-  },
-];
-
 // 모델 구성
 export const models: StyleOption[] = [
   {
@@ -135,10 +106,6 @@ export const styleCategories: StyleCategory[] = [
   {
     id: 'visuals',
     options: visualStyles,
-  },
-  {
-    id: 'tones-moods',
-    options: toneMoods,
   },
   {
     id: 'models',

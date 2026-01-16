@@ -18,7 +18,6 @@
     "productSummary": "Product Summary",
     "messageType": "Message Type",
     "expressionStyle": "Expression Style",
-    "toneMood": "Tone & Mood",
     "modelComposition": "Model Composition",
     "aspectRatio": "Aspect Ratio",
     "imageUpload": "Image Upload",
@@ -100,19 +99,6 @@
       "cartoonDesc": "Simplified and characterful expression like cartoons",
       "illustration": "Illustration",
       "illustrationDesc": "Soft illustration style that looks hand-drawn"
-    },
-    "tones": {
-      "title": "Tone & Mood",
-      "warmComfortable": "Warm & Comfortable",
-      "warmComfortableDesc": "Image with a soft and stable atmosphere",
-      "trustSerious": "Trustworthy & Serious",
-      "trustSeriousDesc": "Image conveying solidity and reliability",
-      "humorLight": "Humorous & Light",
-      "humorLightDesc": "Image with wit and lightness",
-      "premiumSophisticated": "Premium & Sophisticated",
-      "premiumSophisticatedDesc": "Image with a refined and luxurious style",
-      "energeticVibrant": "Energetic & Vibrant",
-      "energeticVibrantDesc": "Dynamic and lively image"
     },
     "models": {
       "title": "Model Composition",

@@ -1,5 +1,5 @@
 import { Styles } from '../store';
-import { visualStyles, messageTypes, toneMoods, models } from '../styles';
+import { visualStyles, messageTypes, models } from '../styles';
 import { ProductCategory } from '../categories/types';
 
 /**
@@ -233,100 +233,6 @@ const getDynamicVisualPrompt = (
 };
 
 /**
- * Randomness에 따라 Tone & Mood Prompt를 동적으로 생성하는 함수
- */
-const getDynamicTonePrompt = (
-  toneId: string,
-  visualId: string,
-  variationIndex?: number,
-  randomSeed?: number
-): string => {
-  // 기본값 fallback
-  const basePrompts: Record<string, string> = {
-    'warm-comfortable':
-      toneMoods.find((t) => t.id === 'warm-comfortable')?.aiPrompt || '',
-    'trust-serious':
-      toneMoods.find((t) => t.id === 'trust-serious')?.aiPrompt || '',
-    'humor-light':
-      toneMoods.find((t) => t.id === 'humor-light')?.aiPrompt || '',
-    'premium-sophisticated':
-      toneMoods.find((t) => t.id === 'premium-sophisticated')?.aiPrompt || '',
-    'energetic-vibrant':
-      toneMoods.find((t) => t.id === 'energetic-vibrant')?.aiPrompt || '',
-  };
-
-  const defaultPrompt = basePrompts[toneId] || '';
-
-  // Line Drawing은 무조건 흑백으로 고정 (톤과 무관하게 선의 느낌만 살림)
-  if (visualId === 'line-drawing') {
-    return 'Black and White only. High contrast, clean lines on white background. No colors, no shading, no grey fills.';
-  }
-
-  // Line Drawing이나 Flat Cartoon일 경우 복잡한 조명 효과를 제거/단순화
-  const isSimpleStyle = visualId === 'cartoon' && Math.random() > 0.5; // Cartoon도 일부 Flat 스타일이 있음
-
-  switch (toneId) {
-    case 'warm-comfortable':
-      if (isSimpleStyle)
-        return 'Warm Color Palette. Use soft oranges, yellows, and browns. Friendly and inviting atmosphere.';
-      const warmVariations = [
-        'Golden Hour Lighting. Soft, warm sunlight coming from the side, long shadows, inviting and cozy atmosphere. Color palette: Amber, Gold, Soft Beige.', // Golden Hour
-        'Cozy Indoor Lighting. Soft diffused light from a window or lamp, warm color temperature (3000K), comfortable and safe feeling. Color palette: Earth tones, Cream, Warm Brown.', // Hygge
-        'Soft Morning Light. Fresh and gentle morning sunlight, low contrast, peaceful and calm mood. Color palette: Pastel Yellow, Soft White, Light Green.', // Morning
-      ];
-      return selectOption(warmVariations, variationIndex, randomSeed);
-
-    case 'trust-serious':
-      if (isSimpleStyle)
-        return 'Cool and Clean Color Palette. Use navy blues, greys, and white. Minimalist and professional.';
-      const trustVariations = [
-        'Professional Studio Lighting. Balanced and even lighting, cool color temperature (5000K), clean white or grey background, sharp details. Color palette: Navy Blue, White, Grey.', // Corporate
-        'Modern Minimalist Lighting. Soft shadows, clean lines, uncluttered composition, calm and reliable atmosphere. Color palette: Cool Grey, Muted Blue, Slate.', // Minimal
-        'Dramatic Professional. Slightly higher contrast, focused spotlight on the subject, deep shadows for weight and seriousness. Color palette: Deep Blue, Charcoal, Silver.', // Dramatic
-      ];
-      return selectOption(trustVariations, variationIndex, randomSeed);
-
-    case 'humor-light':
-      if (isSimpleStyle)
-        return 'Vibrant and Pop Colors. Bright primary colors, playful and fun atmosphere.';
-      const humorVariations = [
-        'Vibrant Pop Style. High key lighting, bright and saturated colors, playful atmosphere, almost no shadows. Color palette: Primary Red, Yellow, Blue.', // Pop
-        'Soft Pastel Lighting. Very soft and diffused light, low contrast, dreamy and cute atmosphere. Color palette: Mint, Baby Pink, Lemon Yellow.', // Pastel
-        'Quirky High-Contrast. Hard lighting with distinct colorful shadows, energetic and fun mood. Color palette: Hot Pink, Electric Blue, Lime Green.', // Funky
-      ];
-      return selectOption(humorVariations, variationIndex, randomSeed);
-
-    case 'premium-sophisticated':
-      if (isSimpleStyle)
-        return 'Monochrome or Metallic Palette. Black, white, and gold accents. Elegant and refined.';
-      const premiumVariations = [
-        'Luxury Dark Mode. Low key lighting, rim lighting highlighting edges, dark background, mysterious and elegant. Color palette: Black, Gold, Deep Emerald.', // Dark Luxury
-        'High-End Editorial. Soft but directional lighting, refined textures, elegant composition, expensive feel. Color palette: Champagne, Silk White, Bronze.', // Editorial
-        'Modern Chic. Clean, bright, and airy, but with sharp contrast and high-quality materials. Color palette: Marble White, Matte Black, Metallic accents.', // Chic
-      ];
-      return selectOption(premiumVariations, variationIndex, randomSeed);
-
-    case 'energetic-vibrant':
-      if (isSimpleStyle)
-        return 'Bright and Vibrant Colors. Saturated primary colors, dynamic composition, full of life and movement.';
-      const energeticVariations = [
-        // A. 야외 활동/스포츠: 밝은 자연광, 건강한 에너지
-        'Active Outdoor Energy. Bright natural sunlight, clear blue sky, people in motion (jogging, cycling, sports). Fresh air feeling, healthy and dynamic lifestyle. Color palette: Sky Blue, Grass Green, Vibrant Orange.',
-        // B. 도시 라이프스타일: 활기찬 도시, 바쁜 일상 속 에너지
-        'Urban Vitality. Bustling city life, morning rush, coffee-to-go moments. Clean modern architecture, street energy without chaos. Bright daylight, optimistic urban mood. Color palette: Crisp White, Urban Blue, Warm Yellow.',
-        // C. 창의적 모멘텀: 아이디어가 터지는 순간, 영감
-        'Creative Momentum. Brainstorming energy, lightbulb moments, ideas flowing. Bright and inspiring workspace, sticky notes, whiteboards. Uplifting and motivational. Color palette: Sunny Yellow, Fresh Mint, Coral Orange.',
-        // D. 축제/이벤트: 파티, 축하, 즐거움
-        'Celebration Vibes. Festive atmosphere, confetti, balloons, joyful gathering. Party energy without being chaotic. Bright and cheerful celebration mood. Color palette: Party Pink, Bright Yellow, Confetti Multi-colors.',
-      ];
-      return selectOption(energeticVariations, variationIndex, randomSeed);
-
-    default:
-      return defaultPrompt;
-  }
-};
-
-/**
  * Randomness에 따라 Message Type Prompt를 동적으로 생성하는 함수
  */
 const getDynamicMessagePrompt = (
@@ -453,14 +359,6 @@ export const getImagePrompt = (
     randomSeed
   );
 
-  // 동적 Tone Prompt 생성 (Visual Style 고려)
-  const tonePrompt = getDynamicTonePrompt(
-    styles.toneMood,
-    styles.visualStyle,
-    variationIndex,
-    randomSeed
-  );
-
   // 동적 Message Prompt 생성 (Model 유무 고려)
   const messagePrompt = getDynamicMessagePrompt(
     styles.messageType,
@@ -480,7 +378,6 @@ The advertising purpose is: ${category?.purpose}.
 Apply the following style package as a single unified direction:
 – Message Type: ${messagePrompt}
 – Visual Style: ${visualPrompt}
-– Tone & Mood: ${tonePrompt}
 – Model Composition: ${modelPrompt}
 
 [Output Requirements]

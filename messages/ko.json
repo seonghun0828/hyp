@@ -18,7 +18,6 @@
     "productSummary": "제품 요약",
     "messageType": "메시지 타입",
     "expressionStyle": "표현 방식",
-    "toneMood": "톤 & 무드",
     "modelComposition": "모델 구성",
     "aspectRatio": "비율 선택",
     "imageUpload": "이미지 업로드",
@@ -100,19 +99,6 @@
       "cartoonDesc": "만화처럼 단순화되고 개성 있는 표현",
       "illustration": "일러스트",
       "illustrationDesc": "사람이 그린 듯한 부드러운 일러스트 스타일"
-    },
-    "tones": {
-      "title": "톤 & 무드",
-      "warmComfortable": "따뜻함·편안함",
-      "warmComfortableDesc": "부드럽고 안정적인 분위기의 이미지",
-      "trustSerious": "신뢰·진지함",
-      "trustSeriousDesc": "견고하고 믿음직한 느낌을 주는 이미지",
-      "humorLight": "유머·가벼움",
-      "humorLightDesc": "재치 있고 가볍게 다가오는 이미지",
-      "premiumSophisticated": "고급·세련됨",
-      "premiumSophisticatedDesc": "감각적이고 고급스러운 스타일의 이미지",
-      "energeticVibrant": "활기·에너지",
-      "energeticVibrantDesc": "역동적이고 생기 넘치는 이미지"
     },
     "models": {
       "title": "모델 구성",

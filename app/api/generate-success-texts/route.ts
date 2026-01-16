@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // 캐시 키 생성: url_스타일조합_locale
-    const cacheKey = `${url}_${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}_${locale}`;
+    const cacheKey = `${url}_${styles.messageType}_${styles.expressionStyle}_${styles.modelComposition}_${locale}`;
 
     // 1. 캐시 조회
     try {
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       await saveMarketingTextCache({
         cache_key: cacheKey,
         url: url,
-        concept_name: `${styles.messageType}_${styles.expressionStyle}_${styles.toneMood}_${styles.modelComposition}`,
+        concept_name: `${styles.messageType}_${styles.expressionStyle}_${styles.modelComposition}`,
         simple: finalTexts.simple,
         unexpected: finalTexts.unexpected,
         concrete: finalTexts.concrete,

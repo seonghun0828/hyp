@@ -38,7 +38,6 @@ export default function UploadPage() {
     tSteps('productSummary'),
     tSteps('messageType'),
     tSteps('expressionStyle'),
-    tSteps('toneMood'),
     tSteps('modelComposition'),
     tSteps('aspectRatio'),
     tSteps('imageUpload'),
@@ -376,7 +375,7 @@ export default function UploadPage() {
   const checkCacheAndInitialize = async () => {
     if (!summary || !styles) return;
 
-    const cacheKey = `${summary.url}_${styles.messageType}_${styles.visualStyle}_${styles.toneMood}_${styles.model}`;
+    const cacheKey = `${summary.url}_${styles.messageType}_${styles.visualStyle}_${styles.model}`;
 
     try {
       const response = await fetch('/api/check-cache', {
@@ -426,7 +425,6 @@ export default function UploadPage() {
       !styles ||
       !styles.messageType ||
       !styles.visualStyle ||
-      !styles.toneMood ||
       !styles.model ||
       !styles.aspectRatio
     ) {
@@ -452,7 +450,6 @@ export default function UploadPage() {
     !styles ||
     !styles.messageType ||
     !styles.visualStyle ||
-    !styles.toneMood ||
     !styles.model ||
     !styles.aspectRatio
   ) {
@@ -462,8 +459,8 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
-        currentStep={8}
-        totalSteps={10}
+        currentStep={7}
+        totalSteps={9}
         stepNames={stepNames}
         onStepClick={(stepNumber: number) => {
           const stepRoutes: Record<number, string> = {
@@ -471,12 +468,11 @@ export default function UploadPage() {
             2: `/${locale}/summary`,
             3: `/${locale}/styles/messages`,
             4: `/${locale}/styles/expressions`,
-            5: `/${locale}/styles/tones-moods`,
-            6: `/${locale}/styles/models`,
-            7: `/${locale}/styles/aspect-ratio`,
-            8: `/${locale}/upload`,
-            9: `/${locale}/editor`,
-            10: `/${locale}/result`,
+            5: `/${locale}/styles/models`,
+            6: `/${locale}/styles/aspect-ratio`,
+            7: `/${locale}/upload`,
+            8: `/${locale}/editor`,
+            9: `/${locale}/result`,
           };
 
           const route = stepRoutes[stepNumber];
