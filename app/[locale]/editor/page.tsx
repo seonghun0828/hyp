@@ -28,7 +28,7 @@ interface TextElement {
   fontSize: number;
   fontWeight: number; // 글자 굵기 (100-900)
   color: string;
-  backgroundColor: 'transparent' | 'black' | 'white';
+  backgroundColor: string; // hex color or 'transparent'
   isSelected: boolean;
   type: 'recommended' | 'custom'; // 추천 텍스트인지 커스텀 텍스트인지
   recommendedPrincipleKey?: string; // 추천 텍스트인 경우 어떤 원칙의 텍스트인지
@@ -1514,6 +1514,63 @@ export default function EditorPage() {
                       </label>
                       {colorPalette.length > 0 ? (
                         <div className="flex justify-between gap-1">
+                          {/* Color Picker Button - Dropper Icon */}
+                          {(() => {
+                            const currentColor =
+                              textElements.find(
+                                (el) => el.id === selectedElement
+                              )?.color || '#000000';
+                            const isCustomColor = !colorPalette.some(
+                              ([r, g, b]) => {
+                                const hexColor = `#${[r, g, b]
+                                  .map((x) => {
+                                    const hex = x.toString(16);
+                                    return hex.length === 1 ? '0' + hex : hex;
+                                  })
+                                  .join('')}`;
+                                return (
+                                  currentColor.toLowerCase() ===
+                                  hexColor.toLowerCase()
+                                );
+                              }
+                            );
+                            return (
+                              <label
+                                className={`relative w-5 h-5 rounded border cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400 ${
+                                  isCustomColor
+                                    ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
+                                    : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                              >
+                                <input
+                                  type="color"
+                                  value={currentColor}
+                                  onChange={(e) => {
+                                    if (selectedElement) {
+                                      updateElementStyle(selectedElement, {
+                                        color: e.target.value,
+                                      });
+                                    }
+                                  }}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="white"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="w-3 h-3 drop-shadow-md"
+                                >
+                                  <path d="m2 22 1-1h3l9-9" />
+                                  <path d="M3 21v-3l9-9" />
+                                  <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
+                                </svg>
+                              </label>
+                            );
+                          })()}
                           {colorPalette.map(([r, g, b], index) => {
                             const hexColor = `#${[r, g, b]
                               .map((x) => {
@@ -1558,70 +1615,125 @@ export default function EditorPage() {
                     </div>
 
                     <div className="flex">
-                      <div className="flex-1">
+                      <div className="flex-1 pr-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           {t('backgroundColor')}
                         </label>
-                        <button
-                          className={`px-4 py-2 rounded text-sm transition-colors ${(() => {
-                            const current = textElements.find(
-                              (el) => el.id === selectedElement
-                            );
-                            if (!current)
-                              return 'bg-blue-500 text-white hover:bg-blue-600';
+                        <div className="flex items-center gap-2">
+                          {/* Background Color Picker - Dropper Icon */}
+                          <label className="relative w-8 h-8 rounded border border-gray-300 hover:border-gray-400 cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400">
+                            <input
+                              type="color"
+                              value={(() => {
+                                const current = textElements.find(
+                                  (el) => el.id === selectedElement
+                                );
+                                if (
+                                  !current ||
+                                  current.backgroundColor === 'transparent' ||
+                                  current.backgroundColor === 'white' ||
+                                  current.backgroundColor === 'black'
+                                ) {
+                                  return '#ffffff';
+                                }
+                                return current.backgroundColor;
+                              })()}
+                              onChange={(e) => {
+                                if (selectedElement) {
+                                  updateElementStyle(selectedElement, {
+                                    backgroundColor: e.target.value,
+                                  });
+                                }
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-4 h-4 drop-shadow-md"
+                            >
+                              <path d="m2 22 1-1h3l9-9" />
+                              <path d="M3 21v-3l9-9" />
+                              <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
+                            </svg>
+                          </label>
+                          {/* Toggle Button: white → black → transparent */}
+                          <button
+                            className={`px-2 h-8 rounded text-sm transition-colors ${(() => {
+                              const current = textElements.find(
+                                (el) => el.id === selectedElement
+                              );
+                              if (!current)
+                                return 'bg-blue-500 text-white hover:bg-blue-600';
 
-                            if (current.backgroundColor === 'white') {
-                              return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
-                            } else if (current.backgroundColor === 'black') {
-                              return 'bg-black text-white hover:bg-gray-800';
-                            } else {
-                              return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
-                            }
-                          })()}`}
-                          onClick={() => {
-                            const current = textElements.find(
-                              (el) => el.id === selectedElement
-                            );
-                            if (!current) return;
+                              if (
+                                current.backgroundColor === 'white' ||
+                                current.backgroundColor === '#ffffff'
+                              ) {
+                                return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
+                              } else if (
+                                current.backgroundColor === 'black' ||
+                                current.backgroundColor === '#000000'
+                              ) {
+                                return 'bg-black text-white hover:bg-gray-800';
+                              } else {
+                                return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
+                              }
+                            })()}`}
+                            onClick={() => {
+                              const current = textElements.find(
+                                (el) => el.id === selectedElement
+                              );
+                              if (!current) return;
 
-                            // 순환 로직: 하얀색 → 검정색 → 없음 → 하얀색
-                            let nextBackgroundColor:
-                              | 'transparent'
-                              | 'black'
-                              | 'white';
+                              let nextBackgroundColor: string;
 
-                            if (current.backgroundColor === 'white') {
-                              // 하얀색 → 검정색
-                              nextBackgroundColor = 'black';
-                            } else if (current.backgroundColor === 'black') {
-                              // 검정색 → 없음
-                              nextBackgroundColor = 'transparent';
-                            } else {
-                              // 없음 → 하얀색
-                              nextBackgroundColor = 'white';
-                            }
+                              if (
+                                current.backgroundColor === 'white' ||
+                                current.backgroundColor === '#ffffff'
+                              ) {
+                                nextBackgroundColor = 'black';
+                              } else if (
+                                current.backgroundColor === 'black' ||
+                                current.backgroundColor === '#000000'
+                              ) {
+                                nextBackgroundColor = 'transparent';
+                              } else {
+                                nextBackgroundColor = 'white';
+                              }
 
-                            updateElementStyle(selectedElement, {
-                              backgroundColor: nextBackgroundColor,
-                              // 텍스트 색상은 변경하지 않음
-                            });
-                          }}
-                        >
-                          {(() => {
-                            const current = textElements.find(
-                              (el) => el.id === selectedElement
-                            );
-                            if (!current) return t('backgroundText');
+                              updateElementStyle(selectedElement, {
+                                backgroundColor: nextBackgroundColor,
+                              });
+                            }}
+                          >
+                            {(() => {
+                              const current = textElements.find(
+                                (el) => el.id === selectedElement
+                              );
+                              if (!current) return t('backgroundText');
 
-                            if (current.backgroundColor === 'white') {
-                              return t('backgroundWhite');
-                            } else if (current.backgroundColor === 'black') {
-                              return t('backgroundBlack');
-                            } else {
-                              return t('backgroundNone');
-                            }
-                          })()}
-                        </button>
+                              if (
+                                current.backgroundColor === 'white' ||
+                                current.backgroundColor === '#ffffff'
+                              ) {
+                                return t('backgroundWhite');
+                              } else if (
+                                current.backgroundColor === 'black' ||
+                                current.backgroundColor === '#000000'
+                              ) {
+                                return t('backgroundBlack');
+                              } else {
+                                return t('backgroundNone');
+                              }
+                            })()}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex-1">
@@ -1752,7 +1864,7 @@ export default function EditorPage() {
                           try {
                             const img = e.currentTarget;
                             const colorThief = new ColorThief();
-                            const palette = colorThief.getPalette(img, 10);
+                            const palette = colorThief.getPalette(img, 9);
 
                             // 검은색과 하얀색 정의
                             const black = [0, 0, 0];
@@ -1947,12 +2059,7 @@ export default function EditorPage() {
                                 style={{
                                   color: element.color,
                                   fontWeight: element.fontWeight,
-                                  backgroundColor:
-                                    element.backgroundColor === 'transparent'
-                                      ? 'transparent'
-                                      : element.backgroundColor === 'black'
-                                      ? 'rgb(0, 0, 0)'
-                                      : 'rgb(255, 255, 255)',
+                                  backgroundColor: element.backgroundColor,
                                   padding: '4px 8px',
                                   borderRadius: '4px',
                                   whiteSpace: 'pre',
@@ -2108,12 +2215,7 @@ export default function EditorPage() {
                   style={{
                     color: editingElement.color,
                     fontWeight: editingElement.fontWeight,
-                    backgroundColor:
-                      editingElement.backgroundColor === 'transparent'
-                        ? 'transparent'
-                        : editingElement.backgroundColor === 'black'
-                        ? 'rgb(0, 0, 0)'
-                        : 'rgb(255, 255, 255)',
+                    backgroundColor: editingElement.backgroundColor,
                     padding: '4px 8px',
                     whiteSpace: 'pre',
                     fontSize: `${editingElement.fontSize}px`,
@@ -2214,6 +2316,61 @@ export default function EditorPage() {
                       </label>
                       {colorPalette.length > 0 ? (
                         <div className="flex justify-between gap-1">
+                          {/* Color Picker Button - Dropper Icon */}
+                          {(() => {
+                            const currentColor =
+                              editingElement?.color || '#000000';
+                            const isCustomColor = !colorPalette.some(
+                              ([r, g, b]) => {
+                                const hexColor = `#${[r, g, b]
+                                  .map((x) => {
+                                    const hex = x.toString(16);
+                                    return hex.length === 1 ? '0' + hex : hex;
+                                  })
+                                  .join('')}`;
+                                return (
+                                  currentColor.toLowerCase() ===
+                                  hexColor.toLowerCase()
+                                );
+                              }
+                            );
+                            return (
+                              <label
+                                className={`relative w-4 h-4 rounded border cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400 ${
+                                  isCustomColor
+                                    ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
+                                    : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                              >
+                                <input
+                                  type="color"
+                                  value={currentColor}
+                                  onChange={(e) => {
+                                    if (editingTextId) {
+                                      updateElementStyle(editingTextId, {
+                                        color: e.target.value,
+                                      });
+                                    }
+                                  }}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="white"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="w-2.5 h-2.5 drop-shadow-md"
+                                >
+                                  <path d="m2 22 1-1h3l9-9" />
+                                  <path d="M3 21v-3l9-9" />
+                                  <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
+                                </svg>
+                              </label>
+                            );
+                          })()}
                           {colorPalette.map(([r, g, b], index) => {
                             const hexColor = `#${[r, g, b]
                               .map((x) => {
@@ -2256,63 +2413,114 @@ export default function EditorPage() {
                     </div>
 
                     <div className="flex">
-                      <div className="flex-1">
+                      <div className="flex-1 pr-1">
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           {t('backgroundColor')}
                         </label>
-                        <button
-                          className={`px-2 py-1 rounded text-xs transition-colors ${(() => {
-                            if (!editingElement)
-                              return 'bg-blue-500 text-white hover:bg-blue-600';
+                        <div className="flex items-center gap-1.5">
+                          {/* Background Color Picker - Dropper Icon */}
+                          <label className="relative w-6 h-6 rounded border border-gray-300 hover:border-gray-400 cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400">
+                            <input
+                              type="color"
+                              value={(() => {
+                                if (
+                                  !editingElement ||
+                                  editingElement.backgroundColor ===
+                                    'transparent' ||
+                                  editingElement.backgroundColor === 'white' ||
+                                  editingElement.backgroundColor === 'black'
+                                ) {
+                                  return '#ffffff';
+                                }
+                                return editingElement.backgroundColor;
+                              })()}
+                              onChange={(e) => {
+                                if (editingTextId) {
+                                  updateElementStyle(editingTextId, {
+                                    backgroundColor: e.target.value,
+                                  });
+                                }
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="w-3 h-3 drop-shadow-md"
+                            >
+                              <path d="m2 22 1-1h3l9-9" />
+                              <path d="M3 21v-3l9-9" />
+                              <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
+                            </svg>
+                          </label>
+                          {/* Toggle Button: white → black → transparent */}
+                          <button
+                            className={`px-1 h-6 rounded text-xs transition-colors ${(() => {
+                              if (!editingElement)
+                                return 'bg-blue-500 text-white hover:bg-blue-600';
 
-                            if (editingElement.backgroundColor === 'white') {
-                              return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
-                            } else if (
-                              editingElement.backgroundColor === 'black'
-                            ) {
-                              return 'bg-black text-white hover:bg-gray-800';
-                            } else {
-                              return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
-                            }
-                          })()}`}
-                          onClick={() => {
-                            if (!editingElement || !editingTextId) return;
+                              if (
+                                editingElement.backgroundColor === 'white' ||
+                                editingElement.backgroundColor === '#ffffff'
+                              ) {
+                                return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
+                              } else if (
+                                editingElement.backgroundColor === 'black' ||
+                                editingElement.backgroundColor === '#000000'
+                              ) {
+                                return 'bg-black text-white hover:bg-gray-800';
+                              } else {
+                                return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
+                              }
+                            })()}`}
+                            onClick={() => {
+                              if (!editingElement || !editingTextId) return;
 
-                            // 순환 로직: 하얀색 → 검정색 → 없음 → 하얀색
-                            let nextBackgroundColor:
-                              | 'transparent'
-                              | 'black'
-                              | 'white';
+                              let nextBackgroundColor: string;
 
-                            if (editingElement.backgroundColor === 'white') {
-                              nextBackgroundColor = 'black';
-                            } else if (
-                              editingElement.backgroundColor === 'black'
-                            ) {
-                              nextBackgroundColor = 'transparent';
-                            } else {
-                              nextBackgroundColor = 'white';
-                            }
+                              if (
+                                editingElement.backgroundColor === 'white' ||
+                                editingElement.backgroundColor === '#ffffff'
+                              ) {
+                                nextBackgroundColor = 'black';
+                              } else if (
+                                editingElement.backgroundColor === 'black' ||
+                                editingElement.backgroundColor === '#000000'
+                              ) {
+                                nextBackgroundColor = 'transparent';
+                              } else {
+                                nextBackgroundColor = 'white';
+                              }
 
-                            updateElementStyle(editingTextId, {
-                              backgroundColor: nextBackgroundColor,
-                            });
-                          }}
-                        >
-                          {(() => {
-                            if (!editingElement) return t('backgroundText');
+                              updateElementStyle(editingTextId, {
+                                backgroundColor: nextBackgroundColor,
+                              });
+                            }}
+                          >
+                            {(() => {
+                              if (!editingElement) return t('backgroundText');
 
-                            if (editingElement.backgroundColor === 'white') {
-                              return t('backgroundWhite');
-                            } else if (
-                              editingElement.backgroundColor === 'black'
-                            ) {
-                              return t('backgroundBlack');
-                            } else {
-                              return t('backgroundNone');
-                            }
-                          })()}
-                        </button>
+                              if (
+                                editingElement.backgroundColor === 'white' ||
+                                editingElement.backgroundColor === '#ffffff'
+                              ) {
+                                return t('backgroundWhite');
+                              } else if (
+                                editingElement.backgroundColor === 'black' ||
+                                editingElement.backgroundColor === '#000000'
+                              ) {
+                                return t('backgroundBlack');
+                              } else {
+                                return t('backgroundNone');
+                              }
+                            })()}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex-1">
