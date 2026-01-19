@@ -1,5 +1,5 @@
 import { Styles } from '../store';
-import { visualStyles, messageTypes, toneMoods, models } from '../styles';
+import { visualStyles, messageTypes, models } from '../styles';
 import { ProductCategory } from '../categories/types';
 
 /**
@@ -32,7 +32,9 @@ const getDynamicModelPrompt = (
   modelId: string,
   visualId: string,
   categoryForm?: string,
-  categoryIndustry?: string
+  categoryIndustry?: string,
+  variationIndex?: number,
+  randomSeed?: number
 ): string => {
   // 기본값 (styles.ts에 정의된 값 사용을 위한 fallback)
   const basePrompts: Record<string, string> = {
@@ -81,7 +83,7 @@ const getDynamicModelPrompt = (
 
     case 'hands-only':
       if (['app', 'web_service', 'digital_product'].includes(categoryForm)) {
-        return `POV ${shotTerm}. Hands holding a smartphone or typing on a keyboard. Screen visible and in focus. Technology-focused context. Clean, modern manicure or natural hands.`;
+        return `POV ${shotTerm}. Hands holding a smartphone or typing on a keyboard. Screen visible and in focus only when the front face of the device is facing the viewer. If the device back is visible, show only the back cover without any screen content. Technology-focused context. Clean, modern manicure or natural hands.`;
       }
       if (categoryForm === 'physical_product') {
         return `Close-up of hands holding or touching the product. Emphasizing tactile experience and material quality. Natural lighting. Hands are interacting naturally with the object.`;
@@ -93,7 +95,7 @@ const getDynamicModelPrompt = (
         return `A natural lifestyle portrait. A person using or wearing the product in a daily setting. Soft lighting, authentic expression. Beauty-focused but natural, not an exaggerated runway look.`;
       }
       if (['app', 'web_service', 'digital_product'].includes(categoryForm)) {
-        return `Lifestyle ${shotTerm} of a user engaging with a device. Happy, focused expression while looking at the screen. Modern environment. The person is clearly enjoying the digital experience.`;
+        return `Lifestyle ${shotTerm} of a user engaging with a device. Happy, focused expression while looking at the screen. Show screen content only when the device front face is visible to the viewer. If the device back is visible, show only the back cover without screen content. Modern environment. The person is clearly enjoying the digital experience.`;
       }
       if (
         [
@@ -107,7 +109,24 @@ const getDynamicModelPrompt = (
       return `A natural lifestyle scene featuring a person using the product/service. Authentic emotions and context. The person is the protagonist of the scene.`;
 
     case 'character-mascot':
-      return `A stylized character or mascot representing the brand. Expressive poses, engaging directly with the viewer or the product element. The character should embody the brand personality.`;
+      const mascotVariations = [
+        // 로봇/기계형 캐릭터
+        'A friendly robot character with expressive eyes and rounded, approachable design. Modern tech aesthetic with clean lines and friendly personality. Expressive poses, engaging directly with the viewer or the product element.',
+        'A mechanical mascot with anthropomorphic features. Tech-inspired design with human-like expressions and gestures. The character should embody the brand personality.',
+
+        // 동물 캐릭터 (다양한 동물)
+        'A cute bear mascot with friendly expression and approachable pose. Soft, rounded design with warm personality. Expressive poses, engaging directly with the viewer or the product element.',
+        'A playful cat character with expressive eyes and dynamic pose. Friendly and energetic design. The character should embody the brand personality.',
+        'A cheerful dog mascot with happy expression. Approachable and trustworthy appearance. Expressive poses, engaging directly with the viewer or the product element.',
+        'A wise owl character with intelligent expression. Professional yet friendly design. The character should embody the brand personality.',
+        'A friendly rabbit mascot with energetic pose. Playful and approachable design. Expressive poses, engaging directly with the viewer or the product element.',
+        'A cute penguin character with charming expression. Friendly and memorable design. The character should embody the brand personality.',
+
+        // 추상/인간형 캐릭터
+        'An abstract geometric character with simple shapes and expressive features. Modern, minimalist design with personality. Expressive poses, engaging directly with the viewer or the product element.',
+        'A stylized humanoid character with exaggerated features and expressive poses. Friendly and approachable design. The character should embody the brand personality.',
+      ];
+      return selectOption(mascotVariations, variationIndex, randomSeed);
 
     default:
       return defaultPrompt;
@@ -150,7 +169,7 @@ const getDynamicVisualPrompt = (
         'Classic Japanese Anime (90s style). Cel-shading, distinct highlights, dramatic angles, vibrant colors.',
         'American Retro Cartoon (Rubber hose style). 1930s vintage animation, black and white or muted colors, rhythmic and bouncy character design.',
         'Modern Webtoon Style. Clean digital lines, trendy fashion, bright and saturated colors, polished finish.',
-        'French Bandes Dessinées (Moebius style). Intricate ink lines, flat pastel colors, surreal and sci-fi atmosphere, detailed environments.',
+        'French Bandes Dessinées (Moebius style). Intricate ink lines, flat pastel colors.',
         'Modern Flat Cartoon. Vector-like clean shapes, bold solid colors, minimalist character design, corporate illustration style.',
       ];
       return selectOption(cartoonVariations, variationIndex, randomSeed);
@@ -214,95 +233,6 @@ const getDynamicVisualPrompt = (
 };
 
 /**
- * Randomness에 따라 Tone & Mood Prompt를 동적으로 생성하는 함수
- */
-const getDynamicTonePrompt = (
-  toneId: string,
-  visualId: string,
-  variationIndex?: number,
-  randomSeed?: number
-): string => {
-  // 기본값 fallback
-  const basePrompts: Record<string, string> = {
-    'warm-comfortable':
-      toneMoods.find((t) => t.id === 'warm-comfortable')?.aiPrompt || '',
-    'trust-serious':
-      toneMoods.find((t) => t.id === 'trust-serious')?.aiPrompt || '',
-    'humor-light':
-      toneMoods.find((t) => t.id === 'humor-light')?.aiPrompt || '',
-    'premium-sophisticated':
-      toneMoods.find((t) => t.id === 'premium-sophisticated')?.aiPrompt || '',
-    'energetic-vibrant':
-      toneMoods.find((t) => t.id === 'energetic-vibrant')?.aiPrompt || '',
-  };
-
-  const defaultPrompt = basePrompts[toneId] || '';
-
-  // Line Drawing은 무조건 흑백으로 고정 (톤과 무관하게 선의 느낌만 살림)
-  if (visualId === 'line-drawing') {
-    return 'Black and White only. High contrast, clean lines on white background. No colors, no shading, no grey fills.';
-  }
-
-  // Line Drawing이나 Flat Cartoon일 경우 복잡한 조명 효과를 제거/단순화
-  const isSimpleStyle = visualId === 'cartoon' && Math.random() > 0.5; // Cartoon도 일부 Flat 스타일이 있음
-
-  switch (toneId) {
-    case 'warm-comfortable':
-      if (isSimpleStyle)
-        return 'Warm Color Palette. Use soft oranges, yellows, and browns. Friendly and inviting atmosphere.';
-      const warmVariations = [
-        'Golden Hour Lighting. Soft, warm sunlight coming from the side, long shadows, inviting and cozy atmosphere. Color palette: Amber, Gold, Soft Beige.', // Golden Hour
-        'Cozy Indoor Lighting. Soft diffused light from a window or lamp, warm color temperature (3000K), comfortable and safe feeling. Color palette: Earth tones, Cream, Warm Brown.', // Hygge
-        'Soft Morning Light. Fresh and gentle morning sunlight, low contrast, peaceful and calm mood. Color palette: Pastel Yellow, Soft White, Light Green.', // Morning
-      ];
-      return selectOption(warmVariations, variationIndex, randomSeed);
-
-    case 'trust-serious':
-      if (isSimpleStyle)
-        return 'Cool and Clean Color Palette. Use navy blues, greys, and white. Minimalist and professional.';
-      const trustVariations = [
-        'Professional Studio Lighting. Balanced and even lighting, cool color temperature (5000K), clean white or grey background, sharp details. Color palette: Navy Blue, White, Grey.', // Corporate
-        'Modern Minimalist Lighting. Soft shadows, clean lines, uncluttered composition, calm and reliable atmosphere. Color palette: Cool Grey, Muted Blue, Slate.', // Minimal
-        'Dramatic Professional. Slightly higher contrast, focused spotlight on the subject, deep shadows for weight and seriousness. Color palette: Deep Blue, Charcoal, Silver.', // Dramatic
-      ];
-      return selectOption(trustVariations, variationIndex, randomSeed);
-
-    case 'humor-light':
-      if (isSimpleStyle)
-        return 'Vibrant and Pop Colors. Bright primary colors, playful and fun atmosphere.';
-      const humorVariations = [
-        'Vibrant Pop Style. High key lighting, bright and saturated colors, playful atmosphere, almost no shadows. Color palette: Primary Red, Yellow, Blue.', // Pop
-        'Soft Pastel Lighting. Very soft and diffused light, low contrast, dreamy and cute atmosphere. Color palette: Mint, Baby Pink, Lemon Yellow.', // Pastel
-        'Quirky High-Contrast. Hard lighting with distinct colorful shadows, energetic and fun mood. Color palette: Hot Pink, Electric Blue, Lime Green.', // Funky
-      ];
-      return selectOption(humorVariations, variationIndex, randomSeed);
-
-    case 'premium-sophisticated':
-      if (isSimpleStyle)
-        return 'Monochrome or Metallic Palette. Black, white, and gold accents. Elegant and refined.';
-      const premiumVariations = [
-        'Luxury Dark Mode. Low key lighting, rim lighting highlighting edges, dark background, mysterious and elegant. Color palette: Black, Gold, Deep Emerald.', // Dark Luxury
-        'High-End Editorial. Soft but directional lighting, refined textures, elegant composition, expensive feel. Color palette: Champagne, Silk White, Bronze.', // Editorial
-        'Modern Chic. Clean, bright, and airy, but with sharp contrast and high-quality materials. Color palette: Marble White, Matte Black, Metallic accents.', // Chic
-      ];
-      return selectOption(premiumVariations, variationIndex, randomSeed);
-
-    case 'energetic-vibrant':
-      if (isSimpleStyle)
-        return 'High Contrast Neon Colors. Bold and dynamic color combinations. Electric and intense.';
-      const energeticVariations = [
-        'Neon Cyberpunk Lighting. Colorful neon lights (magenta and cyan), dark background, glowing effects, futuristic and intense. Color palette: Neon Purple, Cyan, Black.', // Cyberpunk
-        'Active Sunlight. Bright, hard sunlight (high noon), strong cast shadows, saturated colors, dynamic and powerful. Color palette: Orange, Vivid Blue, White.', // Sports
-        'Dynamic Studio Flash. High contrast colorful gels, motion blur suggestions, exciting and bold. Color palette: Electric Blue, Hot Pink, Vivid Purple.', // Studio Color
-      ];
-      return selectOption(energeticVariations, variationIndex, randomSeed);
-
-    default:
-      return defaultPrompt;
-  }
-};
-
-/**
  * Randomness에 따라 Message Type Prompt를 동적으로 생성하는 함수
  */
 const getDynamicMessagePrompt = (
@@ -316,7 +246,6 @@ const getDynamicMessagePrompt = (
     'problem-solving':
       messageTypes.find((m) => m.id === 'problem-solving')?.aiPrompt || '',
     benefit: messageTypes.find((m) => m.id === 'benefit')?.aiPrompt || '',
-    proof: messageTypes.find((m) => m.id === 'proof')?.aiPrompt || '',
     comparison: messageTypes.find((m) => m.id === 'comparison')?.aiPrompt || '',
     story: messageTypes.find((m) => m.id === 'story')?.aiPrompt || '',
   };
@@ -351,7 +280,8 @@ const getDynamicMessagePrompt = (
     case 'benefit':
       const benefitVariations = [
         'Hero Shot Low Angle. The product is placed centrally, shot from a slightly low angle to make it look monumental and important. Rays of light or glow behind it.', // Hero
-        'Visualizing the Intangible. Use floating icons or 3D elements around the product to represent abstract benefits (speed, security, growth). Magical realism style.', // Icons
+        'Visualizing the Intangible. Integrate abstract benefit symbols naturally into the scene as visual metaphors. These symbols should blend seamlessly with the composition, not appear as separate floating icons. No text, numbers, or readable labels on any symbols.', // Icons
+        'Radiating Benefits. The product at the center with visual benefit elements organically flowing from it through natural connections (light rays, energy waves, or environmental elements). Represent benefits as abstract visual shapes and symbols integrated into the scene, not as separate icon elements. No text, numbers, or readable labels.', // Radiating
       ];
       // 라이프스타일 옵션은 사람이 있을 때 더 자연스러움 (없어도 가능은 하나 맥락상)
       if (!hasNoPerson) {
@@ -367,29 +297,12 @@ const getDynamicMessagePrompt = (
 
     case 'story':
       const storyVariations = [
-        'Three-Panel Layout. A subtle triptych (3 vertical sections) showing a sequence: 1. Start, 2. Action, 3. Result. Visual storytelling flow.', // Sequence
-        'Journey Path Composition. A winding road or path leading from a dark/uncertain foreground to a bright/successful background destination. The product is the vehicle or guide.', // Journey
-        'Slice of Life Drama. A single frame that implies a larger story. A "decisive moment" full of context and narrative details. Like a movie still.', // Cinematic
+        'Two-Panel Sequence. A diptych composition with 2 rectangular sections showing a natural progression through visuals only.', // Two-Panel
+        'Two-Panel Sequence. A diptych composition with 2 circular sections showing a natural progression through visuals only.', // Two-Panel
+        'Three-Panel Sequence. A triptych composition with 3 rectangular sections showing a natural progression through visuals only.', // Sequence
+        'Three-Panel Sequence. A triptych composition with 3 circular sections showing a natural progression through visuals only.', // Sequence
       ];
       return selectOption(storyVariations, variationIndex, randomSeed);
-
-    case 'proof':
-      const proofVariations = [
-        'Abstract Data Visualization. 3D charts, upward trending graphs, or percentage signs integrated artistically into the environment. Symbolizing growth and success.', // Data Art
-        'Seal of Excellence. Visual cues of certification, trophies, or 5-star symbols arranged elegantly around the product. Gold and silver accents.', // Awards
-      ];
-      // 군중 샷은 사람이 아예 없어야 하는 설정과는 충돌 가능성이 있으나, 배경의 군중은 'Human Person' 모델 설정과는 별개로 취급될 수도 있음.
-      // 하지만 안전하게 처리하려면:
-      if (!hasNoPerson) {
-        proofVariations.push(
-          'Social Proof Crowd. Suggestions of many people or avatars in the background, all facing or using the product. Implies popularity and community trust.'
-        );
-      } else {
-        proofVariations.push(
-          'Digital Popularity. Symbols of likes, hearts, and high view counts floating around the product interface. Implies digital popularity.'
-        );
-      }
-      return selectOption(proofVariations, variationIndex, randomSeed);
 
     default:
       return defaultPrompt;
@@ -416,21 +329,15 @@ export const getImagePrompt = (
     styles.model,
     styles.visualStyle,
     category?.form,
-    category?.industry
+    category?.industry,
+    variationIndex,
+    randomSeed
   );
 
   // 동적 Visual Style Prompt 생성
   const visualPrompt = getDynamicVisualPrompt(
     styles.visualStyle,
     category?.industry,
-    variationIndex,
-    randomSeed
-  );
-
-  // 동적 Tone Prompt 생성 (Visual Style 고려)
-  const tonePrompt = getDynamicTonePrompt(
-    styles.toneMood,
-    styles.visualStyle,
     variationIndex,
     randomSeed
   );
@@ -454,7 +361,6 @@ The advertising purpose is: ${category?.purpose}.
 Apply the following style package as a single unified direction:
 – Message Type: ${messagePrompt}
 – Visual Style: ${visualPrompt}
-– Tone & Mood: ${tonePrompt}
 – Model Composition: ${modelPrompt}
 
 [Output Requirements]
@@ -462,6 +368,13 @@ Generate one high-quality SNS advertisement image.
 Avoid readable text. If text-like elements (UI labels, chart numbers) are necessary for the composition, represent them as abstract lines or illegible placeholders. Focus on visual symbols over written words.
 Use a realistic, clear, visually appealing composition that reflects the advertising purpose.  
 Avoid distortions, avoid artifacts, and maintain natural lighting.  
-Focus solely on visually conveying the product’s core value and purpose through the selected style package.
+Focus solely on visually conveying the product's core value and purpose through the selected style package.
+
+[Device Screen Display Rules]
+When showing devices (smartphones, tablets, laptops, monitors), strictly follow these rules:
+- If the front face of the device is visible, the screen content can be shown.
+- If only the back of the device is visible, NO screen content should appear (only the device back cover, camera module, logo, etc.).
+- If the device is held at an angle where the screen is partially visible, only show screen content on the visible portion.
+- Never show screen content on the back of a device. This is physically impossible and creates an unrealistic image.
 `;
 };

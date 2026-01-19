@@ -27,7 +27,6 @@ export default function MessagesPage() {
     tSteps('productSummary'),
     tSteps('messageType'),
     tSteps('expressionStyle'),
-    tSteps('toneMood'),
     tSteps('modelComposition'),
     tSteps('aspectRatio'),
     tSteps('imageUpload'),
@@ -79,12 +78,11 @@ export default function MessagesPage() {
       2: `/${locale}/summary`,
       3: `/${locale}/styles/messages`,
       4: `/${locale}/styles/expressions`,
-      5: `/${locale}/styles/tones-moods`,
-      6: `/${locale}/styles/models`,
-      7: `/${locale}/styles/aspect-ratio`,
-      8: `/${locale}/upload`,
-      9: `/${locale}/editor`,
-      10: `/${locale}/result`,
+      5: `/${locale}/styles/models`,
+      6: `/${locale}/styles/aspect-ratio`,
+      7: `/${locale}/upload`,
+      8: `/${locale}/editor`,
+      9: `/${locale}/result`,
     };
     
     const route = stepRoutes[stepNumber];
@@ -101,7 +99,7 @@ export default function MessagesPage() {
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
         currentStep={3}
-        totalSteps={10}
+        totalSteps={9}
         stepNames={stepNames}
         onStepClick={handleStepClick}
       />
