@@ -6,6 +6,7 @@ import {
   getSuccessTextSystemPrompt,
   getSuccessTextUserPrompt,
 } from '@/lib/prompts';
+import { t } from '@/lib/api-messages';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
               generatedText = text;
             } else {
               // 기본값 사용
-              const productName = summary.title || summary.core_value || '제품';
+              const productName = summary.title || summary.core_value || t(request, 'product');
               const defaultTexts = {
                 simple: `${productName}로 시작하세요.\n간단하고 명확한 솔루션입니다.`,
                 unexpected: `${productName}의 놀라운 변화를 경험하세요.\n예상보다 훨씬 더 큰 효과를 얻을 수 있습니다.`,
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
             }
           } catch (error) {
             // 에러 시에도 기본값으로 전송
-            const productName = summary.title || summary.core_value || '제품';
+            const productName = summary.title || summary.core_value || t(request, 'product');
             const defaultTexts = {
               simple: `${productName}로 시작하세요.\n간단하고 명확한 솔루션입니다.`,
               unexpected: `${productName}의 놀라운 변화를 경험하세요.\n예상보다 훨씬 더 큰 효과를 얻을 수 있습니다.`,

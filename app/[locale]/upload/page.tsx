@@ -146,7 +146,7 @@ export default function UploadPage() {
     setError('');
 
     if (!summary) {
-      setError('제품 정보가 없습니다.');
+      setError(t('errorNoSummary'));
       setLoading(false);
       return;
     }
@@ -206,7 +206,7 @@ export default function UploadPage() {
 
       router.push('/editor');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
+      setError(err instanceof Error ? err.message : t('errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -302,7 +302,7 @@ export default function UploadPage() {
       const decoder = new TextDecoder();
 
       if (!reader) {
-        throw new Error('스트림을 읽을 수 없습니다.');
+        throw new Error(t('errorStreamRead'));
       }
 
       let buffer = '';

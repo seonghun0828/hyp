@@ -1220,7 +1220,7 @@ export default function EditorPage() {
       !styles.model ||
       !currentPrinciple
     ) {
-      alert('필수 정보가 없습니다. 다시 시도해주세요.');
+      alert(t('errorMissingInfo'));
       return;
     }
 
@@ -1286,7 +1286,7 @@ export default function EditorPage() {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('이미지 업로드에 실패했습니다.');
+        throw new Error(t('errorUpload'));
       }
 
       const uploadData = await uploadResponse.json();

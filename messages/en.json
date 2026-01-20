@@ -138,7 +138,10 @@
     "errorGeneration": "Image generation failed.",
     "errorTextGeneration": "An error occurred while generating text.",
     "errorImageOnly": "Only image files can be uploaded.",
-    "errorFileSize": "File size must be 5MB or less."
+    "errorFileSize": "File size must be 5MB or less.",
+    "errorNoSummary": "Product information is missing.",
+    "errorGeneric": "An error occurred.",
+    "errorStreamRead": "Unable to read stream."
   },
   "editor": {
     "title": "Content Editor",
@@ -180,6 +183,7 @@
     "errorNoCredit": "Insufficient credits.",
     "errorSomeImagesFailed": "Some images failed to generate.",
     "errorDuringWork": "An error occurred during the operation.",
+    "errorMissingInfo": "Required information is missing. Please try again.",
     "errorAdditionalImageFailed": "Additional image generation failed",
     "principles": {
       "simple": {
