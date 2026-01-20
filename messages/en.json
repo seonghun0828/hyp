@@ -46,15 +46,15 @@
     "exampleTitle": "You can create like this 🎨",
     "exampleCase": "CASE",
     "example1Title": "YouTube",
-    "example1Desc1": "Generate human model images with AI",
+    "example1Desc1": "Generate images with AI",
     "example1Desc2": "Place recommended text",
     "example2Title": "MacBook",
     "example2Desc1": "Upload your own image",
     "example2Desc2": "Place recommended text",
-    "example3Title": "Musinsa",
-    "example3Desc1": "Generate character model images with AI",
-    "example3Desc2": "Place recommended text",
-    "ctaButton": "Start Creating Promotional Content 🚀"
+    "example3Title": "Notion",
+    "example3Desc1": "Generate images with AI",
+    "example3Desc2": "Split and place recommended text",
+    "ctaButton": "Start Creating Content 🚀"
   },
   "summary": {
     "title": "Product Information Review",

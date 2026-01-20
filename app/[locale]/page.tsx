@@ -455,7 +455,7 @@ function ExampleSection() {
       device: 'desktop',
     },
     {
-      src: '/images/result-examples/result3-musinsa.png',
+      src: '/images/result-examples/result3-notion.png',
       title: tHome('example3Title'),
       description1: tHome('example3Desc1'),
       description2: tHome('example3Desc2'),
@@ -470,7 +470,7 @@ function ExampleSection() {
         {tHome('exampleTitle')}
       </h3>
 
-      <div className="flex flex-col gap-16 max-w-4xl mx-auto px-4">
+      <div className="flex flex-col gap-16 max-w-4xl mx-auto">
         {examples.map((example, index) => (
           <div
             key={index}
@@ -506,7 +506,7 @@ function ExampleSection() {
               <span className="text-blue-600 font-bold text-lg tracking-wider mb-2">
                 {tHome('exampleCase')} {index + 1}. {example.title}
               </span>
-              <p className="text-gray-800 font-bold text-md md:text-lg leading-tight">
+              <p className="text-gray-800 font-bold text-sm md:text-md leading-tight">
                 {example.description1},
                 <br />
                 {example.description2}
