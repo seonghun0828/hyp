@@ -56,6 +56,12 @@
     "example3Desc2": "추천받은 문구 배치",
     "ctaButton": "홍보 콘텐츠 만들러가기 🚀"
   },
+  "footer": {
+    "copyright": "© 2026 HYP. All rights reserved.",
+    "termsOfService": "이용약관",
+    "privacyPolicy": "개인정보처리방침",
+    "pricing": "가격 책정"
+  },
   "summary": {
     "title": "제품 정보 확인",
     "description": "AI가 분석한 제품 정보를 확인하고 수정해주세요",

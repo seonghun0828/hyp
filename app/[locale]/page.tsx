@@ -12,6 +12,7 @@ import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
+import Footer from '@/components/Footer';
 import { useCreditStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
 
@@ -240,6 +241,8 @@ export default function HomePage() {
           <ScrollToTopButton />
         </div>
       </div>
+
+      <Footer />
 
       <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
       <PaymentModal

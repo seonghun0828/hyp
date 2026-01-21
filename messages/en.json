@@ -56,6 +56,12 @@
     "example3Desc2": "Split and place recommended text",
     "ctaButton": "Start Creating Content 🚀"
   },
+  "footer": {
+    "copyright": "© 2026 HYP. All rights reserved.",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "pricing": "Pricing"
+  },
   "summary": {
     "title": "Product Information Review",
     "description": "Review and edit the product information analyzed by AI",
