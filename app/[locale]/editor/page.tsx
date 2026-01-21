@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useFunnelStore } from '@/lib/store';
-import { MAX_IMAGES } from '@/lib/constants';
+import { MAX_IMAGES, AI_COSTS } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
@@ -198,7 +198,7 @@ export default function EditorPage() {
     try {
       // 2. UI 분기 처리 (store에서 최신 credits 가져오기)
       const currentCredits = useCreditStore.getState().credits;
-      if (currentCredits === null || currentCredits < 1) {
+      if (currentCredits === null || currentCredits < AI_COSTS.ADDITIONAL_IMAGE) {
         if (user) {
           setShowPaymentModal(true);
         } else {
@@ -243,7 +243,7 @@ export default function EditorPage() {
       // 4. 성공 시 크레딧 차감
       if (allSuccess) {
         try {
-          await deductCredits(1, 'ADDITIONAL_IMAGE_GENERATION');
+          await deductCredits(AI_COSTS.ADDITIONAL_IMAGE, 'ADDITIONAL_IMAGE_GENERATION');
           // 크레딧 차감 후 스토어 업데이트
           fetchCredits();
           trackEvent('generate_more_images_success', { count: 2 });

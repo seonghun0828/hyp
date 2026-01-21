@@ -11,6 +11,7 @@ import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
 import { useCreditStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
+import { AI_COSTS } from '@/lib/constants';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -214,7 +215,7 @@ export default function UploadPage() {
 
   const handleAIGenerate = async () => {
     // 크레딧 부족 시 모달 표시
-    if (credits !== null && credits < 2) {
+    if (credits !== null && credits < AI_COSTS.IMAGE_GENERATION) {
       setShowPaymentModal(true);
       return;
     }

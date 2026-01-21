@@ -168,7 +168,7 @@
     "selected": "Selected",
     "generating": "Generating...",
     "generateMoreImages": "Generate\nMore Images",
-    "creditCost": "(1 credit)",
+    "creditCost": "(100 credits)",
     "complete": "Complete",
     "back": "Back",
     "enterText": "Enter text",
@@ -246,7 +246,7 @@
     "loggedInAs": "Logged in as",
     "recharge": "Recharge Credits",
     "remainingCredits": "Remaining Credits",
-    "firstLoginGift": "5 free credits on first login! 🎁",
+    "firstLoginGift": "500 free credits on first login! 🎁",
     "loginError": "An error occurred during login.",
     "loginPrompt": "Log in and start for free"
   },
@@ -257,7 +257,7 @@
     "descriptionNoCredit": "Don't worry! Log in to use more for free.",
     "message": "Thank you for using our service.\nClick the button to recharge for free and continue!",
     "homeDescription": "🔒 You've used all your free trial credits\nRecharge credits and get started right away!",
-    "uploadDescription": "To view the generated images and promotional texts and proceed to the next step, 2 credits are required.",
+    "uploadDescription": "To view the generated images and promotional texts and proceed to the next step, 200 credits are required.",
     "rechargeButton": "Recharge for Free and Continue",
     "recharging": "Recharging...",
     "errorRecharge": "Recharge failed. Please try again later.",
@@ -274,25 +274,25 @@
     "whatIsCredit": {
       "title": "What are credits?",
       "content1": "From product analysis to image generation and promotional text recommendations",
-      "highlight1": " 2 credits are used to complete one full process",
+      "highlight1": " 200 credits are used to complete one full process",
       "content1End": ".",
       "note": "(Includes base image + 2 additional images)",
       "content2": "If you want to see more images",
-      "highlight2": " 1 credit for 2 additional images",
+      "highlight2": " 100 credits for 2 additional images",
       "content2End": " can be generated."
     },
     "howToRecharge": {
       "title": "How do I recharge credits?",
       "content1": "When you first visit, we give you",
-      "highlight1": "3 trial credits",
+      "highlight1": "300 trial credits",
       "content1End": ",",
       "content2": "and when you log in, we give you an additional",
-      "highlight2": "5 credits",
+      "highlight2": "500 credits",
       "content2End": "!",
       "content3": "If you've used them all, you can recharge to continue using the service."
     },
     "rechargeButton": "Recharge Credits",
-    "loginButton": "Log in and Get 5 Free Credits"
+    "loginButton": "Log in and Get 500 Free Credits"
   },
   "promotion": {
     "title": "Would you like us to promote your project?",

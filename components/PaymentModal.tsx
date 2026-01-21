@@ -48,7 +48,7 @@ export default function PaymentModal({
   const handleRecharge = async () => {
     try {
       setLoading(true);
-      await rechargeCredits(5);
+      await rechargeCredits(500);
 
       onOpenChange(false);
       setShowFeedback(true);
