@@ -26,8 +26,8 @@
   },
   "home": {
     "title": "HYP",
-    "subtitle": "AI가 제안하고, 당신이 선택해 완성합니다.",
-    "description": "단 몇 초 만에 홍보 콘텐츠를 만들어보세요.",
+    "subtitle": "어떤 제품이든 스크롤을 멈추게 하는 SNS 콘텐츠로",
+    "description": "AI 기반 홍보 이미지, 60초 안에 완성.",
     "inputLabel": "아래에 서비스나 제품 설명 페이지의 링크를 입력해보세요 👇",
     "inputPlaceholder": "https://example.com/product",
     "submitButton": "홍보 콘텐츠 만들기",
@@ -54,7 +54,10 @@
     "example3Title": "노션",
     "example3Desc1": "AI로 캐릭터 모델 이미지 생성",
     "example3Desc2": "추천받은 문구 배치",
-    "ctaButton": "홍보 콘텐츠 만들러가기 🚀"
+    "ctaButton": "홍보 콘텐츠 만들러가기 🚀",
+    "contentCreated": "콘텐츠 생성 수",
+    "happyMakers": "만족한 메이커",
+    "avgCreationTime": "평균 생성 시간"
   },
   "footer": {
     "copyright": "© 2026 HYP. All rights reserved.",

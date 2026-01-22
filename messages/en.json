@@ -26,8 +26,8 @@
   },
   "home": {
     "title": "HYP",
-    "subtitle": "AI suggests, you choose and complete.",
-    "description": "Create promotional content in just seconds.",
+    "subtitle": "Turn any product into scroll-stopping social content",
+    "description": "AI-powered promotional images and copies in under 3 minutes",
     "inputLabel": "Enter the link to your product or service page below 👇",
     "inputPlaceholder": "https://example.com/product",
     "submitButton": "Create Promotional Content",
@@ -54,7 +54,10 @@
     "example3Title": "Notion",
     "example3Desc1": "Generate images with AI",
     "example3Desc2": "Split and place recommended text",
-    "ctaButton": "Start Creating Content 🚀"
+    "ctaButton": "Start Creating Content 🚀",
+    "contentCreated": "Content Created",
+    "happyMakers": "Happy Makers",
+    "avgCreationTime": "Avg. Creation Time"
   },
   "footer": {
     "copyright": "© 2026 HYP. All rights reserved.",

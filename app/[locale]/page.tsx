@@ -231,6 +231,9 @@ export default function HomePage() {
             </Button>
           </form>
 
+          {/* 신뢰 신호 섹션 */}
+          <TrustSignals />
+
           {/* HYP 핵심 과정 섹션 */}
           <ProcessSection />
 
@@ -292,6 +295,30 @@ function ScrollToTopButton() {
       >
         {tHome('ctaButton')}
       </Button>
+    </div>
+  );
+}
+
+// 신뢰 신호 섹션 컴포넌트
+function TrustSignals() {
+  const tHome = useTranslations('home');
+
+  return (
+    <div className="py-6 border-y border-gray-200 my-8">
+      <div className="flex flex-wrap justify-center items-center gap-8 text-gray-600">
+        <div className="text-center">
+          <p className="text-2xl font-bold text-gray-900">2,000+</p>
+          <p className="text-sm">{tHome('contentCreated')}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-bold text-gray-900">800+</p>
+          <p className="text-sm">{tHome('happyMakers')}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-bold text-gray-900">&lt; 3 min</p>
+          <p className="text-sm">{tHome('avgCreationTime')}</p>
+        </div>
+      </div>
     </div>
   );
 }
