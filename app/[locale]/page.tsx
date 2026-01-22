@@ -28,6 +28,7 @@ export default function HomePage() {
   const { url, setUrl, setSummary } = useFunnelStore();
   const [inputUrl, setInputUrl] = useState(url);
   const [loading, setLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState('');
   const [error, setError] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -81,6 +82,40 @@ export default function HomePage() {
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Cycle through loading stages to show progress
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStage('');
+      return;
+    }
+
+    const stages = [
+      { text: tHome('loadingFetchingPage'), duration: 2000 },
+      { text: tHome('loadingAnalyzingContent'), duration: 3000 },
+      { text: tHome('loadingExtractingFeatures'), duration: 2000 },
+      { text: tHome('loadingAlmostDone'), duration: 1000 },
+    ];
+
+    let stageIndex = 0;
+    let timeoutId: NodeJS.Timeout;
+
+    const cycleStage = () => {
+      if (stageIndex < stages.length) {
+        setLoadingStage(stages[stageIndex].text);
+        timeoutId = setTimeout(() => {
+          stageIndex++;
+          cycleStage();
+        }, stages[stageIndex].duration);
+      }
+    };
+
+    cycleStage();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [loading, tHome]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,7 +307,7 @@ export default function HomePage() {
               disabled={!inputUrl.trim()}
               className="w-full"
             >
-              {loading ? tHome('analyzing') : tHome('submitButton')}
+              {loading ? loadingStage : tHome('submitButton')}
             </Button>
           </form>
 
@@ -303,7 +338,7 @@ export default function HomePage() {
             className="w-full"
           >
             {loading
-              ? tHome('analyzing')
+              ? loadingStage
               : inputUrl.trim() && isValidUrl(inputUrl)
               ? tHome('submitButton')
               : tHome('ctaButton')}
