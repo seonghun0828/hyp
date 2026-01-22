@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
@@ -31,9 +31,12 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showStickyButton, setShowStickyButton] = useState(false);
   const { user } = useAuthStore();
 
   const { credits, fetchCredits, updateCredits } = useCreditStore();
+  const formRef = useRef<HTMLFormElement>(null);
+  const scrollToTopButtonRef = useRef<HTMLDivElement>(null);
 
   const stepNames = [
     tSteps('linkInput'),
@@ -50,6 +53,34 @@ export default function HomePage() {
   useEffect(() => {
     fetchCredits();
   }, [fetchCredits]);
+
+  // Track form visibility for sticky button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (formRef.current && scrollToTopButtonRef.current) {
+        const formRect = formRef.current.getBoundingClientRect();
+        const scrollButtonRect =
+          scrollToTopButtonRef.current.getBoundingClientRect();
+
+        // Show sticky button when form is scrolled past (not visible in viewport)
+        const isFormVisible =
+          formRect.bottom > 0 && formRect.top < window.innerHeight;
+
+        // Hide sticky button when ScrollToTopButton is visible
+        const isScrollButtonVisible =
+          scrollButtonRect.top < window.innerHeight &&
+          scrollButtonRect.bottom > 0;
+
+        // Show sticky button only when form is not visible AND scroll button is not visible
+        setShowStickyButton(!isFormVisible && !isScrollButtonVisible);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check initial state
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +204,20 @@ export default function HomePage() {
     }
   };
 
+  const handleStickyButtonClick = () => {
+    // If URL is empty or invalid, scroll to form and focus input
+    if (!inputUrl.trim() || !isValidUrl(inputUrl)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        document.getElementById('url')?.focus();
+      }, 500);
+      return;
+    }
+
+    // Otherwise, submit the form
+    handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+  };
+
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
@@ -200,7 +245,7 @@ export default function HomePage() {
           </div>
 
           {/* 입력 폼 */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
                 htmlFor="url"
@@ -241,11 +286,30 @@ export default function HomePage() {
           <ExampleSection />
 
           {/* 하단 CTA 버튼 */}
-          <ScrollToTopButton />
+          <ScrollToTopButton ref={scrollToTopButtonRef} />
         </div>
       </div>
 
       <Footer />
+
+      {/* Sticky CTA - shows when form is scrolled out of view, hides when bottom CTA is visible */}
+      {showStickyButton && (
+        <div className="fixed max-w-2xl mx-auto bottom-0 left-0 right-0 p-4 md:px-0 z-50">
+          <Button
+            onClick={handleStickyButtonClick}
+            disabled={loading}
+            loading={loading}
+            size="lg"
+            className="w-full"
+          >
+            {loading
+              ? tHome('analyzing')
+              : inputUrl.trim() && isValidUrl(inputUrl)
+              ? tHome('submitButton')
+              : tHome('ctaButton')}
+          </Button>
+        </div>
+      )}
 
       <LoginModal open={showLoginModal} onOpenChange={setShowLoginModal} />
       <PaymentModal
@@ -276,7 +340,7 @@ export default function HomePage() {
 }
 
 // 스크롤 탑 버튼 컴포넌트
-function ScrollToTopButton() {
+const ScrollToTopButton = React.forwardRef<HTMLDivElement>((props, ref) => {
   const tHome = useTranslations('home');
 
   const scrollToTop = () => {
@@ -287,17 +351,19 @@ function ScrollToTopButton() {
   };
 
   return (
-    <div className="text-center pb-12 pt-6">
+    <div ref={ref} className="max-w-2xl mx-auto text-center pb-12 pt-6">
       <Button
         onClick={scrollToTop}
         size="lg"
-        className="px-8 py-4 text-lg font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
+        className="w-full text-lg font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
       >
         {tHome('ctaButton')}
       </Button>
     </div>
   );
-}
+});
+
+ScrollToTopButton.displayName = 'ScrollToTopButton';
 
 // 신뢰 신호 섹션 컴포넌트
 function TrustSignals() {
