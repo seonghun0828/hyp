@@ -30,14 +30,15 @@ export const MAX_IMAGES = 3;
  */
 export const AI_COSTS = {
   SUMMARY: 0, // 링크 분석
-  IMAGE_GENERATION: 2, // 이미지 3장 생성 (에디터 진입 시)
+  IMAGE_GENERATION: 200, // 이미지 3장 생성 (에디터 진입 시)
   PROMOTION_TEXT: 0, // 홍보 문구 생성
+  ADDITIONAL_IMAGE: 100, // 추가 이미지 2장 생성
 } as const;
 
 /**
  * 초기 제공 크레딧 정의
  */
 export const INITIAL_CREDITS = {
-  ANON: 3, // 비로그인 유저
-  MEMBER: 5, // 로그인 유저
+  ANON: 300, // 비로그인 유저
+  MEMBER: 500, // 로그인 유저
 } as const;

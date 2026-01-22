@@ -3,6 +3,7 @@ import { GoogleGenAI } from '@google/genai';
 import { getImagePrompt } from '@/lib/prompts';
 import { AI_COSTS } from '@/lib/constants';
 import { deductCredits } from '@/lib/credits';
+import { t } from '@/lib/api-messages';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'IMAGE_GENERATION_FAILED',
-        message: '이미지 생성에 실패했습니다. 잠시 후 다시 시도해주세요.',
+        message: t(request, 'imageGenerationFailed'),
         retryable: true,
       },
       { status: 500 }
@@ -99,8 +100,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'IMAGE_GENERATION_ERROR',
-        message:
-          '이미지 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+        message: t(request, 'imageGenerationError'),
         retryable: true,
       },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { deductCredits } from '@/lib/credits';
 import { AI_COSTS } from '@/lib/constants';
+import { t } from '@/lib/api-messages';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId && !anonToken) {
       return NextResponse.json(
-        { error: 'Unauthorized', message: '로그인이 필요합니다.' },
+        { error: 'Unauthorized', message: t(request, 'loginRequired') },
         { status: 401 }
       );
     }
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
       // 크레딧 부족 에러 처리
       if (error instanceof Error && error.message === 'Insufficient credits') {
         return NextResponse.json(
-          { error: 'INSUFFICIENT_CREDITS', message: '크레딧이 부족합니다.' },
+          { error: 'INSUFFICIENT_CREDITS', message: t(request, 'insufficientCredits') },
           { status: 402 }
         );
       }
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Credit Deduction] Error:', error);
     return NextResponse.json(
-      { error: 'INTERNAL_SERVER_ERROR', message: '서버 에러가 발생했습니다.' },
+      { error: 'INTERNAL_SERVER_ERROR', message: t(request, 'serverError') },
       { status: 500 }
     );
   }

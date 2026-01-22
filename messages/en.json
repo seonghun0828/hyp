@@ -26,12 +26,16 @@
   },
   "home": {
     "title": "HYP",
-    "subtitle": "AI suggests, you choose and complete.",
-    "description": "Create promotional content in just seconds.",
+    "subtitle": "Turn any product into scroll-stopping social content",
+    "description": "AI-powered promotional images and copies in under 3 minutes",
     "inputLabel": "Enter the link to your product or service page below 👇",
     "inputPlaceholder": "https://example.com/product",
     "submitButton": "Create Promotional Content",
     "analyzing": "Analyzing your product...",
+    "loadingFetchingPage": "Fetching page content...",
+    "loadingAnalyzingContent": "Analyzing product information...",
+    "loadingExtractingFeatures": "Extracting key features...",
+    "loadingAlmostDone": "Almost done...",
     "errorEmptyUrl": "Please enter a link.",
     "errorInvalidUrl": "Invalid URL format.",
     "errorBotBlocked": "Automatic analysis is not possible due to the site's security policy. Please enter manually.",
@@ -39,22 +43,31 @@
     "errorServer": "A server error occurred.",
     "errorGeneric": "An error occurred.",
     "errorAnalysisFailed": "Product analysis failed.",
-    "processTitle": "How to create promotional content in under 1 minute 👀",
+    "processTitle": "How to create promotional content in under 3 minutes 👀",
     "processStep1": "1. Enter Link",
-    "processStep2": "2. Select Style",
+    "processStep2": "2. Select Styles",
     "processStep3": "3. Generate Content",
     "exampleTitle": "You can create like this 🎨",
     "exampleCase": "CASE",
     "example1Title": "YouTube",
-    "example1Desc1": "Generate human model images with AI",
+    "example1Desc1": "Generate images with AI",
     "example1Desc2": "Place recommended text",
     "example2Title": "MacBook",
     "example2Desc1": "Upload your own image",
     "example2Desc2": "Place recommended text",
-    "example3Title": "Musinsa",
-    "example3Desc1": "Generate character model images with AI",
-    "example3Desc2": "Place recommended text",
-    "ctaButton": "Start Creating Promotional Content 🚀"
+    "example3Title": "Notion",
+    "example3Desc1": "Generate images with AI",
+    "example3Desc2": "Split and place recommended text",
+    "ctaButton": "Start Creating Content 🚀",
+    "contentCreated": "Content Created",
+    "happyMakers": "Happy Makers",
+    "avgCreationTime": "Avg. Creation Time"
+  },
+  "footer": {
+    "copyright": "© 2026 HYP. All rights reserved.",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "pricing": "Pricing"
   },
   "summary": {
     "title": "Product Information Review",
@@ -138,7 +151,10 @@
     "errorGeneration": "Image generation failed.",
     "errorTextGeneration": "An error occurred while generating text.",
     "errorImageOnly": "Only image files can be uploaded.",
-    "errorFileSize": "File size must be 5MB or less."
+    "errorFileSize": "File size must be 5MB or less.",
+    "errorNoSummary": "Product information is missing.",
+    "errorGeneric": "An error occurred.",
+    "errorStreamRead": "Unable to read stream."
   },
   "editor": {
     "title": "Content Editor",
@@ -165,7 +181,7 @@
     "selected": "Selected",
     "generating": "Generating...",
     "generateMoreImages": "Generate\nMore Images",
-    "creditCost": "(1 credit)",
+    "creditCost": "(100 credits)",
     "complete": "Complete",
     "back": "Back",
     "enterText": "Enter text",
@@ -180,6 +196,7 @@
     "errorNoCredit": "Insufficient credits.",
     "errorSomeImagesFailed": "Some images failed to generate.",
     "errorDuringWork": "An error occurred during the operation.",
+    "errorMissingInfo": "Required information is missing. Please try again.",
     "errorAdditionalImageFailed": "Additional image generation failed",
     "principles": {
       "simple": {
@@ -242,7 +259,7 @@
     "loggedInAs": "Logged in as",
     "recharge": "Recharge Credits",
     "remainingCredits": "Remaining Credits",
-    "firstLoginGift": "5 free credits on first login! 🎁",
+    "firstLoginGift": "500 free credits on first login! 🎁",
     "loginError": "An error occurred during login.",
     "loginPrompt": "Log in and start for free"
   },
@@ -253,7 +270,7 @@
     "descriptionNoCredit": "Don't worry! Log in to use more for free.",
     "message": "Thank you for using our service.\nClick the button to recharge for free and continue!",
     "homeDescription": "🔒 You've used all your free trial credits\nRecharge credits and get started right away!",
-    "uploadDescription": "To view the generated images and promotional texts and proceed to the next step, 2 credits are required.",
+    "uploadDescription": "To view the generated images and promotional texts and proceed to the next step, 200 credits are required.",
     "rechargeButton": "Recharge for Free and Continue",
     "recharging": "Recharging...",
     "errorRecharge": "Recharge failed. Please try again later.",
@@ -270,25 +287,25 @@
     "whatIsCredit": {
       "title": "What are credits?",
       "content1": "From product analysis to image generation and promotional text recommendations",
-      "highlight1": " 2 credits are used to complete one full process",
+      "highlight1": " 200 credits are used to complete one full process",
       "content1End": ".",
       "note": "(Includes base image + 2 additional images)",
       "content2": "If you want to see more images",
-      "highlight2": " 1 credit for 2 additional images",
+      "highlight2": " 100 credits for 2 additional images",
       "content2End": " can be generated."
     },
     "howToRecharge": {
       "title": "How do I recharge credits?",
       "content1": "When you first visit, we give you",
-      "highlight1": "3 trial credits",
+      "highlight1": "300 trial credits",
       "content1End": ",",
       "content2": "and when you log in, we give you an additional",
-      "highlight2": "5 credits",
+      "highlight2": "500 credits",
       "content2End": "!",
       "content3": "If you've used them all, you can recharge to continue using the service."
     },
     "rechargeButton": "Recharge Credits",
-    "loginButton": "Log in and Get 5 Free Credits"
+    "loginButton": "Log in and Get 500 Free Credits"
   },
   "promotion": {
     "title": "Would you like us to promote your project?",

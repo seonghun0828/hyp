@@ -11,6 +11,7 @@ import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
 import { useCreditStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
+import { AI_COSTS } from '@/lib/constants';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -146,7 +147,7 @@ export default function UploadPage() {
     setError('');
 
     if (!summary) {
-      setError('제품 정보가 없습니다.');
+      setError(t('errorNoSummary'));
       setLoading(false);
       return;
     }
@@ -206,7 +207,7 @@ export default function UploadPage() {
 
       router.push('/editor');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
+      setError(err instanceof Error ? err.message : t('errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -214,7 +215,7 @@ export default function UploadPage() {
 
   const handleAIGenerate = async () => {
     // 크레딧 부족 시 모달 표시
-    if (credits !== null && credits < 2) {
+    if (credits !== null && credits < AI_COSTS.IMAGE_GENERATION) {
       setShowPaymentModal(true);
       return;
     }
@@ -302,7 +303,7 @@ export default function UploadPage() {
       const decoder = new TextDecoder();
 
       if (!reader) {
-        throw new Error('스트림을 읽을 수 없습니다.');
+        throw new Error(t('errorStreamRead'));
       }
 
       let buffer = '';

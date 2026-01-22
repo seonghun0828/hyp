@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { createClient } from '@/lib/supabase/server';
 import { getSummarySystemPrompt, getSummaryUserPrompt } from '@/lib/prompts';
 import { extractAndPreprocessUrl } from '@/lib/summary';
+import { t } from '@/lib/api-messages';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -198,8 +199,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'BOT_BLOCKED',
-          message:
-            '해당 사이트는 정보 수집을 차단하고 있습니다. 직접 입력해주세요.',
+          message: t(request, 'siteBlockedScraping'),
           requiresManualInput: true,
           originalError: errorMessage,
         },
@@ -211,8 +211,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'SERVER_ERROR',
-          message:
-            '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+          message: t(request, 'serverTemporaryError'),
           retryable: true,
           originalError: errorMessage,
         },
@@ -223,7 +222,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'UNKNOWN_ERROR',
-        message: '알 수 없는 오류가 발생했습니다.',
+        message: t(request, 'unknownError'),
         originalError: errorMessage,
       },
       { status: 500 }
