@@ -12,8 +12,10 @@ import ColorThief from 'colorthief';
 import { fonts, fontNames } from '@/lib/fonts';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
+import CustomImagePromptModal from '@/components/editor/CustomImagePromptModal';
+import CustomImagePromptPanel from '@/components/editor/CustomImagePromptPanel';
 import { deductCredits } from '@/lib/api/credits';
-import { generateImage } from '@/lib/api/images';
+import { generateImage, generateCustomImage } from '@/lib/api/images';
 import { useCreditStore } from '@/lib/store';
 import { useAuthStore } from '@/lib/auth-store';
 
@@ -95,6 +97,10 @@ export default function EditorPage() {
 
   // 텍스트 자동 생성 초기화 여부 확인용 Ref
   const hasInitializedTextRef = useRef(false);
+
+  // 크레딧 부족 시 보류된 커스텀 프롬프트와 작업 타입 추적
+  const pendingCustomPromptRef = useRef<string | null>(null);
+  const pendingOperationRef = useRef<'custom' | 'more' | null>(null);
 
   useEffect(() => {
     // 1. Hydration이 안 됐거나 필수 정보가 없으면 중단
@@ -198,7 +204,14 @@ export default function EditorPage() {
     try {
       // 2. UI 분기 처리 (store에서 최신 credits 가져오기)
       const currentCredits = useCreditStore.getState().credits;
-      if (currentCredits === null || currentCredits < AI_COSTS.ADDITIONAL_IMAGE) {
+      if (
+        currentCredits === null ||
+        currentCredits < AI_COSTS.ADDITIONAL_IMAGE
+      ) {
+        // Store pending operation type for auto-retry after recharge
+        pendingOperationRef.current = 'more';
+        pendingCustomPromptRef.current = null;
+
         if (user) {
           setShowPaymentModal(true);
         } else {
@@ -243,7 +256,10 @@ export default function EditorPage() {
       // 4. 성공 시 크레딧 차감
       if (allSuccess) {
         try {
-          await deductCredits(AI_COSTS.ADDITIONAL_IMAGE, 'ADDITIONAL_IMAGE_GENERATION');
+          await deductCredits(
+            AI_COSTS.ADDITIONAL_IMAGE,
+            'ADDITIONAL_IMAGE_GENERATION'
+          );
           // 크레딧 차감 후 스토어 업데이트
           fetchCredits();
           trackEvent('generate_more_images_success', { count: 2 });
@@ -258,6 +274,68 @@ export default function EditorPage() {
       alert(t('errorDuringWork'));
     } finally {
       setIsGeneratingMore(false);
+    }
+  };
+
+  // 커스텀 프롬프트로 이미지 생성
+  const handleCustomPromptGenerate = async (customPrompt: string) => {
+    if (!summary || !styles) return;
+
+    setIsGeneratingCustom(true);
+
+    try {
+      const data = await generateCustomImage({
+        customPrompt,
+        summary,
+        aspectRatio: styles.aspectRatio,
+        category: summary.category,
+        locale,
+        currentImageUrl: imageUrl,
+      });
+
+      // 생성된 이미지를 현재 이미지로 설정
+      setImageUrl(data.imageUrl);
+      setImagePrompt(data.imagePrompt);
+
+      // 이미지 갤러리에 추가
+      addGeneratedImage({
+        url: data.imageUrl,
+        prompt: data.imagePrompt,
+      });
+
+      // 크레딧 잔액 새로고침 (이미 API에서 차감됨)
+      await fetchCredits();
+
+      // 모달/패널 닫기
+      setShowCustomPromptModal(false);
+      setShowAIEditPanel(false);
+      setCustomPrompt(''); // Reset prompt after success
+
+      trackEvent('custom_image_generated', {
+        promptLength: customPrompt.length,
+      });
+    } catch (error: any) {
+      console.error('Custom image generation failed:', error);
+
+      // 402 에러 (크레딧 부족)인 경우 모달 표시
+      if (error.status === 402 || error?.response?.status === 402) {
+        setShowCustomPromptModal(false);
+        // Keep AI Edit Panel open to preserve user's text input
+        // Store pending prompt and operation type for auto-retry after recharge
+        pendingCustomPromptRef.current = customPrompt;
+        pendingOperationRef.current = 'custom';
+
+        if (user) {
+          setShowPaymentModal(true);
+        } else {
+          setShowLoginModal(true);
+        }
+      } else {
+        // 그 외 에러는 사용자에게 알림
+        alert(t('customPrompt.errorMessage'));
+      }
+    } finally {
+      setIsGeneratingCustom(false);
     }
   };
 
@@ -382,6 +460,10 @@ export default function EditorPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+  const [showCustomPromptModal, setShowCustomPromptModal] = useState(false);
+  const [showAIEditPanel, setShowAIEditPanel] = useState(false);
+  const [isGeneratingCustom, setIsGeneratingCustom] = useState(false);
+  const [customPrompt, setCustomPrompt] = useState('');
 
   // 스냅 가이드라인 상태
   const [snapGuides, setSnapGuides] = useState({
@@ -1403,152 +1485,255 @@ export default function EditorPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* SUCCESs 원칙 네비게이션 */}
+            {/* Left Panel - Desktop */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  {t('promotionalTextStyle')}
-                </h3>
+              {!showAIEditPanel ? (
+                <>
+                  {/* SUCCESs 원칙 네비게이션 */}
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      {t('promotionalTextStyle')}
+                    </h3>
 
-                {/* 현재 원칙 표시 */}
-                {loadedPrinciples.length > 0 ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div
-                          className={`w-3 h-3 rounded-full ${currentPrinciple?.color} mr-3`}
-                        ></div>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {currentPrinciple?.key
-                              ? t(`principles.${currentPrinciple.key}.label`)
-                              : ''}
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            {currentPrinciple?.key
-                              ? t(`principles.${currentPrinciple.key}.desc`)
-                              : ''}
-                          </p>
+                    {/* 현재 원칙 표시 */}
+                    {loadedPrinciples.length > 0 ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div
+                              className={`w-3 h-3 rounded-full ${currentPrinciple?.color} mr-3`}
+                            ></div>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {currentPrinciple?.key
+                                  ? t(
+                                      `principles.${currentPrinciple.key}.label`
+                                    )
+                                  : ''}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {currentPrinciple?.key
+                                  ? t(`principles.${currentPrinciple.key}.desc`)
+                                  : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 네비게이션 버튼 */}
+                        <div className="flex justify-between">
+                          <button
+                            onClick={handlePrevPrinciple}
+                            disabled={!canGoPrev}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              canGoPrev
+                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                            }`}
+                          >
+                            {t('previous')}
+                          </button>
+
+                          <div className="text-xs text-gray-500 flex items-center">
+                            {loadedPrinciples.length > 0
+                              ? `${currentIndex + 1} / ${
+                                  loadedPrinciples.length
+                                }`
+                              : '0 / 0'}
+                          </div>
+
+                          <button
+                            onClick={handleNextPrinciple}
+                            disabled={!canGoNext}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              canGoNext
+                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                            }`}
+                          >
+                            {t('next')}
+                          </button>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600 text-sm">
+                          {t('generatingTexts')}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {loadedPrinciples.length} / 6 {t('completed')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-                    {/* 네비게이션 버튼 */}
-                    <div className="flex justify-between">
-                      <button
-                        onClick={handlePrevPrinciple}
-                        disabled={!canGoPrev}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          canGoPrev
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {t('previous')}
-                      </button>
+                  {/* 텍스트 스타일 조정 - 데스크톱에서만 표시 */}
+                  {selectedElement && (
+                    <div className="bg-white rounded-lg shadow-md p-6 mt-6 hidden lg:block">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        {t('textStyle')}
+                      </h3>
 
-                      <div className="text-xs text-gray-500 flex items-center">
-                        {loadedPrinciples.length > 0
-                          ? `${currentIndex + 1} / ${loadedPrinciples.length}`
-                          : '0 / 0'}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {t('fontSetting')}
+                        </label>
+                        <div className="flex gap-2 flex-wrap max-h-[186px] overflow-y-auto p-1">
+                          {fontNames.map((fontName, index) => (
+                            <button
+                              key={fontName}
+                              onClick={() => handleFontChange(index)}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                getSelectedFontIndex() === index
+                                  ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-300'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              } ${fonts[index].className}`}
+                            >
+                              {fontName}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
-                      <button
-                        onClick={handleNextPrinciple}
-                        disabled={!canGoNext}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          canGoNext
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {t('next')}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600 text-sm">
-                      {t('generatingTexts')}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {loadedPrinciples.length} / 6 {t('completed')}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* 텍스트 스타일 조정 - 데스크톱에서만 표시 */}
-              {selectedElement && (
-                <div className="bg-white rounded-lg shadow-md p-6 mt-6 hidden lg:block">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    {t('textStyle')}
-                  </h3>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('fontSetting')}
-                    </label>
-                    <div className="flex gap-2 flex-wrap max-h-[186px] overflow-y-auto p-1">
-                      {fontNames.map((fontName, index) => (
-                        <button
-                          key={fontName}
-                          onClick={() => handleFontChange(index)}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                            getSelectedFontIndex() === index
-                              ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-300'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          } ${fonts[index].className}`}
-                        >
-                          {fontName}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {t('color')}
-                      </label>
-                      {colorPalette.length > 0 ? (
-                        <div className="flex justify-between gap-1">
-                          {/* Color Picker Button - Dropper Icon */}
-                          {(() => {
-                            const currentColor =
-                              textElements.find(
-                                (el) => el.id === selectedElement
-                              )?.color || '#000000';
-                            const isCustomColor = !colorPalette.some(
-                              ([r, g, b]) => {
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {t('color')}
+                          </label>
+                          {colorPalette.length > 0 ? (
+                            <div className="flex justify-between gap-1">
+                              {/* Color Picker Button - Dropper Icon */}
+                              {(() => {
+                                const currentColor =
+                                  textElements.find(
+                                    (el) => el.id === selectedElement
+                                  )?.color || '#000000';
+                                const isCustomColor = !colorPalette.some(
+                                  ([r, g, b]) => {
+                                    const hexColor = `#${[r, g, b]
+                                      .map((x) => {
+                                        const hex = x.toString(16);
+                                        return hex.length === 1
+                                          ? '0' + hex
+                                          : hex;
+                                      })
+                                      .join('')}`;
+                                    return (
+                                      currentColor.toLowerCase() ===
+                                      hexColor.toLowerCase()
+                                    );
+                                  }
+                                );
+                                return (
+                                  <label
+                                    className={`relative w-5 h-5 rounded border cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-linear-to-br from-red-400 via-green-400 to-blue-400 ${
+                                      isCustomColor
+                                        ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
+                                        : 'border-gray-300 hover:border-gray-400'
+                                    }`}
+                                  >
+                                    <input
+                                      type="color"
+                                      value={currentColor}
+                                      onChange={(e) => {
+                                        if (selectedElement) {
+                                          updateElementStyle(selectedElement, {
+                                            color: e.target.value,
+                                          });
+                                        }
+                                      }}
+                                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    />
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="white"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="w-3 h-3 drop-shadow-md"
+                                    >
+                                      <path d="m2 22 1-1h3l9-9" />
+                                      <path d="M3 21v-3l9-9" />
+                                      <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
+                                    </svg>
+                                  </label>
+                                );
+                              })()}
+                              {colorPalette.map(([r, g, b], index) => {
                                 const hexColor = `#${[r, g, b]
                                   .map((x) => {
                                     const hex = x.toString(16);
                                     return hex.length === 1 ? '0' + hex : hex;
                                   })
                                   .join('')}`;
-                                return (
+                                const currentColor =
+                                  textElements.find(
+                                    (el) => el.id === selectedElement
+                                  )?.color || '#000000';
+                                const isSelected =
                                   currentColor.toLowerCase() ===
-                                  hexColor.toLowerCase()
+                                  hexColor.toLowerCase();
+
+                                return (
+                                  <button
+                                    key={index}
+                                    onClick={() => {
+                                      if (selectedElement) {
+                                        updateElementStyle(selectedElement, {
+                                          color: hexColor,
+                                        });
+                                      }
+                                    }}
+                                    className={`w-5 h-5 rounded border transition-all ${
+                                      isSelected
+                                        ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
+                                        : 'border-gray-300 hover:border-gray-400 hover:scale-105'
+                                    }`}
+                                    style={{ backgroundColor: hexColor }}
+                                    title={`RGB(${r}, ${g}, ${b})`}
+                                  />
                                 );
-                              }
-                            );
-                            return (
-                              <label
-                                className={`relative w-5 h-5 rounded border cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400 ${
-                                  isCustomColor
-                                    ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
-                                    : 'border-gray-300 hover:border-gray-400'
-                                }`}
-                              >
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500 py-2">
+                              {t('extractingColors')}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex">
+                          <div className="flex-1 pr-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {t('backgroundColor')}
+                            </label>
+                            <div className="flex items-center gap-2">
+                              {/* Background Color Picker - Dropper Icon */}
+                              <label className="relative w-8 h-8 rounded border border-gray-300 hover:border-gray-400 cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-linear-to-br from-red-400 via-green-400 to-blue-400">
                                 <input
                                   type="color"
-                                  value={currentColor}
+                                  value={(() => {
+                                    const current = textElements.find(
+                                      (el) => el.id === selectedElement
+                                    );
+                                    if (
+                                      !current ||
+                                      current.backgroundColor ===
+                                        'transparent' ||
+                                      current.backgroundColor === 'white' ||
+                                      current.backgroundColor === 'black'
+                                    ) {
+                                      return '#ffffff';
+                                    }
+                                    return current.backgroundColor;
+                                  })()}
                                   onChange={(e) => {
                                     if (selectedElement) {
                                       updateElementStyle(selectedElement, {
-                                        color: e.target.value,
+                                        backgroundColor: e.target.value,
                                       });
                                     }
                                   }}
@@ -1562,235 +1747,170 @@ export default function EditorPage() {
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="w-3 h-3 drop-shadow-md"
+                                  className="w-4 h-4 drop-shadow-md"
                                 >
                                   <path d="m2 22 1-1h3l9-9" />
                                   <path d="M3 21v-3l9-9" />
                                   <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
                                 </svg>
                               </label>
-                            );
-                          })()}
-                          {colorPalette.map(([r, g, b], index) => {
-                            const hexColor = `#${[r, g, b]
-                              .map((x) => {
-                                const hex = x.toString(16);
-                                return hex.length === 1 ? '0' + hex : hex;
-                              })
-                              .join('')}`;
-                            const currentColor =
-                              textElements.find(
-                                (el) => el.id === selectedElement
-                              )?.color || '#000000';
-                            const isSelected =
-                              currentColor.toLowerCase() ===
-                              hexColor.toLowerCase();
-
-                            return (
+                              {/* Toggle Button: white → black → transparent */}
                               <button
-                                key={index}
-                                onClick={() => {
-                                  if (selectedElement) {
-                                    updateElementStyle(selectedElement, {
-                                      color: hexColor,
-                                    });
+                                className={`px-2 h-8 rounded text-sm transition-colors ${(() => {
+                                  const current = textElements.find(
+                                    (el) => el.id === selectedElement
+                                  );
+                                  if (!current)
+                                    return 'bg-blue-500 text-white hover:bg-blue-600';
+
+                                  if (
+                                    current.backgroundColor === 'white' ||
+                                    current.backgroundColor === '#ffffff'
+                                  ) {
+                                    return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
+                                  } else if (
+                                    current.backgroundColor === 'black' ||
+                                    current.backgroundColor === '#000000'
+                                  ) {
+                                    return 'bg-black text-white hover:bg-gray-800';
+                                  } else {
+                                    return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
                                   }
-                                }}
-                                className={`w-5 h-5 rounded border transition-all ${
-                                  isSelected
-                                    ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
-                                    : 'border-gray-300 hover:border-gray-400 hover:scale-105'
-                                }`}
-                                style={{ backgroundColor: hexColor }}
-                                title={`RGB(${r}, ${g}, ${b})`}
-                              />
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-500 py-2">
-                          {t('extractingColors')}
-                        </div>
-                      )}
-                    </div>
+                                })()}`}
+                                onClick={() => {
+                                  const current = textElements.find(
+                                    (el) => el.id === selectedElement
+                                  );
+                                  if (!current) return;
 
-                    <div className="flex">
-                      <div className="flex-1 pr-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {t('backgroundColor')}
-                        </label>
-                        <div className="flex items-center gap-2">
-                          {/* Background Color Picker - Dropper Icon */}
-                          <label className="relative w-8 h-8 rounded border border-gray-300 hover:border-gray-400 cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400">
-                            <input
-                              type="color"
-                              value={(() => {
-                                const current = textElements.find(
-                                  (el) => el.id === selectedElement
-                                );
-                                if (
-                                  !current ||
-                                  current.backgroundColor === 'transparent' ||
-                                  current.backgroundColor === 'white' ||
-                                  current.backgroundColor === 'black'
-                                ) {
-                                  return '#ffffff';
-                                }
-                                return current.backgroundColor;
-                              })()}
-                              onChange={(e) => {
-                                if (selectedElement) {
+                                  let nextBackgroundColor: string;
+
+                                  if (
+                                    current.backgroundColor === 'white' ||
+                                    current.backgroundColor === '#ffffff'
+                                  ) {
+                                    nextBackgroundColor = 'black';
+                                  } else if (
+                                    current.backgroundColor === 'black' ||
+                                    current.backgroundColor === '#000000'
+                                  ) {
+                                    nextBackgroundColor = 'transparent';
+                                  } else {
+                                    nextBackgroundColor = 'white';
+                                  }
+
                                   updateElementStyle(selectedElement, {
-                                    backgroundColor: e.target.value,
+                                    backgroundColor: nextBackgroundColor,
                                   });
-                                }
-                              }}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                }}
+                              >
+                                {(() => {
+                                  const current = textElements.find(
+                                    (el) => el.id === selectedElement
+                                  );
+                                  if (!current) return t('backgroundText');
+
+                                  if (
+                                    current.backgroundColor === 'white' ||
+                                    current.backgroundColor === '#ffffff'
+                                  ) {
+                                    return t('backgroundWhite');
+                                  } else if (
+                                    current.backgroundColor === 'black' ||
+                                    current.backgroundColor === '#000000'
+                                  ) {
+                                    return t('backgroundBlack');
+                                  } else {
+                                    return t('backgroundNone');
+                                  }
+                                })()}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-0.5">
+                              {t('fontSize')}
+                            </label>
+                            <input
+                              type="range"
+                              min={minFont}
+                              max={maxFont}
+                              value={
+                                textElements.find(
+                                  (el) => el.id === selectedElement
+                                )?.fontSize || 12
+                              }
+                              onChange={(e) =>
+                                updateElementStyle(selectedElement, {
+                                  fontSize: parseInt(e.target.value),
+                                })
+                              }
+                              className="w-full"
                             />
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="white"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="w-4 h-4 drop-shadow-md"
-                            >
-                              <path d="m2 22 1-1h3l9-9" />
-                              <path d="M3 21v-3l9-9" />
-                              <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" />
-                            </svg>
-                          </label>
-                          {/* Toggle Button: white → black → transparent */}
-                          <button
-                            className={`px-2 h-8 rounded text-sm transition-colors ${(() => {
-                              const current = textElements.find(
-                                (el) => el.id === selectedElement
-                              );
-                              if (!current)
-                                return 'bg-blue-500 text-white hover:bg-blue-600';
-
-                              if (
-                                current.backgroundColor === 'white' ||
-                                current.backgroundColor === '#ffffff'
-                              ) {
-                                return 'bg-white text-black border border-gray-300 hover:bg-gray-50';
-                              } else if (
-                                current.backgroundColor === 'black' ||
-                                current.backgroundColor === '#000000'
-                              ) {
-                                return 'bg-black text-white hover:bg-gray-800';
-                              } else {
-                                return 'bg-transparent text-black border border-gray-300 hover:bg-gray-50';
-                              }
-                            })()}`}
-                            onClick={() => {
-                              const current = textElements.find(
-                                (el) => el.id === selectedElement
-                              );
-                              if (!current) return;
-
-                              let nextBackgroundColor: string;
-
-                              if (
-                                current.backgroundColor === 'white' ||
-                                current.backgroundColor === '#ffffff'
-                              ) {
-                                nextBackgroundColor = 'black';
-                              } else if (
-                                current.backgroundColor === 'black' ||
-                                current.backgroundColor === '#000000'
-                              ) {
-                                nextBackgroundColor = 'transparent';
-                              } else {
-                                nextBackgroundColor = 'white';
-                              }
-
-                              updateElementStyle(selectedElement, {
-                                backgroundColor: nextBackgroundColor,
-                              });
-                            }}
-                          >
-                            {(() => {
-                              const current = textElements.find(
-                                (el) => el.id === selectedElement
-                              );
-                              if (!current) return t('backgroundText');
-
-                              if (
-                                current.backgroundColor === 'white' ||
-                                current.backgroundColor === '#ffffff'
-                              ) {
-                                return t('backgroundWhite');
-                              } else if (
-                                current.backgroundColor === 'black' ||
-                                current.backgroundColor === '#000000'
-                              ) {
-                                return t('backgroundBlack');
-                              } else {
-                                return t('backgroundNone');
-                              }
-                            })()}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-0.5">
-                          {t('fontSize')}
-                        </label>
-                        <input
-                          type="range"
-                          min={minFont}
-                          max={maxFont}
-                          value={
-                            textElements.find((el) => el.id === selectedElement)
-                              ?.fontSize || 12
-                          }
-                          onChange={(e) =>
-                            updateElementStyle(selectedElement, {
-                              fontSize: parseInt(e.target.value),
-                            })
-                          }
-                          className="w-full"
-                        />
-                        <div className="mt-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-0.5">
-                            {t('fontWeight')}
-                          </label>
-                          <input
-                            type="range"
-                            min={100}
-                            max={900}
-                            step={100}
-                            value={
-                              textElements.find(
-                                (el) => el.id === selectedElement
-                              )?.fontWeight || 400
-                            }
-                            onChange={(e) =>
-                              updateElementStyle(selectedElement, {
-                                fontWeight: parseInt(e.target.value),
-                              })
-                            }
-                            className="w-full"
-                          />
-                          {/* <div className="text-xs text-gray-500 mt-1 text-center">
+                            <div className="mt-1">
+                              <label className="block text-sm font-medium text-gray-700 mb-0.5">
+                                {t('fontWeight')}
+                              </label>
+                              <input
+                                type="range"
+                                min={100}
+                                max={900}
+                                step={100}
+                                value={
+                                  textElements.find(
+                                    (el) => el.id === selectedElement
+                                  )?.fontWeight || 400
+                                }
+                                onChange={(e) =>
+                                  updateElementStyle(selectedElement, {
+                                    fontWeight: parseInt(e.target.value),
+                                  })
+                                }
+                                className="w-full"
+                              />
+                              {/* <div className="text-xs text-gray-500 mt-1 text-center">
                             {textElements.find(
                               (el) => el.id === selectedElement
                             )?.fontWeight || 400}
                           </div> */}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+                </>
+              ) : (
+                /* AI Edit Panel - Desktop */
+                <div className="hidden lg:block">
+                  <CustomImagePromptPanel
+                    onGenerate={handleCustomPromptGenerate}
+                    onClose={() => setShowAIEditPanel(false)}
+                    isLoading={isGeneratingCustom}
+                    creditCost={AI_COSTS.CUSTOM_PROMPT_IMAGE}
+                    value={customPrompt}
+                    onChange={setCustomPrompt}
+                  />
                 </div>
               )}
             </div>
 
             {/* 캔버스 영역 - 홍보 문구 스타일 바로 아래 */}
             <div className="lg:col-span-3">
+              {/* AI Edit Panel - Mobile Bottom Sheet */}
+              {showAIEditPanel && (
+                <div className="lg:hidden">
+                  <CustomImagePromptPanel
+                    onGenerate={handleCustomPromptGenerate}
+                    onClose={() => setShowAIEditPanel(false)}
+                    isLoading={isGeneratingCustom}
+                    creditCost={AI_COSTS.CUSTOM_PROMPT_IMAGE}
+                    value={customPrompt}
+                    onChange={setCustomPrompt}
+                  />
+                </div>
+              )}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-center" ref={containerParentRef}>
                   <div
@@ -1893,6 +2013,16 @@ export default function EditorPage() {
                           }
                         }}
                       />
+
+                      {/* AI Customize Button */}
+                      {imageUrl && (
+                        <button
+                          onClick={() => setShowAIEditPanel(true)}
+                          className="absolute top-4 right-4 z-10 bg-linear-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-2.5 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-all"
+                        >
+                          <span className="text-sm">✨</span>
+                        </button>
+                      )}
 
                       {/* 스냅 가이드라인 */}
                       {snapGuides.vertical && (
@@ -2336,7 +2466,7 @@ export default function EditorPage() {
                             );
                             return (
                               <label
-                                className={`relative w-4 h-4 rounded border cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400 ${
+                                className={`relative w-4 h-4 rounded border cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-linear-to-br from-red-400 via-green-400 to-blue-400 ${
                                   isCustomColor
                                     ? 'border-blue-500 ring-2 ring-blue-300 scale-110'
                                     : 'border-gray-300 hover:border-gray-400'
@@ -2419,7 +2549,7 @@ export default function EditorPage() {
                         </label>
                         <div className="flex items-center gap-1.5">
                           {/* Background Color Picker - Dropper Icon */}
-                          <label className="relative w-6 h-6 rounded border border-gray-300 hover:border-gray-400 cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400">
+                          <label className="relative w-6 h-6 rounded border border-gray-300 hover:border-gray-400 cursor-pointer transition-all hover:scale-105 flex items-center justify-center bg-linear-to-br from-red-400 via-green-400 to-blue-400">
                             <input
                               type="color"
                               value={(() => {
@@ -2581,9 +2711,28 @@ export default function EditorPage() {
         onSuccess={async () => {
           // 충전 완료 후 서버에서 최신 크레딧 조회
           await fetchCredits();
-          // 이미지 추가 생성 재시도
-          handleGenerateMoreClick();
+
+          // 보류된 작업 재시도
+          const operation = pendingOperationRef.current;
+          if (operation === 'custom' && pendingCustomPromptRef.current) {
+            // AI 수정 재시도
+            await handleCustomPromptGenerate(pendingCustomPromptRef.current);
+            // 재시도 후 보류 상태 초기화
+            pendingCustomPromptRef.current = null;
+            pendingOperationRef.current = null;
+          } else if (operation === 'more') {
+            // 이미지 추가 생성 재시도
+            handleGenerateMoreClick();
+            pendingOperationRef.current = null;
+          }
         }}
+      />
+      <CustomImagePromptModal
+        open={showCustomPromptModal}
+        onOpenChange={setShowCustomPromptModal}
+        onGenerate={handleCustomPromptGenerate}
+        isLoading={isGeneratingCustom}
+        creditCost={AI_COSTS.CUSTOM_PROMPT_IMAGE}
       />
     </div>
   );

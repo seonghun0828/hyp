@@ -14,7 +14,7 @@ export default function SummaryPage() {
   const t = useTranslations('summary');
   const tSteps = useTranslations('steps');
   const tCommon = useTranslations('common');
-  
+
   const { summary, setSummary, url } = useFunnelStore();
   const [formData, setFormData] = useState<ProductSummary>({
     url: '',
@@ -130,7 +130,7 @@ export default function SummaryPage() {
       8: `/${locale}/editor`,
       9: `/${locale}/result`,
     };
-    
+
     const route = stepRoutes[stepNumber];
     if (route && route !== window.location.pathname) {
       router.push(route);
@@ -142,7 +142,7 @@ export default function SummaryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
       <ProgressBar
         currentStep={2}
         totalSteps={9}
@@ -156,9 +156,7 @@ export default function SummaryPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {t('title')}
             </h1>
-            <p className="text-gray-600">
-              {t('description')}
-            </p>
+            <p className="text-gray-600">{t('description')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
