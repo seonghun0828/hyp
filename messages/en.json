@@ -223,6 +223,25 @@
         "label": "Story",
         "desc": "Naturally convey the product's value through storytelling."
       }
+    },
+    "customPrompt": {
+      "title": "Customize Image with AI",
+      "description": "Describe how you'd like to modify the current image.",
+      "costNotice": "This will cost {cost} credits",
+      "placeholder": "Example: Make the background sunset colors, add soft lighting...",
+      "examples": "Quick Examples",
+      "examplePrompts": {
+        "example1": "Add dramatic sunset lighting",
+        "example2": "Change background to minimalist white",
+        "example3": "Make it look more professional and corporate"
+      },
+      "cancel": "Cancel",
+      "generate": "Generate Image",
+      "generating": "Generating...",
+      "credits": "credits",
+      "errorMessage": "Failed to generate custom image. Please try again.",
+      "validationMinLength": "Please enter at least {minLength} characters",
+      "validationMaxLength": "Please enter no more than {maxLength} characters"
     }
   },
   "result": {

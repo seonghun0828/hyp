@@ -33,6 +33,7 @@ export const AI_COSTS = {
   IMAGE_GENERATION: 200, // 이미지 3장 생성 (에디터 진입 시)
   PROMOTION_TEXT: 0, // 홍보 문구 생성
   ADDITIONAL_IMAGE: 100, // 추가 이미지 2장 생성
+  CUSTOM_PROMPT_IMAGE: 50, // 커스텀 프롬프트로 이미지 수정
 } as const;
 
 /**
