@@ -272,10 +272,11 @@ export default function HomePage() {
             <p className="text-xl text-gray-600 mb-2">
               {tCommon('appTagline')}
             </p>
-            <p className="text-gray-500">
-              {tHome('subtitle')}
-              <br />
-              {tHome('description')}
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 mt-6 whitespace-pre-line">
+              {tHome('mainHeadline')}
+            </h2>
+            <p className="text-lg text-gray-700 mb-4 whitespace-pre-line">
+              {tHome('subHeadline')}
             </p>
           </div>
 
@@ -284,7 +285,7 @@ export default function HomePage() {
             <div>
               <label
                 htmlFor="url"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-2 whitespace-pre-line"
               >
                 {tHome('inputLabel')}
               </label>
