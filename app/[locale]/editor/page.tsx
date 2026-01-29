@@ -2018,7 +2018,7 @@ export default function EditorPage() {
                       {imageUrl && (
                         <button
                           onClick={() => setShowAIEditPanel(true)}
-                          className="absolute top-4 right-4 z-10 bg-linear-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-2.5 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-all"
+                          className="absolute top-4 right-4 z-10 bg-linear-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-2.5 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-all exclude-from-result"
                         >
                           <span className="text-sm">✨</span>
                         </button>
