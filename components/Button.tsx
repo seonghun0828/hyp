@@ -19,20 +19,23 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-base ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
+    primary:
+      'bg-primary-600 text-white hover:bg-primary-500 focus:ring-primary-600',
+    secondary:
+      'bg-neutral-700 text-white hover:bg-neutral-900 focus:ring-neutral-500',
     outline:
-      'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-blue-500',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-blue-500',
+      'border border-neutral-300 text-neutral-700 bg-white hover:bg-neutral-100 focus:ring-primary-600',
+    ghost:
+      'text-neutral-700 hover:bg-neutral-200 focus:ring-primary-600',
   };
 
   const sizeClasses = {
     sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    md: 'px-4 py-2 text-md',
+    lg: 'px-6 py-3 text-md font-semibold',
   };
 
   const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;

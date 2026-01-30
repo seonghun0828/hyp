@@ -169,6 +169,18 @@ See `lib/credits.ts` and API routes for implementation.
 - Client-side errors logged but not exposed to users
 - AI API failures return user-friendly Korean/English messages via i18n (`lib/api-messages.ts`)
 
+### Design System & Tokens
+
+**Single Source of Truth**: `docs/design/token.ts`
+
+All design tokens (colors, typography, spacing, radius, motion) are defined in `docs/design/token.ts` and imported directly into `tailwind.config.ts`. This ensures consistency and prevents duplication.
+
+**IMPORTANT**:
+- NEVER hardcode color values, sizes, or spacing in components
+- Use Tailwind utilities that reference the token system (e.g., `bg-primary-600`, `text-neutral-900`)
+- The design system follows HYP's philosophy: calm, tool-like, non-judgmental
+- See `.claude/rules/design-system.md` and `.claude/rules/design-tokens.md` for full guidelines
+
 ## File Organization
 
 ```

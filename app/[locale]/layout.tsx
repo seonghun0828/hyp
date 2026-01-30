@@ -3,9 +3,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { GoogleTagManager } from '@next/third-parties/google';
 import { inter } from '@/lib/fonts';
-import ProfileDisplay from '@/components/auth/ProfileDisplay';
+import NavigationBar from '@/components/NavigationBar';
 import AuthProvider from '@/components/auth/AuthProvider';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import '../globals.css';
@@ -24,12 +23,14 @@ export async function generateMetadata({
 
   return {
     title: {
-      default: isKorean ? 'HYP - 제품 홍보 콘텐츠 생성' : 'HYP - Product Promotion Generator',
+      default: isKorean
+        ? 'HYP - 제품 홍보 콘텐츠 생성'
+        : 'HYP - Product Promotion Generator',
       template: '%s | HYP',
     },
     description: isKorean
       ? 'AI가 제안하고 당신이 선택해 완성합니다. 단 몇 초 만에 홍보 콘텐츠를 만들어보세요.'
-      : 'AI suggests, you choose and complete. Create promotional content in just seconds.',
+      : 'AI suggests, you choose and complete. Create promotional content in just minutes.',
     openGraph: {
       locale: isKorean ? 'ko_KR' : 'en_US',
     },
@@ -44,7 +45,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }>) {
   const { locale } = await params;
-  
+
   // Validate locale
   if (!locales.includes(locale as any)) {
     notFound();
@@ -60,8 +61,7 @@ export default async function LocaleLayout({
         <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID!} />
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
-            <LanguageSwitcher />
-            <ProfileDisplay />
+            <NavigationBar locale={locale} />
             {children}
           </AuthProvider>
         </NextIntlClientProvider>
@@ -69,4 +69,3 @@ export default async function LocaleLayout({
     </html>
   );
 }
-

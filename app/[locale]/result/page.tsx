@@ -354,9 +354,9 @@ export default function ResultPage() {
         onStepClick={handleStepClick}
       />
 
-      <div className="container mx-auto px-4 pb-12 md:py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
+      <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 pb-12 md:py-12">
+        <div className="max-w-5xl mx-auto">
+          <div className="max-w-2xl mx-auto text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {t('completionTitle')}
             </h1>
@@ -438,7 +438,7 @@ export default function ResultPage() {
           </div>
 
           {/* 추가 정보 */}
-          <div className="mt-8 text-center">
+          <div className="max-w-2xl mx-auto mt-8 text-center">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <p className="text-gray-600 text-sm whitespace-pre-line">
                 {t('contentFooter')}

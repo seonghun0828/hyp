@@ -51,7 +51,7 @@ export default function ProfileDisplay() {
 
   return (
     <>
-      <div className="fixed top-4 right-4 z-50" ref={containerRef}>
+      <div className="relative" ref={containerRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="bg-white/90 backdrop-blur-xs px-2 py-1 rounded-full shadow-sm border border-gray-200 text-sm font-medium text-gray-700 flex items-center gap-2 hover:bg-gray-50 transition-colors"
