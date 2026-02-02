@@ -142,7 +142,7 @@ export default function SummaryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen">
       <ProgressBar
         currentStep={2}
         totalSteps={9}

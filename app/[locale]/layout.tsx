@@ -57,7 +57,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className={`${recursive.variable} antialiased font-recursive`}>
+      <body className={`${recursive.variable} antialiased font-recursive bg-neutral-100`}>
         <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID!} />
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
