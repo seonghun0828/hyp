@@ -23,7 +23,7 @@ export default function NavigationBar({ locale }: NavigationBarProps) {
           {/* Logo */}
           <button
             onClick={handleLogoClick}
-            className="flex items-center hover:opacity-80 transition-opacity duration-fast"
+            className="flex items-center hover:opacity-80 transition-opacity duration-fast cursor-pointer"
             aria-label="Go to homepage"
           >
             <Image

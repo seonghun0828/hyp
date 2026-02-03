@@ -19,7 +19,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-base ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-base ease-out focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
   const variantClasses = {
     primary:
@@ -28,8 +28,7 @@ export default function Button({
       'bg-neutral-700 text-white hover:bg-neutral-900 focus:ring-neutral-500',
     outline:
       'border border-neutral-300 text-neutral-700 bg-white hover:bg-neutral-100 focus:ring-primary-600',
-    ghost:
-      'text-neutral-700 hover:bg-neutral-200 focus:ring-primary-600',
+    ghost: 'text-neutral-700 hover:bg-neutral-200 focus:ring-primary-600',
   };
 
   const sizeClasses = {

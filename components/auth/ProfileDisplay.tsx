@@ -54,7 +54,7 @@ export default function ProfileDisplay() {
       <div className="relative" ref={containerRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-white/90 backdrop-blur-xs px-2 py-1 rounded-full shadow-sm border border-gray-200 text-sm font-medium text-gray-700 flex items-center gap-2 hover:bg-gray-50 transition-colors"
+          className="bg-white/90 backdrop-blur-xs px-2 py-1 rounded-full shadow-sm border border-gray-200 text-sm font-medium text-gray-700 flex items-center gap-2 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <span className="text-md">👤</span>
         </button>
@@ -65,7 +65,9 @@ export default function ProfileDisplay() {
             <div className="px-4 py-2">
               {user ? (
                 <div className="text-sm">
-                  <p className="text-gray-500 text-xs mb-1">{t('loggedInAs')}</p>
+                  <p className="text-gray-500 text-xs mb-1">
+                    {t('loggedInAs')}
+                  </p>
                   <p className="font-medium truncate">{user.email}</p>
                 </div>
               ) : (

@@ -30,7 +30,7 @@ export default function LanguageSwitcher() {
     <div className="relative">
       <button
         onClick={() => switchLanguage(getOtherLocale())}
-        className="bg-white/90 backdrop-blur-xs px-3 py-2 rounded-full shadow-sm border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1"
+        className="bg-white/90 backdrop-blur-xs px-3 py-2 rounded-full shadow-sm border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1 cursor-pointer"
         aria-label="Switch language"
       >
         {getLanguageDisplay(getOtherLocale())}
@@ -38,4 +38,3 @@ export default function LanguageSwitcher() {
     </div>
   );
 }
-
