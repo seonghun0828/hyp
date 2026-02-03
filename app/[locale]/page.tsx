@@ -293,7 +293,7 @@ export default function HomePage() {
 
         {/* Example Section - Expanded for better images */}
         <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <ExampleSection />
           </div>
         </div>
