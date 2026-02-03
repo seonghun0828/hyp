@@ -9,7 +9,6 @@ import { useFunnelStore, ProductSummary } from '@/lib/store';
 import { isValidUrl } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
-import ProgressBar from '@/components/ProgressBar';
 import LoginModal from '@/components/auth/LoginModal';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
@@ -21,7 +20,6 @@ export default function HomePage() {
   const locale = useLocale();
   const t = useTranslations();
   const tHome = useTranslations('home');
-  const tSteps = useTranslations('steps');
   const tCommon = useTranslations('common');
   const tPayment = useTranslations('payment');
 
@@ -35,21 +33,9 @@ export default function HomePage() {
   const [showStickyButton, setShowStickyButton] = useState(false);
   const { user } = useAuthStore();
 
-  const { credits, fetchCredits, updateCredits } = useCreditStore();
+  const { credits, fetchCredits } = useCreditStore();
   const formRef = useRef<HTMLFormElement>(null);
   const scrollToTopButtonRef = useRef<HTMLDivElement>(null);
-
-  const stepNames = [
-    tSteps('linkInput'),
-    tSteps('productSummary'),
-    tSteps('messageType'),
-    tSteps('expressionStyle'),
-    tSteps('modelComposition'),
-    tSteps('aspectRatio'),
-    tSteps('imageUpload'),
-    tSteps('editor'),
-    tSteps('result'),
-  ];
 
   useEffect(() => {
     fetchCredits();
@@ -78,7 +64,7 @@ export default function HomePage() {
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Check initial state
+    handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -145,9 +131,6 @@ export default function HomePage() {
     setUrl(targetUrl);
 
     try {
-      console.log('🌐 [HomePage] Sending to API:', { url: inputUrl, locale });
-
-      // API 호출하여 제품 요약 생성
       const response = await fetch('/api/summary', {
         method: 'POST',
         headers: {
@@ -166,7 +149,6 @@ export default function HomePage() {
           return;
         }
 
-        // 에러 타입별 처리
         if (response.status === 403 && errorData.error === 'BOT_BLOCKED') {
           alert(tHome('errorBotBlocked'));
           router.push(`/${locale}/summary?manual=true`);
@@ -204,38 +186,17 @@ export default function HomePage() {
       };
       setSummary(summaryData);
 
-      // 이벤트 추적
       trackEvent('link_submit', {
         step: 1,
         page: 'home',
         locale,
       });
 
-      // 제품 요약 페이지로 이동
       router.push(`/${locale}/summary`);
     } catch (err) {
       setError(err instanceof Error ? err.message : tHome('errorGeneric'));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleStepClick = (stepNumber: number) => {
-    const stepRoutes: Record<number, string> = {
-      1: `/${locale}`,
-      2: `/${locale}/summary`,
-      3: `/${locale}/styles/messages`,
-      4: `/${locale}/styles/expressions`,
-      5: `/${locale}/styles/models`,
-      6: `/${locale}/styles/aspect-ratio`,
-      7: `/${locale}/upload`,
-      8: `/${locale}/editor`,
-      9: `/${locale}/result`,
-    };
-
-    const route = stepRoutes[stepNumber];
-    if (route && route !== window.location.pathname) {
-      router.push(route);
     }
   };
 
@@ -249,100 +210,124 @@ export default function HomePage() {
       return;
     }
 
-    // Otherwise, submit the form
     handleSubmit({ preventDefault: () => {} } as React.FormEvent);
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-      <ProgressBar
-        currentStep={1}
-        totalSteps={9}
-        stepNames={stepNames}
-        onStepClick={handleStepClick}
-      />
-
-      <div className="container mx-auto px-4 pb-12 md:py-12">
-        <div className="max-w-2xl mx-auto text-center">
-          {/* 헤더 */}
-          <div className="mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {tCommon('appName')}
-            </h1>
-            <p className="text-xl text-gray-600 mb-2">
-              {tCommon('appTagline')}
-            </p>
-            <p className="text-gray-500">
-              {tHome('subtitle')}
-              <br />
-              {tHome('description')}
-            </p>
+    <div className="min-h-screen bg-neutral-100">
+      <main className="w-full pb-12 md:py-8">
+        {/* Hero Section - Expanded width like process section */}
+        <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16">
+          <div className="max-w-6xl mx-auto">
+            <HeroSection />
           </div>
-
-          {/* 입력 폼 */}
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="url"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                {tHome('inputLabel')}
-              </label>
-              <input
-                type="url"
-                id="url"
-                value={inputUrl}
-                onChange={(e) => setInputUrl(e.target.value)}
-                placeholder={tHome('inputPlaceholder')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                disabled={loading}
-              />
-              {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-            </div>
-
-            <Button
-              type="submit"
-              size="lg"
-              loading={loading}
-              disabled={!inputUrl.trim()}
-              className="w-full"
-            >
-              {loading ? loadingStage : tHome('submitButton')}
-            </Button>
-          </form>
-
-          {/* 신뢰 신호 섹션 */}
-          <TrustSignals />
-
-          {/* HYP 핵심 과정 섹션 */}
-          <ProcessSection />
-
-          {/* 사용 예시 섹션 */}
-          <ExampleSection />
-
-          {/* 하단 CTA 버튼 */}
-          <ScrollToTopButton ref={scrollToTopButtonRef} />
         </div>
-      </div>
+
+        {/* Primary Action Card - Focused, constrained */}
+        <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16">
+          <div className="max-w-xl mx-auto">
+            <section className="pb-8 md:pb-12">
+              <div className="bg-white rounded-lg border border-neutral-300 shadow-sm">
+                {/* Card Header */}
+                <div className="px-6 pt-6 pb-4 md:px-8 md:pt-8 md:pb-5 border-b border-neutral-200">
+                  <p className="text-sm text-neutral-700 leading-relaxed whitespace-pre-line text-center">
+                    {tHome('inputLabel')}
+                  </p>
+                </div>
+
+                {/* Card Body */}
+                <div className="px-6 py-6 md:px-8 md:py-8">
+                  <form
+                    ref={formRef}
+                    onSubmit={handleSubmit}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-2">
+                      <input
+                        type="url"
+                        id="url"
+                        value={inputUrl}
+                        onChange={(e) => setInputUrl(e.target.value)}
+                        placeholder={tHome('inputPlaceholder')}
+                        className="w-full px-4 py-3 text-md bg-neutral-100 border border-neutral-300 rounded-sm
+                               placeholder:text-neutral-500
+                               focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent
+                               transition-all duration-fast"
+                        disabled={loading}
+                        autoComplete="url"
+                      />
+                      {error && (
+                        <p className="text-sm text-danger-600">{error}</p>
+                      )}
+                    </div>
+
+                    <Button
+                      type="submit"
+                      size="lg"
+                      loading={loading}
+                      disabled={!inputUrl.trim()}
+                      className="w-full"
+                    >
+                      {loading ? loadingStage : tHome('submitButton')}
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Trust Signals - Full width with responsive padding */}
+        <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16">
+          <div className="max-w-xl mx-auto">
+            <TrustSignals />
+          </div>
+        </div>
+
+        {/* Process Section - Expanded for 3-column layout */}
+        <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16">
+          <div className="max-w-6xl mx-auto">
+            <ProcessSection />
+          </div>
+        </div>
+
+        {/* Example Section - Expanded for better images */}
+        <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16">
+          <div className="max-w-6xl mx-auto">
+            <ExampleSection />
+          </div>
+        </div>
+
+        {/* Bottom CTA - Centered like form */}
+        <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16">
+          <div className="max-w-xl mx-auto">
+            <ScrollToTopButton ref={scrollToTopButtonRef} />
+          </div>
+        </div>
+      </main>
 
       <Footer />
 
-      {/* Sticky CTA - shows when form is scrolled out of view, hides when bottom CTA is visible */}
+      {/* Sticky CTA - no gradient, clean background */}
       {showStickyButton && (
-        <div className="fixed max-w-2xl mx-auto bottom-0 left-0 right-0 p-4 md:px-0 z-50">
-          <Button
-            onClick={handleStickyButtonClick}
-            disabled={loading}
-            loading={loading}
-            size="lg"
-            className="w-full"
-          >
-            {loading
-              ? loadingStage
-              : inputUrl.trim() && isValidUrl(inputUrl)
-              ? tHome('submitButton')
-              : tHome('ctaButton')}
-          </Button>
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-neutral-100 border-t border-neutral-200">
+          <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 py-4">
+            <div className="max-w-xl mx-auto">
+              <Button
+                onClick={handleStickyButtonClick}
+                disabled={loading}
+                loading={loading}
+                size="lg"
+                className="w-full"
+              >
+                {loading
+                  ? loadingStage
+                  : inputUrl.trim() && isValidUrl(inputUrl)
+                  ? tHome('submitButton')
+                  : tHome('ctaButton')}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -364,9 +349,7 @@ export default function HomePage() {
           </div>
         }
         onSuccess={async () => {
-          // 충전 완료 후 서버에서 최신 크레딧 조회
           await fetchCredits();
-          // 분석 시작
           executeSubmit(inputUrl);
         }}
       />
@@ -374,7 +357,34 @@ export default function HomePage() {
   );
 }
 
-// 스크롤 탑 버튼 컴포넌트
+/* ----- Hero Section ----- */
+function HeroSection() {
+  const tCommon = useTranslations('common');
+  const tHome = useTranslations('home');
+
+  return (
+    <section className="pt-8 pb-8 md:pt-12 md:pb-10">
+      <div className="text-center space-y-4">
+        {/* Tagline - subtle, uppercase, functional */}
+        <p className="text-xs font-medium text-neutral-500 tracking-widest uppercase">
+          {tCommon('appTagline')}
+        </p>
+
+        {/* Main Headline - clear, direct, reassuring */}
+        <h1 className="text-lg md:text-xl font-semibold text-neutral-900 leading-snug whitespace-pre-line">
+          {tHome('mainHeadline')}
+        </h1>
+
+        {/* Subheadline - supportive, not hype */}
+        <p className="text-md text-neutral-700 leading-relaxed whitespace-pre-line max-w-3xl mx-auto">
+          {tHome('subHeadline')}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ----- Scroll to Top Button ----- */
 const ScrollToTopButton = React.forwardRef<HTMLDivElement>((props, ref) => {
   const tHome = useTranslations('home');
 
@@ -386,12 +396,8 @@ const ScrollToTopButton = React.forwardRef<HTMLDivElement>((props, ref) => {
   };
 
   return (
-    <div ref={ref} className="max-w-2xl mx-auto text-center pb-12 pt-6">
-      <Button
-        onClick={scrollToTop}
-        size="lg"
-        className="w-full text-lg font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
-      >
+    <div ref={ref} className="pt-8 pb-8">
+      <Button onClick={scrollToTop} size="lg" className="w-full">
         {tHome('ctaButton')}
       </Button>
     </div>
@@ -400,31 +406,33 @@ const ScrollToTopButton = React.forwardRef<HTMLDivElement>((props, ref) => {
 
 ScrollToTopButton.displayName = 'ScrollToTopButton';
 
-// 신뢰 신호 섹션 컴포넌트
+/* ----- Trust Signals ----- */
 function TrustSignals() {
   const tHome = useTranslations('home');
 
+  const signals = [
+    { value: '2,000+', label: tHome('contentCreated') },
+    { value: '800+', label: tHome('happyMakers') },
+    { value: '< 3 min', label: tHome('avgCreationTime') },
+  ];
+
   return (
-    <div className="py-6 border-y border-gray-200 my-8">
-      <div className="flex flex-wrap justify-center items-center gap-8 text-gray-600">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-gray-900">2,000+</p>
-          <p className="text-sm">{tHome('contentCreated')}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-gray-900">800+</p>
-          <p className="text-sm">{tHome('happyMakers')}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-gray-900">&lt; 3 min</p>
-          <p className="text-sm">{tHome('avgCreationTime')}</p>
-        </div>
+    <section className="py-6 mb-4 border-y border-neutral-200">
+      <div className="flex flex-wrap justify-center items-start gap-8 md:gap-16">
+        {signals.map((signal, index) => (
+          <div key={index} className="text-center min-w-[80px]">
+            <p className="text-lg font-semibold text-neutral-900">
+              {signal.value}
+            </p>
+            <p className="text-xs text-neutral-500 mt-1">{signal.label}</p>
+          </div>
+        ))}
       </div>
-    </div>
+    </section>
   );
 }
 
-// HYP 핵심 과정 섹션 컴포넌트
+/* ----- Process Section ----- */
 function ProcessSection() {
   const tHome = useTranslations('home');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -505,11 +513,11 @@ function ProcessSection() {
         })}
       </div>
 
-      {/* 모바일: 세로 */}
-      <div className="md:hidden space-y-6">
+      {/* Mobile: Vertical layout with tighter spacing */}
+      <div className="md:hidden space-y-4">
         {processImages.map((src, index) => (
-          <div key={index}>
-            <p className="text-sm font-medium text-gray-700 mb-2">
+          <div key={index} className="space-y-2">
+            <p className="text-sm font-medium text-neutral-700">
               {processSteps[index]}
             </p>
             <ProcessImageMobile
@@ -535,7 +543,7 @@ function ProcessImageMobile({
   stepLabel: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.4 });
+  const isInView = useInView(ref, { once: true, amount: 0.7 });
 
   return (
     <motion.div
@@ -574,71 +582,69 @@ function ExampleSection() {
       title: tHome('example1Title'),
       description1: tHome('example1Desc1'),
       description2: tHome('example1Desc2'),
-      align: 'left',
-      device: 'desktop',
+      align: 'left' as const,
     },
     {
       src: '/images/result-examples/result2-macbook.png',
       title: tHome('example2Title'),
       description1: tHome('example2Desc1'),
       description2: tHome('example2Desc2'),
-      align: 'right',
-      device: 'desktop',
+      align: 'right' as const,
     },
     {
       src: '/images/result-examples/result3-notion.png',
       title: tHome('example3Title'),
       description1: tHome('example3Desc1'),
       description2: tHome('example3Desc2'),
-      align: 'left',
-      device: 'mobile',
+      align: 'left' as const,
     },
   ];
 
   return (
-    <div className="py-6 md:pt-12 md:pb-6 border-t border-gray-100">
-      <h3 className="text-lg font-semibold text-gray-900 pb-8 text-center">
-        {tHome('exampleTitle')}
-      </h3>
+    <section className="py-8 md:py-12 border-t border-neutral-200">
+      {/* Section Header */}
+      <div className="mb-6 md:mb-8">
+        <h2 className="text-md font-semibold text-neutral-900 text-center">
+          {tHome('exampleTitle').replace(' 🎨', '')}
+        </h2>
+      </div>
 
-      <div className="flex flex-col gap-16 max-w-4xl mx-auto">
+      {/* Examples List */}
+      <div className="space-y-10 md:space-y-12">
         {examples.map((example, index) => (
           <div
             key={index}
-            className={`flex flex-col md:flex-row items-center gap-4 md:gap-8 ${
+            className={`flex flex-col md:flex-row items-center gap-4 md:gap-6 ${
               example.align === 'right' ? 'md:flex-row-reverse' : ''
             }`}
           >
-            {/* 이미지 영역 */}
-            <div
-              className={`w-full ${
-                example.device === 'mobile' ? 'md:w-1/2' : 'md:w-full'
-              }`}
-            >
-              <div className="relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white border border-gray-100">
+            {/* Image */}
+            <div className="w-full md:w-3/5">
+              <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
                 <Image
                   src={example.src}
-                  alt={`${tHome('exampleCase')} ${index + 1}`}
+                  alt={`Example ${index + 1}: ${example.title}`}
                   width={400}
                   height={500}
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto"
                 />
               </div>
             </div>
 
-            {/* 텍스트 영역 */}
+            {/* Text */}
             <div
-              className={`w-full md:w-1/2 flex flex-col ${
-                example.align === 'right'
-                  ? 'md:items-end md:text-right'
-                  : 'md:items-start md:text-left'
-              } items-center text-center`}
+              className={`w-full md:w-2/5 ${
+                example.align === 'right' ? 'md:text-right' : 'md:text-left'
+              } text-center`}
             >
-              <span className="text-blue-600 font-bold text-lg tracking-wider mb-2">
-                {tHome('exampleCase')} {index + 1}. {example.title}
+              <span className="inline-block text-xs font-medium text-neutral-500 tracking-wide uppercase mb-2">
+                {tHome('exampleCase')} {index + 1}
               </span>
-              <p className="text-gray-800 font-bold text-sm md:text-md leading-tight">
-                {example.description1},
+              <p className="text-sm font-semibold text-neutral-900 mb-1">
+                {example.title}
+              </p>
+              <p className="text-sm text-neutral-700 leading-relaxed">
+                {example.description1}
                 <br />
                 {example.description2}
               </p>
@@ -646,6 +652,6 @@ function ExampleSection() {
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

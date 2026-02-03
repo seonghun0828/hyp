@@ -27,7 +27,7 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <div className="fixed top-4 left-4 z-50">
+    <div className="relative">
       <button
         onClick={() => switchLanguage(getOtherLocale())}
         className="bg-white/90 backdrop-blur-xs px-3 py-2 rounded-full shadow-sm border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1"

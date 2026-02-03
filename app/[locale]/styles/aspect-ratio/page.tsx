@@ -90,7 +90,7 @@ export default function AspectRatioPage() {
 
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">{tCommon('loading')}</p>
@@ -128,7 +128,7 @@ export default function AspectRatioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen">
       <ProgressBar 
         currentStep={6} 
         totalSteps={9} 
@@ -136,18 +136,17 @@ export default function AspectRatioPage() {
         onStepClick={handleStepClick}
       />
 
-      <div className="container mx-auto px-4 pb-12 md:py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {t('title')}
-            </h1>
-            <p className="text-gray-600">
-              {t('description')}
-            </p>
-          </div>
+      <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 pb-12 md:py-12">
+        <div className="max-w-2xl mx-auto text-center mb-12">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {t('title')}
+          </h1>
+          <p className="text-gray-600">
+            {t('description')}
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {aspectRatioOptions.map((option) => {
               const isSelected = selectedId === option.id;
               return (
@@ -185,19 +184,18 @@ export default function AspectRatioPage() {
                 </div>
               );
             })}
-          </div>
+        </div>
 
-          <div className="mt-8 text-center">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSelectedId(null);
-                router.back();
-              }}
-            >
-              {tCommon('back')}
-            </Button>
-          </div>
+        <div className="mt-8 text-center max-w-7xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setSelectedId(null);
+              router.back();
+            }}
+          >
+            {tCommon('back')}
+          </Button>
         </div>
       </div>
     </div>

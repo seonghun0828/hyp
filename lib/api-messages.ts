@@ -41,6 +41,16 @@ const messages: Record<string, Record<Locale, string>> = {
     en: 'A server error occurred.',
   },
 
+  // Payments
+  checkoutFailed: {
+    ko: '결제 생성에 실패했습니다. 다시 시도해주세요.',
+    en: 'Failed to create payment checkout. Please try again.',
+  },
+  webhookError: {
+    ko: '결제 웹훅 처리에 실패했습니다. 고객센터에 문의해주세요.',
+    en: 'Payment webhook processing failed. Please contact support.',
+  },
+
   // Fallback
   product: {
     ko: '제품',

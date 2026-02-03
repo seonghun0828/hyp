@@ -43,3 +43,9 @@ export const INITIAL_CREDITS = {
   ANON: 300, // 비로그인 유저
   MEMBER: 500, // 로그인 유저
 } as const;
+
+export const PRICING_TIERS = [
+  { id: 'starter', credits: 2000, price: 5, popular: false },
+  { id: 'popular', credits: 4200, price: 10, popular: true },
+  { id: 'best', credits: 22000, price: 50, popular: false },
+] as const;

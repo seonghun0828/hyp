@@ -18,20 +18,22 @@ export default function ProgressBar({
 
   return (
     <div
-      className={`w-full max-w-4xl mx-auto px-4 transition-opacity duration-300 ${
+      className={`w-full px-4 md:px-8 lg:px-12 xl:px-16 transition-opacity duration-base ${
         isFirstStep ? 'py-2 opacity-40' : 'py-6 opacity-100'
       }`}
     >
-      {/* Progress Bar */}
-      <div className="relative">
-        {/* 텍스트 라벨 - 첫 단계에서는 숨김, 모바일에서도 숨김 */}
+      <div className="max-w-7xl mx-auto">
+        {/* Progress Bar */}
+        <div className="relative">
+        {/* Step Labels - hidden on first step and mobile */}
         {!isFirstStep && (
           <div className="hidden md:flex justify-between items-center mb-2">
             {stepNames.map((name, index) => {
               const stepNumber = index + 1;
               const isClickable = onStepClick && stepNumber <= currentStep;
               const isCurrentStep = stepNumber === currentStep;
-              
+              const isCompleted = stepNumber < currentStep;
+
               return (
                 <button
                   key={index}
@@ -42,19 +44,15 @@ export default function ProgressBar({
                     }
                   }}
                   disabled={!isClickable}
-                  className={`text-sm font-medium transition-colors ${
-                    index < currentStep
-                      ? 'text-blue-600'
-                      : index === currentStep - 1
-                      ? 'text-blue-600'
-                      : 'text-gray-400'
+                  className={`text-xs lg:text-sm transition-colors duration-fast ${
+                    isCompleted || isCurrentStep
+                      ? 'text-primary-600'
+                      : 'text-neutral-500'
                   } ${
                     isClickable
-                      ? 'cursor-pointer hover:text-blue-800 hover:underline'
+                      ? 'cursor-pointer hover:text-primary-500 hover:underline'
                       : 'cursor-default'
-                  } ${
-                    isCurrentStep ? 'font-bold' : ''
-                  }`}
+                  } ${isCurrentStep ? 'font-semibold' : 'font-medium'}`}
                   title={
                     isClickable
                       ? `Go to step ${stepNumber}: ${name}`
@@ -68,37 +66,42 @@ export default function ProgressBar({
           </div>
         )}
 
-        {/* 진행바 */}
+        {/* Progress Track */}
         <div
-          className={`w-full bg-gray-200 rounded-full ${
+          className={`w-full bg-neutral-200 rounded-full ${
             isFirstStep ? 'h-1' : 'h-2'
           }`}
         >
           <div
-            className={`bg-blue-600 rounded-full transition-all duration-300 ease-out ${
+            className={`bg-primary-600 rounded-full transition-all duration-slow ease-out ${
               isFirstStep ? 'h-1' : 'h-2'
             }`}
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        {/* 점 표시 - 첫 단계에서는 숨김 */}
+        {/* Step Dots - hidden on first step */}
         {!isFirstStep && (
           <div className="flex justify-between mt-1">
-            {stepNames.map((_, index) => (
-              <div
-                key={index}
-                className={`w-3 h-3 rounded-full border-2 ${
-                  index < currentStep
-                    ? 'bg-blue-600 border-blue-600'
-                    : index === currentStep - 1
-                    ? 'bg-blue-600 border-blue-600'
-                    : 'bg-white border-gray-300'
-                }`}
-              />
-            ))}
+            {stepNames.map((_, index) => {
+              const stepNumber = index + 1;
+              const isCompleted = stepNumber < currentStep;
+              const isCurrentStep = stepNumber === currentStep;
+
+              return (
+                <div
+                  key={index}
+                  className={`w-3 h-3 rounded-full border-2 transition-colors duration-fast ${
+                    isCompleted || isCurrentStep
+                      ? 'bg-primary-600 border-primary-600'
+                      : 'bg-white border-neutral-300'
+                  }`}
+                />
+              );
+            })}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
