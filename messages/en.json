@@ -285,17 +285,49 @@
     "loginPrompt": "Log in and start for free"
   },
   "payment": {
-    "title": "Beta Tester Benefits 🎉",
-    "titleNoCredit": "Free Trial Credits Depleted",
-    "description": "Unlimited free access during the open beta period.",
+    "title": "Recharge Credits",
+    "titleNoCredit": "Free Trial Credits Exhausted",
+    "description": "Choose how you'd like to get more credits",
     "descriptionNoCredit": "Don't worry! Log in to use more for free.",
     "message": "Thank you for using our service.\nClick the button to recharge for free and continue!",
     "homeDescription": "🔒 You've used all your free trial credits\nRecharge credits and get started right away!",
     "uploadDescription": "To view the generated images and promotional texts and proceed to the next step, 200 credits are required.",
+    "freeTier": {
+      "title": "Free Credits",
+      "description": "Get 500 credits for free (beta)",
+      "button": "Get Free Credits"
+    },
+    "orPurchase": "or purchase",
+    "popular": "Most Popular",
+    "credits": "credits",
+    "perCredit": "per credit",
+    "tier": {
+      "starter": {
+        "name": "Starter"
+      },
+      "popular": {
+        "name": "Popular"
+      },
+      "best": {
+        "name": "Best Value"
+      }
+    },
+    "select": "Select",
+    "processing": "Processing...",
     "rechargeButton": "Recharge for Free and Continue",
     "recharging": "Recharging...",
     "errorRecharge": "Recharge failed. Please try again later.",
+    "errorCheckout": "Failed to create checkout. Please try again.",
+    "securePayment": "Secure payment powered by Lemon Squeezy",
     "close": "Close"
+  },
+  "paymentSuccess": {
+    "title": "Payment Successful!",
+    "description": "Your credits have been added to your account.",
+    "loading": "Processing your payment...",
+    "loadingDescription": "This may take a few seconds",
+    "currentCredits": "Current credits",
+    "backToApp": "Back to App"
   },
   "feedback": {
     "title": "Your feedback shapes the next version of HYP 🚀",
