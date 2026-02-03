@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         checkout_id: checkout.data.data.id,
         variant_id: tierConfig.variantId,
         status: 'pending',
-        amount_usd: tierConfig.price * 100,
+        amount_usd: tierConfig.price,
         credits_amount: tierConfig.credits,
         customer_email: user.email,
         tier: tier,

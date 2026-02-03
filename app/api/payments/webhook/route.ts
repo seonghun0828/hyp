@@ -66,14 +66,14 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Idempotency: Check if credits already granted
-    const { data: existingOrder } = await supabase
+    // Check if this order was already processed (idempotency)
+    const { data: alreadyProcessed } = await supabase
       .from('payment_orders')
-      .select('*')
+      .select('id, credits_granted')
       .eq('order_id', orderId)
       .maybeSingle();
 
-    if (existingOrder?.credits_granted) {
+    if (alreadyProcessed?.credits_granted) {
       console.log('[Webhook] Credits already granted:', orderId);
       return NextResponse.json(
         {
@@ -82,6 +82,29 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       );
     }
+
+    // Find the pending payment order for this user
+    // Match by user_id and status='pending' (most recent one)
+    const { data: pendingOrder } = await supabase
+      .from('payment_orders')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!pendingOrder) {
+      console.error('[Webhook] No pending order found', { userId, orderId });
+      return NextResponse.json(
+        {
+          error: 'No pending order found',
+        },
+        { status: 400 }
+      );
+    }
+
+    console.log('[Webhook] Found pending order:', pendingOrder.id);
 
     // Grant credits to paid_credits
     await grantCredits(userId, creditsAmount, supabase);
@@ -98,22 +121,31 @@ export async function POST(request: NextRequest) {
         webhook_event_name: eventName,
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', userId)
-      .eq('status', 'pending');
+      .eq('id', pendingOrder.id);
 
     if (updateError) {
       console.error('[Webhook] Failed to update order:', updateError);
       // Continue anyway - credits were granted
+    } else {
+      console.log('[Webhook] Updated payment order:', pendingOrder.id);
     }
 
-    // Log transaction
-    await supabase.from('credit_transactions').insert({
-      user_id: userId,
-      amount: creditsAmount,
-      type: 'purchase',
-      description: `Purchased ${creditsAmount} credits via Lemon Squeezy`,
-      payment_order_id: existingOrder?.id,
-    });
+    // Log transaction with the correct payment_order_id
+    const { error: transactionError } = await supabase
+      .from('credit_transactions')
+      .insert({
+        user_id: userId,
+        amount: creditsAmount,
+        type: 'purchase',
+        description: `Purchased ${creditsAmount} credits via Lemon Squeezy`,
+        payment_order_id: pendingOrder.id,
+      });
+
+    if (transactionError) {
+      console.error('[Webhook] Failed to log transaction:', transactionError);
+    } else {
+      console.log('[Webhook] Logged transaction for order:', pendingOrder.id);
+    }
 
     console.log('[Webhook] Successfully processed:', orderId);
     return NextResponse.json({ success: true }, { status: 200 });
