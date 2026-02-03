@@ -43,10 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     const orderId = payload.data.id;
-    const orderData = payload.data.attributes;
-
-    // Extract custom data from checkout_data.custom
-    const customData = orderData.checkout_data?.custom || {};
+    const customData = payload.meta.custom_data;
 
     console.log('[Webhook] Custom data:', customData);
 
