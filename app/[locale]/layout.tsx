@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { GoogleTagManager } from '@next/third-parties/google';
+import Script from 'next/script';
 import { recursive } from '@/lib/fonts';
 import NavigationBar from '@/components/NavigationBar';
 import AuthProvider from '@/components/auth/AuthProvider';
@@ -24,15 +25,16 @@ export async function generateMetadata({
   return {
     title: {
       default: isKorean
-        ? 'HYP - 제품 홍보 콘텐츠 생성'
-        : 'HYP - Product Promotion Generator',
+        ? 'HYP - 뭘 올려야 할지 몰라서, 아직도 못 올리고 있다면'
+        : 'HYP - From nothing to post-ready content for your product',
       template: '%s | HYP',
     },
     description: isKorean
-      ? 'AI가 제안하고 당신이 선택해 완성합니다. 단 몇 초 만에 홍보 콘텐츠를 만들어보세요.'
-      : 'AI suggests, you choose and complete. Create promotional content in just minutes.',
+      ? '제품 링크 하나로 SNS에 올릴 수 있는 이미지 기반 콘텐츠를 만들어줍니다. 일단 시작해보세요.'
+      : 'Turn your product into post-ready visuals and messages — even if you don’t know where to start.',
     openGraph: {
       locale: isKorean ? 'ko_KR' : 'en_US',
+      images: '/og-image.png',
     },
   };
 }
@@ -57,8 +59,11 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className={`${recursive.variable} antialiased font-recursive bg-neutral-100`}>
+      <body
+        className={`${recursive.variable} antialiased font-recursive bg-neutral-100`}
+      >
         <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID!} />
+        <Script src="https://tally.so/widgets/embed.js" strategy="lazyOnload" />
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <NavigationBar locale={locale} />
