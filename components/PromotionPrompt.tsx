@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { trackEvent } from '@/lib/analytics';
 
 interface PromotionPromptProps {
@@ -15,6 +15,13 @@ export const PromotionPrompt = ({
   onAgree,
 }: PromotionPromptProps) => {
   const t = useTranslations('promotion');
+  const locale = useLocale();
+
+  // Get locale-specific form ID
+  const formId =
+    locale === 'ko'
+      ? process.env.NEXT_PUBLIC_TALLY_FORM_ID_KO
+      : process.env.NEXT_PUBLIC_TALLY_FORM_ID_EN;
 
   const handleAgree = async () => {
     trackEvent('promotion_agree', {
@@ -70,18 +77,30 @@ export const PromotionPrompt = ({
         </div>
 
         <div className="quick-actions">
-          <button onClick={handleAgree} className="feedback-btn survey">
+          <button
+            onClick={handleAgree}
+            className="feedback-btn survey"
+            data-tally-open={formId}
+            data-tally-hide-title="1"
+            data-tally-emoji-text="📝"
+            data-tally-emoji-animation="wave"
+          >
             {t('agreeButton')}
           </button>
         </div>
 
-        <button onClick={handleDecline} className="skip-btn">
+        <button
+          onClick={handleDecline}
+          className="skip-btn"
+          data-tally-open={formId}
+          data-tally-hide-title="1"
+          data-tally-emoji-text="📝"
+          data-tally-emoji-animation="wave"
+        >
           {t('declineButton')}
         </button>
 
-        <p className="text-xs text-gray-500 mt-4">
-          {t('notice')}
-        </p>
+        <p className="text-xs text-gray-500 mt-4">{t('notice')}</p>
       </div>
     </div>
   );

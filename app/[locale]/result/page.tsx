@@ -8,7 +8,6 @@ import { generateFileName, getOrCreateSessionId } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import Button from '@/components/Button';
 import ProgressBar from '@/components/ProgressBar';
-import { FeedbackPrompt } from '@/components/FeedbackPrompt';
 import { PromotionPrompt } from '@/components/PromotionPrompt';
 
 export default function ResultPage() {
@@ -17,7 +16,7 @@ export default function ResultPage() {
   const t = useTranslations('result');
   const tSteps = useTranslations('steps');
   const tCommon = useTranslations('common');
-  
+
   const {
     summary,
     reset,
@@ -26,7 +25,7 @@ export default function ResultPage() {
     setImagePrompt,
     setFinalImageUrl: setStoreFinalImageUrl,
   } = useFunnelStore();
-  
+
   const stepNames = [
     tSteps('linkInput'),
     tSteps('productSummary'),
@@ -40,14 +39,16 @@ export default function ResultPage() {
   ];
   const [downloading, setDownloading] = useState(false);
   const [finalImageUrl, setFinalImageUrl] = useState<string | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
   const [showPromotion, setShowPromotion] = useState(false);
   const [hasQuickFeedback, setHasQuickFeedback] = useState(false);
   const [resultId, setResultId] = useState<string | null>(null);
-  const [lastQuickFeedback, setLastQuickFeedback] = useState<
-    'good' | 'neutral' | 'bad' | null
-  >(null);
   const [isLoadingResult, setIsLoadingResult] = useState(false);
+
+  // Get locale-specific form ID
+  const formId =
+    locale === 'ko'
+      ? process.env.NEXT_PUBLIC_TALLY_FORM_ID_KO
+      : process.env.NEXT_PUBLIC_TALLY_FORM_ID_EN;
 
   // 상태가 로드될 때까지 기다리는 로딩 상태 추가
   const [isHydrated, setIsHydrated] = useState(false);
@@ -160,7 +161,6 @@ export default function ResultPage() {
     // 1. 즉시 UI 반영 (optimistic update)
     sessionStorage.setItem('quickFeedbackDone', 'true');
     setHasQuickFeedback(true);
-    setLastQuickFeedback(feedback);
 
     // 2. 이벤트 추적
     trackEvent('quick_feedback', {
@@ -196,9 +196,6 @@ export default function ResultPage() {
     if (feedback === 'good') {
       // good이면 홍보 팝업 표시
       setShowPromotion(true);
-    } else {
-      // neutral 또는 bad면 바로 피드백 모달 표시
-      setShowFeedback(true);
     }
   };
 
@@ -338,7 +335,7 @@ export default function ResultPage() {
       8: `/${locale}/editor`,
       9: `/${locale}/result`,
     };
-    
+
     const route = stepRoutes[stepNumber];
     if (route && route !== window.location.pathname) {
       router.push(route);
@@ -360,9 +357,7 @@ export default function ResultPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               {t('completionTitle')}
             </h1>
-            <p className="text-gray-600">
-              {t('completionDescription')}
-            </p>
+            <p className="text-gray-600">{t('completionDescription')}</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -385,7 +380,7 @@ export default function ResultPage() {
                   <div className="flex justify-center gap-4">
                     <button
                       onClick={() => handleQuickFeedback('good')}
-                      className="cursor-pointer flex flex-col items-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                      className="cursor-pointer flex flex-col items-center gap-2 md:px-6 px-3 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
                     >
                       <span className="text-2xl">👍</span>
                       <span className="text-sm font-medium text-gray-700">
@@ -394,7 +389,11 @@ export default function ResultPage() {
                     </button>
                     <button
                       onClick={() => handleQuickFeedback('neutral')}
-                      className="cursor-pointer flex flex-col items-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                      data-tally-open={formId}
+                      data-tally-hide-title="1"
+                      data-tally-emoji-text="📝"
+                      data-tally-emoji-animation="wave"
+                      className="cursor-pointer flex flex-col items-center gap-2 md:px-6 px-3 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
                     >
                       <span className="text-2xl">🤔</span>
                       <span className="text-sm font-medium text-gray-700">
@@ -403,7 +402,11 @@ export default function ResultPage() {
                     </button>
                     <button
                       onClick={() => handleQuickFeedback('bad')}
-                      className="cursor-pointer flex flex-col items-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                      data-tally-open={formId}
+                      data-tally-hide-title="1"
+                      data-tally-emoji-text="📝"
+                      data-tally-emoji-animation="wave"
+                      className="cursor-pointer flex flex-col items-center gap-2 md:px-6 px-3 py-3 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors"
                     >
                       <span className="text-2xl">👎</span>
                       <span className="text-sm font-medium text-gray-700">
@@ -454,17 +457,8 @@ export default function ResultPage() {
           resultId={resultId}
           onClose={() => {
             setShowPromotion(false);
-            // 홍보 팝업 닫으면 피드백 모달 표시 (피드백 아직 안한 경우만)
-            if (!hasQuickFeedback && !lastQuickFeedback) {
-              setShowFeedback(true);
-            }
           }}
         />
-      )}
-
-      {/* 피드백 팝업 */}
-      {showFeedback && (
-        <FeedbackPrompt onClose={() => setShowFeedback(false)} />
       )}
     </div>
   );

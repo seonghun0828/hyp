@@ -15,7 +15,6 @@ import { rechargeCredits } from '@/lib/api/credits';
 import { createCheckout } from '@/lib/api/payments';
 import { PricingTier } from '@/lib/lemonsqueezy';
 import { useState } from 'react';
-import { FeedbackPrompt } from '@/components/FeedbackPrompt';
 import { PRICING_TIERS } from '@/lib/constants';
 
 const ENABLE_PAID_CREDITS =
@@ -41,7 +40,6 @@ export default function PaymentModal({
   const tAuth = useTranslations('auth');
   const [loading, setLoading] = useState(false);
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
 
   const handleGoogleLogin = async () => {
     try {
@@ -57,7 +55,6 @@ export default function PaymentModal({
       await rechargeCredits(500);
 
       onOpenChange(false);
-      setShowFeedback(true);
     } catch (error) {
       console.error('Recharge failed:', error);
       alert(t('errorRecharge'));
@@ -79,15 +76,6 @@ export default function PaymentModal({
       setLoadingTier(null);
     }
   };
-
-  const handleFeedbackClose = () => {
-    setShowFeedback(false);
-    onSuccess?.();
-  };
-
-  if (showFeedback) {
-    return <FeedbackPrompt onClose={handleFeedbackClose} />;
-  }
 
   // Non-logged-in users: Show login prompt
   if (!isLoggedIn) {

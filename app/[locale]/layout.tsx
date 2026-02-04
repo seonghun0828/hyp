@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { GoogleTagManager } from '@next/third-parties/google';
+import Script from 'next/script';
 import { recursive } from '@/lib/fonts';
 import NavigationBar from '@/components/NavigationBar';
 import AuthProvider from '@/components/auth/AuthProvider';
@@ -59,6 +60,10 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body className={`${recursive.variable} antialiased font-recursive bg-neutral-100`}>
         <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID!} />
+        <Script
+          src="https://tally.so/widgets/embed.js"
+          strategy="lazyOnload"
+        />
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <NavigationBar locale={locale} />
